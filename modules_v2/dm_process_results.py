@@ -19,7 +19,7 @@ import dm_sim_period as sim#
 
 class ProcessResults(object):
 
-    def __init__(self, market, sim_name, agents, contracts, debug):
+    def __init__(self, market, sim_name, agents, contracts, debug=False):
         
         self.debug = debug            # if True print additional information
         self.results = {}             # period simulation results

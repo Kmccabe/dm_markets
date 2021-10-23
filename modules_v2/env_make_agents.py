@@ -14,7 +14,7 @@ import dm_env as env
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
     def __init__(self, num_traders, trader_types, num_units,
-                 grid_size, lower_bound, upper_bound, debug):
+                 grid_size, lower_bound, upper_bound, debug=False):
 
         self.trader_types = trader_types     # list of two trader types, should be tuple
         self.num_traders = num_traders       # number of traders divisible by two

@@ -18,7 +18,7 @@ import env_make_agents as mkt
 class SimPeriod(object):
     """Simulate a market on grid of consisting of weeks and days using two types of trading agents"""
 
-    def __init__(self, sim_name, num_rounds, agents, market, grid_size, debug, plot_on):
+    def __init__(self, sim_name, num_rounds, agents, market, grid_size, debug=False, plot_on=False):
 
         self.sim_name = sim_name            # simulation name
         #self.week = week                    # current week
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     num_rounds = 60
     debug = False
     plot_on = True
-    sim = SimPeriod(sim_name, week, period, num_rounds, agents, market, grid_size, debug, plot_on)
+    sim = SimPeriod(sim_name, week, period, num_rounds, agents, market, grid_size)
 
     sim.run_period()
     print(sim.get_contracts())
