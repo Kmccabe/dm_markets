@@ -12,7 +12,7 @@ from scipy.stats import sem
 # import dm_bargain
 # import dm_travel
 import dm_agents
-# import dm_env as env
+#import dm_env as env
 # import dm_utils as dm
 import dm_sim_period as simp
 import dm_process_results as pr

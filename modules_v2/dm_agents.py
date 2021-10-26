@@ -1,4 +1,5 @@
 import random as rnd
+import numpy as np
 from dm_message_model import Message
 #from dm_zida import ZIDA
 
@@ -58,12 +59,21 @@ class Trader(object):
         s = s + f"cu = {self.cur_unit}"
         return s
 
+    def help(self):
+        print("strategy - ZID")
+        print("period move: randomly one step")
+        print("round offer: bid ~ [lower_bound, current_value]") 
+        print("             ask ~ [current_cost, upper_bound]") 
+    
     def get_simulation(self, simulation):
         self.simulation = simulation
         return self.simulation
 
     def set_debug(self, flag):
         self.debug = flag
+
+    def set_contract_this_period(self, flag):
+        self.contract_this_period = flag
  
     def set_values(self, v):
         """
@@ -372,6 +382,7 @@ class ZIDA(ZID):
             x_dir = rnd.choice(direction_list)
             y_dir = rnd.choice(direction_list)
             return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
+            #self.contract_this_period = False
             self.returned_msg(return_msg)
             return return_msg
 
@@ -470,8 +481,7 @@ class ZIDPA(ZIDP):
 
     def move_requested(self, pl):
         """
-        Make a move in a random direction but with bias to stay if you can still trade
-        Stickiness to state quo is determined by the contract number in the last day
+        Make a move in a random direction but with bias to stay if you made a contract in the past.
         """
         if self.contract_this_period:
             direction_list = [0, 0, 0]
@@ -486,6 +496,7 @@ class ZIDPA(ZIDP):
             y_dir = rnd.choice(direction_list)
             return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
             self.returned_msg(return_msg)
+            #self.contract_this_period = False
             return return_msg
 
 class ZIDPR(ZIDP):
@@ -500,6 +511,7 @@ class ZIDPR(ZIDP):
         Make a move in a random direction but with bias to stay if you can still trade
         Stickiness to state quo is determined by the contract number in the last day
         """
+
         if self.contract_this_period:
             direction_list = [0, 0, 0]
         else:
@@ -516,5 +528,6 @@ class ZIDPR(ZIDP):
             y_dir = rnd.choice(direction_list)
             return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
             self.returned_msg(return_msg)
+            #self.contract_this_period = False
             return return_msg
         

@@ -125,11 +125,8 @@ class MakeAgents(object):
         # replicate trade_object total_traders//2 times and put in traders list
         # make a shuffled list of trader objects for trader roles
         traders = []
-        for agent_type in self.trader_types:
-            t_name, t_num = agent_type
-            for k in range(t_num):
-                traders.append(t_name)
-        assert len(traders) == self.num_traders, f"num_traders {self.num_traders} != length of traders"
+        for k in range(self.num_traders // 2):
+            traders = traders + self.trader_types
         # randomize trader startegies one for each agent
         np.random.shuffle(traders)
 
@@ -138,13 +135,13 @@ class MakeAgents(object):
         for t in range(self.num_traders):
             # make buyer and seller name, intitialize type, set money endowment
             name = f"B_{t+1}"
-            trader_role = "BUYER"
+            trader_type = "BUYER"
             payoff = self.utility
             money = 500
             if t >= self.num_traders // 2:
                 name = f"S_{t + 1 - self.num_traders // 2}"
-                trader_role = "SELLER"
-                payoff = self.profit
+                trader_type = "SELLER"
+                payoff = self.profit 
             # Get agent class             
             agent_model = traders[t]
             # Get agent class name
@@ -152,7 +149,7 @@ class MakeAgents(object):
             name = f"{name}_{agent_kind}"
             location = self.location_list[t]   # get initial location
             # initialize agent with info constructed above
-            agent = agent_model(name, trader_role, payoff, money, location, 
+            agent = agent_model(name, trader_type, payoff, money, location, 
                                 lower_bound = self.lb, upper_bound = self.ub)
             # Make Value list or cost list
             if agent.get_type() == "BUYER":
@@ -205,7 +202,7 @@ if __name__ == "__main__":
     ZID = dm_agents.ZID
     ZIDA = dm_agents.ZIDA
 
-    trader_objects = [(ZID, 2), (ZIDA, 8)]     # List of artificial traders length 2
+    trader_objects = [ZID, ZIDA]     # List of artificial traders length 2
     debug = False
     num_traders = 10                  # traders (multiple of two)
     num_units = 4                     # Number of units per trader
