@@ -99,6 +99,7 @@ def analyze_eff_data(num_trials, num_weeks, data_table):
     # Set up arrays to parse data into weeks
     week_effs = []
     eff_avg = []
+
     for week in range(num_weeks):
         eff_avg.append(0)
         week_effs.append([])
@@ -120,21 +121,25 @@ def analyze_eff_data(num_trials, num_weeks, data_table):
             eff_avg[k] += eff
             week_effs[k].append(eff)
             
-    #calculate avg and sem for each week
-    std_errors = []   
+    #calculate avg, min, max, and sem for each week
+    std_errors = [] 
+    eff_min = []
+    eff_max = []  
     for k in range(num_weeks):
         eff_avg[k] /= num_trials
         std_error = sem(week_effs[k])
         std_errors.append(std_error)
+        eff_min.append(min(week_effs[k]))
+        eff_max.append(max(week_effs[k]))
 
-    return eff_avg, std_errors
+    return eff_avg, std_errors, eff_min, eff_max
 
 if __name__ == "__main__":
     # test monte-carlo runner
 
-    num_trials = 100
+    num_trials = 5
     ZID = dm_agents.ZID   # name of agent class
-    trader_objects =[ZID, ZID] # run simulation with just ZID agents
+    trader_objects =[(ZID,10), (ZID,10)] # run simulation with just ZID agents
 
     sim_name = "ZID MONTE-CARLO"
     num_periods = 7
@@ -172,12 +177,14 @@ if __name__ == "__main__":
             print()
     """          
 
-    eff_avg_1, std_error_1 = analyze_eff_data(num_trials, num_weeks, data_table)
+    eff_avg_1, std_error_1, eff_min_1, eff_max_1 = analyze_eff_data(num_trials, num_weeks, data_table)
     x = range(num_weeks)
     fig, ax = plt.subplots(figsize=(10, 8))
 
-    ax.plot(x, eff_avg_1, label = 'ZID', linestyle = 'dotted', color='red', lw =3)
+    ax.plot(x, eff_avg_1, label = 'ZID', linestyle = 'solid', color='red', lw =3)
     ax.errorbar(x, eff_avg_1, yerr=std_error_1, fmt='.k')
+    ax.plot(x, eff_min_1, label = 'min', linestyle = 'dotted', color='cyan', lw =3)
+    ax.plot(x, eff_max_1, label = 'max', linestyle = 'dotted', color='cyan', lw =3)
 
     ax.set_xlabel('week', size = 'x-large') 
     ax.set_xbound(0, num_weeks)

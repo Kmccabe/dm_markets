@@ -196,7 +196,7 @@ class Trader(object):
 
 class ZID(Trader):
     """ 
-        Zero Intelligence variant for sdecentralized market
+        Zero Intelligence variant for decentralized market
         a budget constrained ZI 
     """
     
