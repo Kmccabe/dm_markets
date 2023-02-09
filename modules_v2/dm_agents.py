@@ -23,7 +23,7 @@ class Trader(object):
         self.money = money        # starting money ballance
         self.location = location  # starting location a tuple (x, y)
         self.lower_bound = lower_bound # on bids, asks, prices, values, costs
-        self.upper_bound = upper_bound # on abaove
+        self.upper_bound = upper_bound # on above
 
         self.values = []  # BUYER values are set by self.set_values(list) 
         self.costs = []   # SELLER costs are set by self.set_costs(list)
@@ -32,9 +32,10 @@ class Trader(object):
         self.max_units = 0    # length of values or costs
 
         self.contracts = []   # list of contracts
-        self.valid_directives = ["START", "MOVE_REQUESTED", "OFFER", "TRANSACT", 
-                                 "CONTRACT"]
+        self.valid_directives = ["START", "MOVE_REQUESTED", "OFFER", "TRANSACT", "CONTRACT"]
+        #TODO: make directives lower case (maybe)
         self.simulation = None    # get access to class SimulateMarket
+        #TODO: explain above better and why the flag below
         self.contract_this_period = False
         self.num_at_loc = 0
     
@@ -65,6 +66,7 @@ class Trader(object):
         print("round offer: bid ~ [lower_bound, current_value]") 
         print("             ask ~ [current_cost, upper_bound]") 
     
+    #TODO: Check on this.  Is it needed.
     def get_simulation(self, simulation):
         self.simulation = simulation
         return self.simulation

@@ -121,16 +121,16 @@ class MakeAgents(object):
         """
         build list self.agents of agent objects
         """
-        self.make_locations()
+        self.make_locations() # Put traders at random grid point
         # replicate trade_object total_traders//2 times and put in traders list
         # make a shuffled list of trader objects for trader roles
         traders = []
-        for agent_type in self.trader_types:
-            t_name, t_num = agent_type
+        for agent_name_number in self.trader_types:
+            t_name, t_num = agent_name_number
             for k in range(t_num):
                 traders.append(t_name)
         assert len(traders) == self.num_traders, f"num_traders {self.num_traders} != length of traders"
-        # randomize trader startegies one for each agent
+        # randomize trader strategies one for each agent
         np.random.shuffle(traders)
 
         # Assign trader objects to buyer/seller roles and assign values and costs
@@ -139,14 +139,13 @@ class MakeAgents(object):
             # make buyer and seller name, intitialize type, set money endowment
             name = f"B_{t+1}"
             trader_role = "BUYER"
-            payoff = self.utility
+            payoff = self.utility  
             money = 500
             if t >= self.num_traders // 2:
                 name = f"S_{t + 1 - self.num_traders // 2}"
                 trader_role = "SELLER"
-                payoff = self.profit
-            # Get agent class             
-            agent_model = traders[t]
+                payoff = self.profit            
+            agent_model = traders[t] # Get agent class  
             # Get agent class name
             agent_kind = str(agent_model.__name__)
             name = f"{name}_{agent_kind}"
@@ -162,7 +161,7 @@ class MakeAgents(object):
                 costs = self.gen_res_values(False)
                 agent.set_costs(costs)
             # add agent to self.agents list
-            self.agents.append(agent)
+            self.agents.append(agent)  # List of agent objects
 
 
     def get_agents(self):
