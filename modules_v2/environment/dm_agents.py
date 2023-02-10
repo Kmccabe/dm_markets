@@ -1,6 +1,6 @@
 import random as rnd
 import numpy as np
-from dm_message_model import Message
+from institutions.dm_message_model import Message
 #from dm_zida import ZIDA
 
 class Trader(object):

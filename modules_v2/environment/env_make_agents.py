@@ -7,8 +7,8 @@ import copy
 import os
 import json
 
-import dm_agents
-import dm_env as env
+import environment.dm_agents as dm_agents
+import environment.dm_env as env
 
 
 class MakeAgents(object):

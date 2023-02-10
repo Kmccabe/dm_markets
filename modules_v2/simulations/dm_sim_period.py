@@ -7,13 +7,13 @@ import random as rnd
 #import copy
 #import json
 #import pprint
-import dm_bargain
+import institutions.dm_bargain as dm_bargain
 #from dm_simulator import SimulateMarket
-import dm_travel
-import dm_agents
-#import dm_env as env
+import institutions.dm_travel as dm_travel
+import environment.dm_agents as dm_agents
+#import environment.dm_env as env
 #import dm_utils as dm
-import env_make_agents as mkt
+import environment.env_make_agents as mkt
 
 class SimPeriod(object):
     """Simulate a market on grid of consisting of weeks and days using two types of trading agents"""

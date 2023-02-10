@@ -10,11 +10,11 @@ import random as rnd
 #import dm_bargain
 #from dm_simulator import SimulateMarket
 #import dm_travel
-import dm_agents
+import environment.dm_agents as dm_agents
 #import dm_env as env
 #import dm_utils as dm
-import env_make_agents as mkt
-import dm_sim_period as sim#
+import environment.env_make_agents as mkt
+import simulations.dm_sim_period as sim#
 
 
 class ProcessResults(object):

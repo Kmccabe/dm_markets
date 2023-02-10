@@ -1,5 +1,5 @@
 import random as rnd
-from dm_message_model import Message
+from institutions.dm_message_model import Message
 
 class Travel(object):
     """Travel Institution"""

@@ -1,4 +1,4 @@
-import dm_agents as dma
+import environment.dm_agents as dma
 
 def test_agents(debug):
     """Helper function to initialize test agents"""
