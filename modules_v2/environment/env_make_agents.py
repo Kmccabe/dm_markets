@@ -21,11 +21,12 @@ class MakeAgents(object):
         self.num_units = num_units           # number of units, same for all traders
         self.debug = debug                   # if True print additional information
         self.grid_size = grid_size           # grid is grid_size x grid_size
+        self.lb = lower_bound
+        self.ub = upper_bound
         self.agents = []                     # contains list of agents
         self.location_list = []
         self.market = None
-        self.lb = lower_bound
-        self.ub = upper_bound
+        
 
     def utility(self, q, m, v, p):
         """Calculates utility payoff
