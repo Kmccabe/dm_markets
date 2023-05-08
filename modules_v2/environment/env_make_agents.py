@@ -10,6 +10,8 @@ import json
 import environment.dm_agents as dm_agents
 import environment.dm_env as env
 
+# Flag for debugging
+debug = True
 
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
@@ -122,6 +124,11 @@ class MakeAgents(object):
         """
         build list self.agents of agent objects
         """
+
+        if debug:
+            print("At make agents in make_env")
+            print(f"\tMaking off of {self.trader_types}")
+
         self.make_locations() # Put traders at random grid point
         # replicate trade_object total_traders//2 times and put in traders list
         # make a shuffled list of trader objects for trader roles
