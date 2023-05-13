@@ -11,7 +11,7 @@ import environment.dm_agents as dm_agents
 import environment.dm_env as env
 
 # Flag for debugging
-debug = True
+debug = False
 
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
