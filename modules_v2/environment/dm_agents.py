@@ -532,4 +532,216 @@ class ZIDPR(ZIDP):
             self.returned_msg(return_msg)
             #self.contract_this_period = False
             return return_msg
+
+
+class ZIDA_E(ZID):
+    """
+        Variant of ZIDA that moves with a degree of error
+        TODO: REDO with inheritence or integrate error rate into ZIDA base - currently replicates code (messy)
+    """
+
+    # Should be replaced by super().__init__() variants
+    def set_error(self, error_tuple):
+        self.bargain_error = error_tuple[0]
+        self.move_error = error_tuple[1]
+        self.moved_randomly = 0
+        self.moved = 0
+        self.contracted = 0
+
+    def move_requested(self, pl):
+        """
+        Make a move in a random direction but with bias to stay if you can still trade
+        Stickiness to state quo is determined by the contract number in the last day
+        """
+
+        rnd_gen = np.random.default_rng()
+        rnd_draw = rnd_gen.random()
+
+        # Don't move if contracted, unless randomly make a movement error
+        if self.contract_this_period and rnd_draw > self.move_error:
+            direction_list = [0]
+        else:
+            direction_list = [-1, 0, +1]
+        if self.cur_unit > self.max_units:
+            return_msg = Message("MOVE", self.name, "Travel", (0, 0))
+            self.returned_msg(return_msg)
+            return return_msg
+        else:
+            x_dir = rnd.choice(direction_list)
+            y_dir = rnd.choice(direction_list)
+
+            if self.contract_this_period:
+                self.contracted += 1
+
+            if x_dir != 0 or y_dir != 0:
+                self.moved += 1
+                if self.contract_this_period:
+                    self.moved_randomly += 1
+
+            return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
+            #self.contract_this_period = False
+            self.returned_msg(return_msg)
+            return return_msg
+
+
+class ZIDP_E(ZID):
+    """
+        Variant of ZIDP that accepts best offer with a degree of error
+        TODO: REDO with inheritence or integrate error rate into ZIDP base - currently replicates code (messy)
+        TODO: Implement bargaining error
+    """
+
+    # Should be replaced by super().__init__() variants
+    def set_error(self, error_tuple):
+        self.bargain_error = error_tuple[0]
+        self.move_error = error_tuple[1]
+
+    def find_opt(self, m_type, offers):
+        """returns offer with min ask or max bid to action_requested
+           m_type = 'min' or 'max'
+           offers = (id, amount) either all bids or all asks"""
+
+        y_found = offers[0]
+        for x, y in offers:
+            if m_type == 'max' and y > y_found[1]:
+                y_found = (x, y)
+            if m_type == 'min' and y < y_found[1]:    
+                y_found = (x, y)
+        return y_found
+    
+    def transact(self, pl):
+        """
+        Make a buy or sell 
+        """
+        if self.debug:
+            print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
+            print(f"-- {self.name} working on unit {self.cur_unit}")
+        if self.cur_unit >= self.max_units:
+            return_msg = Message("NULL", self.name, "BARGAIN", None)
+            self.returned_msg(return_msg)
+            return return_msg
+            
+        current_offers = pl  # payload from bargain, self.order_book
         
+        if self.type == "BUYER":
+            WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
+            # collect relavent offers
+            offers = []
+            for trader_id in current_offers:
+                if current_offers[trader_id] == None:
+                    continue
+                offer_type = current_offers[trader_id][0]
+                offer_amount = current_offers[trader_id][1]
+                if offer_type == "ASK":
+                    offers.append((trader_id, offer_amount))
+            # Now find an offer to accept    
+            if len(offers) > 0:
+                offer = self.find_opt('min', offers)
+                if WTP >= offer[1]:  # offer[1] = sellers willingness to accept
+                    seller_id = offer[0]
+                    return_msg = Message("BUY", self.name, "BARGAIN", seller_id)
+                    self.returned_msg(return_msg)
+                    return return_msg    
+                else:
+                    return_msg = Message("NULL", self.name, "BARGAIN", None)
+                    self.returned_msg(return_msg)
+                    return return_msg   
+            else:
+                return_msg = Message("NULL", self.name, "BARGAIN", None)
+                self.returned_msg(return_msg)
+                return return_msg
+            
+        else: # for SELLER
+            WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
+            # collect relavent offers
+            offers = []
+            for trader_id in current_offers:
+                if current_offers[trader_id] == None:
+                    continue
+                offer_type = current_offers[trader_id][0]
+                offer_amount = current_offers[trader_id][1]
+                if offer_type == "BID":
+                    offers.append((trader_id, offer_amount))
+            # Now find an offer    
+            if len(offers) > 0:
+                offer = self.find_opt('max', offers)
+                if WTA <= offer[1]:  # offer[1] = buyers willingness to pay
+                    buyer_id = offer[0]
+                    return_msg = Message("SELL", self.name, "BARGAIN", buyer_id)
+                    self.returned_msg(return_msg)
+                    return return_msg    
+                else:
+                    return_msg = Message("NULL", self.name, "BARGAIN", None)
+                    self.returned_msg(return_msg)
+                    return return_msg   
+            else:
+                return_msg = Message("NULL", self.name, "BARGAIN", None)
+                self.returned_msg(return_msg)
+                return return_msg
+            
+
+class ZIDPA_E(ZIDP_E):
+    """
+        ZIDPA variant with errors
+        TODO: add bargaining error (in ZIDP_E), do multiple inheritence
+    """
+
+    def move_requested(self, pl):
+        """
+        Make a move in a random direction but with bias to stay if you can still trade
+        Stickiness to state quo is determined by the contract number in the last day
+        """
+
+        rnd_gen = np.random.default_rng()
+        rnd_draw = rnd_gen.random()
+
+        # Don't move if contracted, unless randomly make a movement error
+        if self.contract_this_period and rnd_draw > self.move_error:
+            direction_list = [0, 0, 0]
+        else:
+            direction_list = [-1, 0, +1]
+        if self.cur_unit > self.max_units:
+            return_msg = Message("MOVE", self.name, "Travel", (0, 0))
+            self.returned_msg(return_msg)
+            return return_msg
+        else:
+            x_dir = rnd.choice(direction_list)
+            y_dir = rnd.choice(direction_list)
+            return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
+            #self.contract_this_period = False
+            self.returned_msg(return_msg)
+            return return_msg  
+
+
+class ZIDPR_E(ZIDP_E):
+    """
+        ZIDPR variant with errors in movement, bargaining
+    """
+
+    def move_requested(self, pl):
+        """
+        Make a move in a random direction but with bias to stay if you can still trade
+        Stickiness to state quo is determined by the contract number in the last day
+        """
+
+        rnd_gen = np.random.default_rng()
+        rnd_draw = rnd_gen.random()
+
+        if self.contract_this_period and rnd_draw > self.move_error:
+            direction_list = [0, 0, 0]
+        else:
+            direction_list = [-1, 0, +1]
+        if self.num_at_loc > 2:
+            #print('NUMBER AT g', self.num_at_loc)
+            direction_list = [-1, +1]
+        if self.cur_unit > self.max_units:
+            return_msg = Message("MOVE", self.name, "Travel", (0, 0))
+            self.returned_msg(return_msg)
+            return return_msg
+        else:
+            x_dir = rnd.choice(direction_list)
+            y_dir = rnd.choice(direction_list)
+            return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
+            self.returned_msg(return_msg)
+            #self.contract_this_period = False
+            return return_msg
