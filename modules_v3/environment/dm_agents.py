@@ -1,3 +1,34 @@
+"""
+Version 3 Trader Agents
+Added in this version:
+- TRADER type traders can now submit both bids and asks
+- Traders have a current quantity (of stored or available-to-trade items) (self.quantities)
+    - Structure {"property_right": {"item_type": q}}
+    - Items are in a nested dictionary
+    - Types of property rights: [SPOT, RENT, DURABLE]
+    - Types of items: [C, X, Y] - C is a generic, all users would have util/can produce, [X, Y] are two seperate two-sided markets
+- Traders have value structures for utility items as a dictionary (self.valuations)
+    - Structure: {"property_right": {"item_type": [uX1, uX2, uX3, ...]}}
+    - Note: Base utilities (stored here) are for SPOT consumption - other utilities are computed
+        - The current utility positiion is the sum of the least
+- Traders have a currency position for all currencies (assumed 0 otherwise) (self.currencies)
+    - Structure: {"currency_type": q} 
+- Traders have a reputation token position - this is a more general reputation, a global reputation, that the agent has
+    - Note: there are many reputation positions with each Node X Agent having a particular reputation
+    - The global default reputation can be controlled here - or it would in any case be one way to do this
+
+In future versions:
+- Traders have a mental map of the world and their position in it
+    - They know the shape of the world (i.e. map) and their position
+    - They remember their path and nodes they have encountered
+    - They add recent information onto this map - like prices in other markets, or from other agents
+- Traders can employ more advanced movement logic
+    - They can path towards a particular area (adds additional weight for those directions)
+- Traders may spontaneously move randomly
+    - Either locally or choose a spontaneous other point to path towards
+    - Controlled by an exogenous random error parameter
+"""
+
 import random as rnd
 import numpy as np
 from institutions.dm_message_model import Message
@@ -9,8 +40,8 @@ class Trader(object):
        overridden methods are those called in process_message
     """
     
-    def __init__(self, name, trader_type, payoff, money, location,
-                 lower_bound = 0, upper_bound = 9999):
+    def __init__(self, name, trader_type="TRADER", payoff=None, money=0, location=(0, 0),
+                 lower_bound = 0, upper_bound = 9999, item_buyer="C", item_seller="C", default_rep=100):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
@@ -18,9 +49,9 @@ class Trader(object):
         """
         self.debug = False
         self.name = name          # unique identifier 
-        self.type = trader_type   # BUYER or SELLER
+        self.type = trader_type   # BUYER or SELLER or TRADER (Trader can place buys and sells - but can have especific perscribed types they sell or buy)
         self.payoff = payoff  # utility or profit function
-        self.money = money        # starting money ballance
+        self.money = money        # starting money ballance - Note this is superseeded by local currencies dict when local currencies employed
         self.location = location  # starting location a tuple (x, y)
         self.lower_bound = lower_bound # on bids, asks, prices, values, costs
         self.upper_bound = upper_bound # on above
@@ -32,12 +63,26 @@ class Trader(object):
         self.max_units = 0    # length of values or costs
 
         self.contracts = []   # list of contracts
-        self.valid_directives = ["START", "MOVE_REQUESTED", "OFFER", "TRANSACT", "CONTRACT"]
+        self.valid_directives = ["START", "MOVE_REQUESTED", "OFFER", "TRANSACT", "CONTRACT", "REPORT_QUANTITY", "REPORT_MONEY", "REQUEST_MONEY", "REPAY_LOAN"]
         #TODO: make directives lower case (maybe)
         self.simulation = None    # get access to class SimulateMarket
         #TODO: explain above better and why the flag below
         self.contract_this_period = False
         self.num_at_loc = 0
+
+        # NOTE: for PRODUCTION decisions these quantities also reflect ability-to-produce - so it is similar to the previous approach
+        # Also means the quantities start at the max-units for sellers of an item
+        self.quantities = {}
+
+        # Stores current quantities of local currencies at the disposal of the agent - if not-in-dictionary, presumed 0
+        self.currencies = {}
+
+        # Stores valuations of all the types of items the agent can buy/sell
+        self.valuations = {}
+        self.item_buyer = item_buyer
+        self.item_seller = item_seller
+
+        self.rep_tokens = default_rep
     
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
@@ -49,7 +94,7 @@ class Trader(object):
                     s = s + f"{value:5}]"
                 else:
                     s = s + f"{value:5},"
-        else:
+        elif self.type == "SELLER":
             for k, cost in enumerate(self.costs):
                 if k == 0:
                     s = s + f"[{cost:5},"
@@ -57,6 +102,10 @@ class Trader(object):
                     s = s + f"{cost:5}]"
                 else:
                     s = s + f"{cost:5},"
+        elif self.type == "TRADER":
+            return f"""STILL WORKING ON REPRESENTING TRADERS EXACTLY: But this ID is {self.name}, seller of {self.item_seller}, buyer of {self.item_buyer}, 
+                    vals for buying items: {self.valuations["SPOT"][self.item_seller]}, vals for selling items {self.valuations["SPOT"][self.item_buyer]},
+                    current quantities {self.quantities}, current currencies {self.currencies}, current location {self.location}"""
         s = s + f"cu = {self.cur_unit}"
         return s
 
@@ -147,6 +196,15 @@ class Trader(object):
             msg = self.transact(payload)
         elif directive == "CONTRACT":
             msg = self.contract(payload)
+        elif directive == "REPORT_QUANTITY":
+            msg = self.report_quantity(payload)
+        elif directive == "REPORT_MONEY":
+            msg = self.report_money(payload)
+        elif directive == "REQUEST_MONEY":
+            msg = self.request_money(payload)
+        elif directive == "REPAY_LOAN":
+            msg = self.repay_loan(payload)
+
         self.returned_msg(msg)
         return(msg)
           
@@ -194,6 +252,68 @@ class Trader(object):
     
     def get_cur_unit(self):
         return self.cur_unit
+
+    def report_quantity(self, payload):
+        """Returns the amount of the item type with that property right this agent owns"""
+        p_right = payload['property_right']
+        item_type = payload['item_type']
+        try:
+            return_val = self.quantities[p_right][item_type]
+        except KeyError:
+            if p_right in self.quantities.keys():
+                self.quantities[p_right][item_type] = 0
+            else:
+                self.quantities[p_right] = {}
+                self.quantities[p_right][item_type] = 0
+            return_val = 0
+
+        return_msg = Message(p_right+"|"+item_type, self.name, "REPORT_QUANTITY", return_val)
+        return return_msg
+    
+    def request_money(self, payload):
+        """Request currency moneys - total requested is the total amount of money required to purchase all buy-desired at a valuation of util-currency of 1"""
+        cur_type = payload # What currency to request
+
+        # Add up values this agent wants to buy and request that much currency
+        if self.type == "TRADER":
+            # See current currency position 
+            try:
+                cur_val = self.currencies[cur_type]
+            except KeyError:
+                self.currencies[cur_type] = 0
+                cur_val = 0
+
+            total_desire = sum(self.valuations[self.item_buyer]) # the total desired is total willing to spend on buying items
+            req_desire = total_desire - cur_val
+
+        # Currently all moneys are effectively local because they cannot be transported or communicated at a distance - so just using M type right now
+        return_msg = Message(cur_type, self.name, "REQUEST_MONEY", req_desire)
+        return return_msg
+
+    def report_money(self, payload):
+        """Returns the amount of currency of this type this agent owns"""
+        cur_type = payload['currency']
+        try:
+            return_val = self.currencies[cur_type]
+        except KeyError:
+            self.currencies[cur_type] = 0
+            return_val = 0
+
+        return_msg = Message(cur_type, self.name, "REPORT_MONEY", return_val)
+        return return_msg
+
+    def repay_loan(self, payload):
+        """Returns the requested currency to the currency issuer - currently returns the TOTAL amount of the currency, not just how much was borrowed
+            This simplifying assumption alows us to not worry about monetary inflation, only worrying about real prices"""
+        cur_type = payload # Currently - repays ALL of the given currency - allows us to not worry about inter-period inflation and only care about real prices
+        try:
+            onhand_currency = self.currencies[cur_type]
+        except KeyError:
+            self.currencies[cur_type] = 0
+            onhand_currency = 0
+        
+        return_msg = Message(cur_type, self.name, "REPAY_LOAN", onhand_currency)
+        return return_msg
 
 
 class ZID(Trader):
@@ -254,11 +374,14 @@ class ZID(Trader):
             self.returned_msg(return_msg)
             return return_msg   
 
-        else: # for SELLER
+        elif self.type == "SELLER": # for SELLER
             WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
             return_msg = Message("ASK", self.name, "BARGAIN", WTA)
             self.returned_msg(return_msg)
-            return return_msg  
+            return return_msg
+
+        elif self.type == "TRADER":
+            pass
 
     def transact(self, pl):
         """
@@ -301,7 +424,7 @@ class ZID(Trader):
                 self.returned_msg(return_msg)
                 return return_msg
             
-        else: # for SELLER
+        elif self.type == "SELLER": # for SELLER
             WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
             offers = []
             for trader_id in current_offers:
@@ -326,7 +449,10 @@ class ZID(Trader):
             else:
                 return_msg = Message("NULL", self.name, "BARGAIN", None)
                 self.returned_msg(return_msg)
-                return return_msg  
+                return return_msg
+
+        elif self.type == "TRADER": # Trader is a combo of buyer and seller - accepts both bids and asks - sometimes only one for each type of market
+            pass
                  
 
     def contract(self, pl):
