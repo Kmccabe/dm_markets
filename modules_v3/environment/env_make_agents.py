@@ -16,10 +16,10 @@ debug = False
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
     def __init__(self, num_traders, trader_types, num_units,
-                 grid_size, lower_bound, upper_bound, debug=False):
+                 grid_size, lower_bound, upper_bound, debug=False, market_type="ONE_TYPE", item_types=("C"), default_rep=100):
 
-        self.trader_types = trader_types     # list of two trader types, should be tuple
         self.num_traders = num_traders       # number of traders divisible by two
+        self.trader_types = trader_types     # list of two trader types, should be tuple
         self.num_units = num_units           # number of units, same for all traders
         self.debug = debug                   # if True print additional information
         self.grid_size = grid_size           # grid is grid_size x grid_size
@@ -28,7 +28,9 @@ class MakeAgents(object):
         self.agents = []                     # contains list of agents
         self.location_list = []
         self.market = None
-        
+        self.market_type = market_type
+        self.item_types = item_types
+        self.default_rep = default_rep
 
     def utility(self, q, m, v, p):
         """Calculates utility payoff
@@ -143,31 +145,60 @@ class MakeAgents(object):
 
         # Assign trader objects to buyer/seller roles and assign values and costs
         self.agents = []
+        
+        # Generate list of types (BUYER, SELLER, TRADER)
+        half_trader_num = int(self.num_traders/2)
+        if self.market_type == "ONE_TYPE":
+            agent_m_types = ["BUYER"]*half_trader_num + ["SELLER"]*half_trader_num
+        elif self.market_type == "TWO_TYPE":
+            agent_m_types = ["TRADER"]*self.num_traders
+            agent_b_items = [self.item_types[0]]*half_trader_num + [self.item_types[1]]*half_trader_num # Buying items
+            agent_s_items = [self.item_types[1]]*half_trader_num + [self.item_types[0]]*half_trader_num # Selling items
+
+        # TODO add gen for TRADER type
         for t in range(self.num_traders):
             # make buyer and seller name, intitialize type, set money endowment
-            name = f"B_{t+1}"
-            trader_role = "BUYER"
-            payoff = self.utility  
+            trader_role = agent_m_types[t]
+            name = f"{trader_role[0]}_{t+1}"
+            
+            if trader_role == "BUYER":
+                payoff = self.utility 
+            elif trader_role == "SELLER":
+                payoff = self.profit
+            elif trader_role == "TRADER":
+                payoff = None # used for backwards compatibility only
+                buy_item = agent_b_items[t]
+                sell_item = agent_s_items[t]
+                payoffs = {buy_item: self.utility, sell_item: self.profit}
             money = 500
-            if t >= self.num_traders // 2:
-                name = f"S_{t + 1 - self.num_traders // 2}"
-                trader_role = "SELLER"
-                payoff = self.profit            
             agent_model = traders[t] # Get agent class  
             # Get agent class name
             agent_kind = str(agent_model.__name__)
             name = f"{name}_{agent_kind}"
             location = self.location_list[t]   # get initial location
-            # initialize agent with info constructed above
-            agent = agent_model(name, trader_role, payoff, money, location, 
-                                lower_bound = self.lb, upper_bound = self.ub)
+
+            if trader_role == "BUYER" or trader_role == "SELLER":
+                # initialize agent with info constructed above
+                agent = agent_model(name, trader_role, payoff, money, location, 
+                                    lower_bound = self.lb, upper_bound = self.ub)
+            elif trader_role == "TRADER":
+                agent = agent_model(name, trader_role, payoff, money, location, 
+                    lower_bound = self.lb, upper_bound = self.ub, item_buyer=buy_item, 
+                    item_seller=sell_item, default_rep=self.default_rep, payoffs=payoffs)
+
             # Make Value list or cost list
-            if agent.get_type() == "BUYER":
+            if trader_role == "BUYER":
                 values = self.gen_res_values(True)
                 agent.set_values(values)
-            else:
+            elif trader_role == "SELLER":
                 costs = self.gen_res_values(False)
                 agent.set_costs(costs)
+            elif trader_role == "TRADER":
+                values = self.gen_res_values(True)
+                agent.set_values(values)
+                costs = self.gen_res_values(False)
+                agent.set_costs(costs) # TODO consider change this later
+
             # add agent to self.agents list
             self.agents.append(agent)  # List of agent objects
 

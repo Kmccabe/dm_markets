@@ -39,10 +39,7 @@ class ProcessResults(object):
 
     
     def get_prices(self):
-        prices = []
-        for contract in self.contracts:
-            prices.append(contract[1])
-        return prices
+        return list(self.contracts['price'].values)
 
     def plot_prices(self):
         prices = self.get_prices()

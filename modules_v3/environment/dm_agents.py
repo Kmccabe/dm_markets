@@ -41,7 +41,7 @@ class Trader(object):
     """
     
     def __init__(self, name, trader_type="TRADER", payoff=None, money=0, location=(0, 0),
-                 lower_bound = 0, upper_bound = 9999, item_buyer="C", item_seller="C", default_rep=100):
+                 lower_bound = 0, upper_bound = 9999, item_buyer="C", item_seller="C", default_rep=100, payoffs=None):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
@@ -72,17 +72,27 @@ class Trader(object):
 
         # NOTE: for PRODUCTION decisions these quantities also reflect ability-to-produce - so it is similar to the previous approach
         # Also means the quantities start at the max-units for sellers of an item
-        self.quantities = {}
+        if self.type == "BUYER" or self.type == "SELLER":
+            self.quantities = {"SPOT": {item_buyer: 0}}
+        elif self.type == "TRADER":
+            self.quantities = {"SPOT": {item_buyer: 0, item_seller: 0}}
 
         # Stores current quantities of local currencies at the disposal of the agent - if not-in-dictionary, presumed 0
-        self.currencies = {}
+        self.currencies = {"M": 0} # Currently only one currency
 
         # Stores valuations of all the types of items the agent can buy/sell
-        self.valuations = {}
+        self.valuations = {item_buyer:[], item_seller:[]} # Structure {B: [values], S: [costs]}
         self.item_buyer = item_buyer
         self.item_seller = item_seller
 
+        self.trx_units = {item_buyer:0, item_seller:0} # Structure {B: units_transacted, S: units_transacted}
+        self.cur_units = {item_buyer:0, item_seller:0} # Structure {B: cur_unit, S: cur_unit}
+        self.unit_maxs = {item_buyer:0, item_seller:0} # Structure {B: max_unit, S: max_unit}
+
         self.rep_tokens = default_rep
+        self.payoffs = payoffs # Structure {B: units_transacted, S: units_transacted}
+
+        self.debug3 = False
     
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
@@ -103,9 +113,12 @@ class Trader(object):
                 else:
                     s = s + f"{cost:5},"
         elif self.type == "TRADER":
-            return f"""STILL WORKING ON REPRESENTING TRADERS EXACTLY: But this ID is {self.name}, seller of {self.item_seller}, buyer of {self.item_buyer}, 
-                    vals for buying items: {self.valuations["SPOT"][self.item_seller]}, vals for selling items {self.valuations["SPOT"][self.item_buyer]},
-                    current quantities {self.quantities}, current currencies {self.currencies}, current location {self.location}"""
+            return f"""TRADER: {self.name}
+                    \n\tSells: {self.item_seller}, at costs: {self.valuations[self.item_buyer]}
+                    \n\tBuys: {self.item_buyer}, at vals: {self.valuations[self.item_seller]}
+                    \n\tQuantities: {self.quantities}
+                    \n\tCurrencies: {self.currencies}
+                    \n\tLocation: {self.location}"""
         s = s + f"cu = {self.cur_unit}"
         return s
 
@@ -130,17 +143,37 @@ class Trader(object):
         """
         Set self.values for buyer from list v 
         """
-        self.values = v
-        self.max_units = len(v) 
-        self.cur_unit = 0 
+        if self.type == "BUYER":
+            self.values = v
+            self.max_units = len(v) 
+            self.cur_unit = 0
+        elif self.type == "TRADER":
+            buying_item = self.item_buyer
+            self.values = v
+            self.valuations[buying_item] = v
+            self.unit_maxs[buying_item] = len(v)
+            self.cur_units[buying_item] = 0
+
+        # Update starting quantity
+        self.quantities["SPOT"][self.item_buyer] = 0
     
     def set_costs(self, c):
         """
         Set self.costs for seller from list c 
         """
-        self.costs = c
-        self.max_units = len(c)
-        self.cur_unit = 0
+        if self.type == "SELLER":
+            self.costs = c
+            self.max_units = len(c)
+            self.cur_unit = 0
+        elif self.type == "TRADER":
+            selling_item = self.item_seller
+            self.costs = c
+            self.valuations[selling_item] = c
+            self.unit_maxs[selling_item] = len(c)
+            self.cur_units[selling_item] = 0
+        
+        # Update starting quantity
+        self.quantities["SPOT"][self.item_seller] = len(c)
         
     def set_location(self, loc):
         """
@@ -152,7 +185,11 @@ class Trader(object):
         """
         Set number of units bought or sold by trader
         """
-        self.units_transacted = q
+        if self.type == "BUYER" or self.type == "SELLER":
+            self.units_transacted = q
+        elif self.type == "TRADER":
+            self.trx_units[self.item_buyer] = q
+            self.trx_units[self.item_seller] = q
 
     def set_num_at_loc(self, q):
         """Set number of agents at location"""
@@ -200,9 +237,9 @@ class Trader(object):
             msg = self.report_quantity(payload)
         elif directive == "REPORT_MONEY":
             msg = self.report_money(payload)
-        elif directive == "REQUEST_MONEY":
+        elif directive == "REQUEST_MONEY": # TODO finish
             msg = self.request_money(payload)
-        elif directive == "REPAY_LOAN":
+        elif directive == "REPAY_LOAN": # TODO finish
             msg = self.repay_loan(payload)
 
         self.returned_msg(msg)
@@ -224,13 +261,49 @@ class Trader(object):
     def get_name(self):
         return self.name
     
-    def get_payoff(self, prices):
+    def get_payoff(self, prices, currency="M", prices_bs=None):
+
+        if self.type == "BUYER" or self.type == "SELLER":
+            agent_roles = [self.type]
+            agent_items = ["C"]
+        elif self.type == "TRADER":
+            agent_roles = ["BUYER", "SELLER"]
+            agent_items = [self.item_buyer, self.item_seller]
+            assert prices_bs is not None
+
+        for i, role in enumerate(agent_roles):
+            if role == "BUYER":
+                if agent_items[i] == "C":
+                    vs = self.values
+                    q = self.units_transacted
+                    m = self.money
+                    utility = self.payoff(q, m, vs, prices)
+                else:
+                    vs = self.valuations[agent_items[i]]
+                    q = self.trx_units[agent_items[i]]
+                    m = self.currencies[currency]/2 # Currently local-non-named. Avoids double-counting
+                    utility = self.payoffs[self.item_buyer](q, m, vs, prices_bs[self.item_buyer])
+
+                
+        
+            if role == "SELLER":
+                if agent_items[i] == "C":
+                    cs = self.costs
+                    q = self.units_transacted
+                    m = self.money
+                    profit = self.payoff(q, m, cs, prices)
+                else:
+                    cs = self.valuations[agent_items[i]]
+                    q = self.trx_units[agent_items[i]]
+                    m = self.currencies[currency]/2 # Local non-named TODO generalize
+                    profit = self.payoffs[self.item_seller](q, m, cs, prices_bs[self.item_seller])
+
         if self.type == "BUYER":
-            utility = self.payoff(self.units_transacted, self.money, self.values, prices)
             return utility
         if self.type == "SELLER":
-            profit = self.payoff(self.units_transacted, self.money, self.costs, prices)
             return profit
+        if self.type == "TRADER":
+            return utility + profit
         
     def get_location(self):
         return self.location
@@ -267,7 +340,7 @@ class Trader(object):
                 self.quantities[p_right][item_type] = 0
             return_val = 0
 
-        return_msg = Message(p_right+"|"+item_type, self.name, "REPORT_QUANTITY", return_val)
+        return_msg = Message("REPORT_QUANTITY", self.name, "BARGAIN", return_val)
         return return_msg
     
     def request_money(self, payload):
@@ -285,9 +358,11 @@ class Trader(object):
 
             total_desire = sum(self.valuations[self.item_buyer]) # the total desired is total willing to spend on buying items
             req_desire = total_desire - cur_val
+        else:
+            return_msg = Message("NULL", self.name, "BARGAIN", 99999999999999)    
 
         # Currently all moneys are effectively local because they cannot be transported or communicated at a distance - so just using M type right now
-        return_msg = Message(cur_type, self.name, "REQUEST_MONEY", req_desire)
+        return_msg = Message("REQUEST_MONEY", self.name, "BARGAIN", req_desire)
         return return_msg
 
     def report_money(self, payload):
@@ -312,9 +387,51 @@ class Trader(object):
             self.currencies[cur_type] = 0
             onhand_currency = 0
         
-        return_msg = Message(cur_type, self.name, "REPAY_LOAN", onhand_currency)
+        return_msg = Message("REPAY_LOAN", self.name, "BARGAIN", onhand_currency)
         return return_msg
 
+    def get_type_valuation(self, i_type="C", market_type="ONE_TYPE"):
+        # Get valuations, types
+        if market_type == "ONE_TYPE":
+            agent_role = self.type
+            if agent_role == "BUYER":
+                item_val = self.values[self.cur_unit]
+            if agent_role == "SELLER":
+                item_val = self.costs[self.cur_unit]
+        # Need to determine the trader role at this moment for two-type market
+        elif market_type == "TWO_TYPE":
+            if i_type == self.item_buyer:
+                agent_role = "BUYER"
+            elif i_type == self.item_seller:
+                agent_role = "SELLER"
+            item_val = self.valuations[i_type][self.cur_units[i_type]]
+        
+        return agent_role, item_val
+
+    def check_contract(self, contracted_to, contract_df, give_detail=False):
+        # Check if this is the right kind of contract for this agent
+        good_contract = False
+        if self.type == 'BUYER' or self.type == "SELLER":
+            agent_role = self.type 
+        elif self.type == "TRADER":
+            item_type = contract_df["item_type"].values[0]
+            if item_type == self.item_buyer:
+                agent_role = "BUYER"
+            elif item_type == self.item_seller:
+                agent_role = "SELLER"
+        if contracted_to == "BUY" and agent_role == "BUYER":
+            good_contract = True
+        elif contracted_to == "SELL" and agent_role == "SELLER":
+            good_contract = True
+        
+        if not good_contract:
+            if give_detail:
+                return False, "Not the right kind of contract"
+            return False
+        elif good_contract:
+            if give_detail:
+                return True, "All good"
+            return True
 
 class ZID(Trader):
     """ 
@@ -331,8 +448,15 @@ class ZID(Trader):
         self.cur_unit = 0
         if self.type == "BUYER":
             self.max_units = len(self.values)
-        else:
+        elif self.type == "SELLER":
             self.max_units = len(self.costs)
+        elif self.type == "TRADER":
+            self.unit_maxs[self.item_buyer] = len(self.values)
+            self.unit_maxs[self.item_seller] = len(self.costs)
+            self.cur_units[self.item_buyer] = 0
+            self.cur_units[self.item_seller] = 0
+            self.trx_units[self.item_buyer] = 0
+            self.trx_units[self.item_seller] = 0
         return_msg = Message("Initial", self.name, self.name, "Initialized")
         self.returned_msg(return_msg)
         return return_msg
@@ -343,7 +467,7 @@ class ZID(Trader):
         """
         self.contract_this_period = False  # Use this to see if you get a contract this period
         direction_list = [-1, 0, +1] # 
-        if self.cur_unit > self.max_units:
+        if self.cur_unit > self.max_units: # Do not move if over-traded - this flag should NEVER be true
             return_msg = Message("MOVE", self.name, "Travel", (0, 0))
             self.returned_msg(return_msg)
             return return_msg 
@@ -361,27 +485,49 @@ class ZID(Trader):
         if self.debug:
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
             print(f"-- {self.name} working on unit {self.cur_unit}")
-        if self.cur_unit >= self.max_units:
-            return_msg = Message("NULL", self.name, "BARGAIN", None)
-            self.returned_msg(return_msg)
-            return return_msg
-            
-        current_offers = pl  # payload from bargain, self.order_book
         
-        if self.type == "BUYER":
-            WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
-            return_msg = Message("BID", self.name, "BARGAIN", WTP)
-            self.returned_msg(return_msg)
-            return return_msg   
-
-        elif self.type == "SELLER": # for SELLER
-            WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
-            return_msg = Message("ASK", self.name, "BARGAIN", WTA)
+        # Do not put in offers if already satiated with trading
+        done_trading = False
+        i_type = pl['item_type']
+        if self.type == "SELLER" or self.type == "BUYER":
+            if self.cur_unit >= self.max_units:
+                done_trading = True
+        elif self.type == "TRADER": # note BIGGER barrier to moving away and to not trading
+            if self.cur_units[i_type] >= self.unit_maxs[i_type]:
+                done_trading = True
+        if done_trading:
+            return_msg = Message("NO_OFFER", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
             return return_msg
+        
+        # Here if not done trading
+        p_type = pl['property_right'] # currently only SPOT market
+        current_offers = pl['order_book']  # order_book
+        market_type = pl['market_type']
+        bidding_type = pl['bidding_type']
+        c_type = pl['currency_type']
 
-        elif self.type == "TRADER":
-            pass
+        agent_role, item_val = self.get_type_valuation(i_type, market_type)
+        
+        # Determine Bid
+        if agent_role == "BUYER":
+            if bidding_type == "MONETARY": # determine if cash-constrained
+                cash_on_hand = self.currencies[c_type]
+                max_bid = np.min(cash_on_hand, item_val) # Cannot bid above cash-on-hand
+            else:
+                max_bid = self.values[self.cur_unit]
+            
+            send_price = rnd.randint(self.lower_bound, max_bid)
+            o_type = "BID"
+
+        # Determine Ask
+        elif agent_role == "SELLER":
+            send_price = rnd.randint(item_val, self.upper_bound)
+            o_type = "ASK"
+
+        return_msg = Message("PLACE_OFFER", self.name, "BARGAIN", (send_price, o_type))
+        self.returned_msg(return_msg)
+        return return_msg
 
     def transact(self, pl):
         """
@@ -390,99 +536,126 @@ class ZID(Trader):
         if self.debug:
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
             print(f"-- {self.name} working on unit {self.cur_unit}")
-        if self.cur_unit >= self.max_units:
-            return_msg = Message("NULL", self.name, "BARGAIN", None)
+
+        # Do not put in offers if already satiated with trading
+        done_trading = False
+        i_type = pl['item_type']
+        if self.type == "SELLER" or self.type == "BUYER":
+            if self.cur_unit >= self.max_units:
+                done_trading = True
+        elif self.type == "TRADER": # note BIGGER barrier to moving away and to not trading
+            if self.cur_units[i_type] >= self.unit_maxs[i_type]:
+                done_trading = True
+        if done_trading:
+            return_msg = Message("NO_TRADE", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
             return return_msg
             
-        current_offers = pl  # payload from bargain, self.order_book
+        order_book = pl['order_book']  # payload from bargain, self.order_book
+        market_type = pl['market_type']
+        p_type = pl['property_right'] # Currently only SPOT 
+        bid_type = pl['bidding_type']
+        c_type = pl['currency_type']
         
-        if self.type == "BUYER":
-            WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
-            offers = []
-            for trader_id in current_offers:
-                if current_offers[trader_id] == None:
-                    continue
-                offer_type = current_offers[trader_id][0]
-                offer_amount = current_offers[trader_id][1]
-                if offer_type == "ASK":
-                    offers.append((trader_id, offer_amount))
-            # Now find an offer    
-            if len(offers) > 0:
-                offer = rnd.choice(offers)
-                if WTP >= offer[1]:  # offer[1] = sellers willingness to accept
-                    seller_id = offer[0]
-                    return_msg = Message("BUY", self.name, "BARGAIN", seller_id)
-                    self.returned_msg(return_msg)
-                    return return_msg    
-                else:
-                    return_msg = Message("NULL", self.name, "BARGAIN", None)
-                    self.returned_msg(return_msg)
-                    return return_msg   
-            else:
-                return_msg = Message("NULL", self.name, "BARGAIN", None)
-                self.returned_msg(return_msg)
-                return return_msg
-            
-        elif self.type == "SELLER": # for SELLER
-            WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
-            offers = []
-            for trader_id in current_offers:
-                if current_offers[trader_id] == None:
-                    continue
-                offer_type = current_offers[trader_id][0]
-                offer_amount = current_offers[trader_id][1]
-                if offer_type == "BID":
-                    offers.append((trader_id, offer_amount))
-            # Now find an offer    
-            if len(offers) > 0:
-                offer = rnd.choice(offers)
-                if WTA <= offer[1]:  # offer[1] = buyers willingness to pay
-                    buyer_id = offer[0]
-                    return_msg = Message("SELL", self.name, "BARGAIN", buyer_id)
-                    self.returned_msg(return_msg)
-                    return return_msg    
-                else:
-                    return_msg = Message("NULL", self.name, "BARGAIN", None)
-                    self.returned_msg(return_msg)
-                    return return_msg   
-            else:
-                return_msg = Message("NULL", self.name, "BARGAIN", None)
-                self.returned_msg(return_msg)
-                return return_msg
+        agent_role, item_val = self.get_type_valuation(i_type, market_type)
+        
+        if bid_type == "MONETARY":
+            currency_limit = self.currencies[c_type]
+        else:
+            currency_limit = 9999999999999999999999
 
-        elif self.type == "TRADER": # Trader is a combo of buyer and seller - accepts both bids and asks - sometimes only one for each type of market
-            pass
-                 
+        sent_order = False # Flag to return NO_TRADE
+
+        # Try to buy
+        if agent_role == "BUYER":
+            if bid_type == "MONETARY":
+                max_bid = np.min(item_val, currency_limit)
+            else:
+                max_bid = item_val
+            WTP = rnd.randint(self.lower_bound, max_bid)
+            current_offers = order_book[order_book['offer_type']=="ASK"]
+            if self.debug3:
+                print(WTP)
+                print(current_offers)
+
+            # current_offers = current_offers[current_offers['price']<=WTP] # Exclude non-satisficing offers - not included for now - not ZID
+            if len(current_offers) > 0:
+                offer_id_chosen = rnd.choice(list(current_offers['offer_id'].values))
+                offer_chosen = order_book[order_book['offer_id']== offer_id_chosen]
+                if self.debug3:
+                    print(offer_id_chosen, offer_chosen)
+                if WTP >= offer_chosen['price'].values[0]:
+                    return_msg = Message("BUY", self.name, "BARGAIN", offer_id_chosen) # note: now uses the offer_id not seller id
+                    sent_order = True
+        
+        # Try to sell
+        elif agent_role == "SELLER": # for SELLER
+            WTA = rnd.randint(item_val, self.upper_bound)
+            current_offers = order_book[order_book['offer_type']=="BID"]
+            if self.debug3:
+                print(WTA)
+                print(current_offers)
+            if len(current_offers) > 0:
+                offer_id_chosen = rnd.choice(list(current_offers['offer_id'].values))
+                offer_chosen = order_book[order_book['offer_id']== offer_id_chosen]
+                if self.debug3:
+                    print(offer_id_chosen, offer_chosen)
+                if WTA <= offer_chosen['price'].values[0]:
+                    return_msg = Message("SELL", self.name, "BARGAIN", offer_id_chosen)
+                    sent_order = True
+
+        if not sent_order:
+            return_msg = Message("NO_TRADE", self.name, "BARGAIN", None)
+        
+        self.returned_msg(return_msg)
+        return return_msg
 
     def contract(self, pl):
         """
         Update contract information for ZID Trader
         """
+
+        # Unpack payload
+        contracted_to = pl[0]
+        contract_df = pl[1]
+
+        good_contract, error_code = self.check_contract(contracted_to, contract_df, True)
+        if not good_contract:
+            return_msg = Message("BAD", self.name, "BARGAIN", error_code)
+            self.returned_msg(return_msg)
+            return return_msg
+
         self.contract_this_period = True  # Got a contract this period
-        contract = pl
-        price = contract[1]
-        buyer_id = contract[2]
-        seller_id = contract[3]
-        if self.type == 'BUYER':
-            if self.get_name() != buyer_id:
-                return_msg = Message("BAD", self.name, "BARGAIN", 
-                                "08 Not buyer contract")
-                self.returned_msg(return_msg)
-                return return_msg                
+
+        # Update item quantities
+        p_right = contract_df["property_right"].values[0]
+        i_type = contract_df["item_type"].values[0]
+
+        if self.type == "BUYER" or self.type == "SELLER":
             self.units_transacted += 1
             self.cur_unit += 1
-        else:  # SELLER
-            if self.get_name() != seller_id:
-                return_msg = Message("BAD", self.name, "BARGAIN", 
-                       "09 Not seller contract")
-                self.returned_msg(return_msg)
-                return return_msg
-            self.units_transacted += 1
-            self.cur_unit += 1
+        elif self.type == "TRADER":
+            if contracted_to == "BUY":
+                self.quantities[p_right][i_type] += 1
+            elif contracted_to == "SELL":
+                self.quantities[p_right][i_type] -= 1
+            self.trx_units[i_type] += 1
+            self.cur_units[i_type] += 1
+        
+        cont_price = contract_df['price'].values[0]
+        cont_currency = contract_df['currency_type'].values[0]
+
+        # Update money balances
+        if self.type == "BUYER" or self.type == "SELLER":
+            pass # NOTE In the v2 there is a money balance passed by environment, but it is never updated 
+        elif self.type == "TRADER":
+            if contracted_to == "BUY":
+                self.currencies[cont_currency] -= cont_price
+            elif contracted_to == "SELL":
+                self.currencies[cont_currency] += cont_price
             
         return_msg = Message("Update", self.name, "BARGAIN", 
-                             "10 Units Updated")
+                             "10. Units Updated")
         self.returned_msg(return_msg)
         return return_msg
 
@@ -502,7 +675,7 @@ class ZIDA(ZID):
             direction_list = [0, 0, 0]
         else:
             direction_list = [-1, 0, +1]
-        if self.cur_unit > self.max_units:
+        if self.cur_unit > self.max_units: # Should never be true
             return_msg = Message("MOVE", self.name, "Travel", (0, 0))
             self.returned_msg(return_msg)
             return return_msg
@@ -534,71 +707,71 @@ class ZIDP(ZID):
         """
         Make a buy or sell 
         """
-        if self.debug:
-            print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
-            print(f"-- {self.name} working on unit {self.cur_unit}")
-        if self.cur_unit >= self.max_units:
-            return_msg = Message("NULL", self.name, "BARGAIN", None)
+
+        # Do not put in offers if already satiated with trading
+        done_trading = False
+        i_type = pl['item_type']
+        if self.type == "SELLER" or self.type == "BUYER":
+            if self.cur_unit >= self.max_units:
+                done_trading = True
+        elif self.type == "TRADER": # note BIGGER barrier to moving away and to not trading
+            if self.cur_units[i_type] >= self.unit_maxs[i_type]:
+                done_trading = True
+        if done_trading:
+            return_msg = Message("NO_TRADE", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
             return return_msg
-            
-        current_offers = pl  # payload from bargain, self.order_book
+
+
+        order_book = pl['order_book']  # payload from bargain, self.order_book
+        market_type = pl['market_type']
+        p_type = pl['property_right'] # Currently only SPOT 
+        bid_type = pl['bidding_type']
+        c_type = pl['currency_type']
         
-        if self.type == "BUYER":
-            WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
-            # collect relavent offers
-            offers = []
-            for trader_id in current_offers:
-                if current_offers[trader_id] == None:
-                    continue
-                offer_type = current_offers[trader_id][0]
-                offer_amount = current_offers[trader_id][1]
-                if offer_type == "ASK":
-                    offers.append((trader_id, offer_amount))
-            # Now find an offer to accept    
-            if len(offers) > 0:
-                offer = self.find_opt('min', offers)
-                if WTP >= offer[1]:  # offer[1] = sellers willingness to accept
-                    seller_id = offer[0]
-                    return_msg = Message("BUY", self.name, "BARGAIN", seller_id)
-                    self.returned_msg(return_msg)
-                    return return_msg    
-                else:
-                    return_msg = Message("NULL", self.name, "BARGAIN", None)
-                    self.returned_msg(return_msg)
-                    return return_msg   
+        agent_role, item_val = self.get_type_valuation(i_type, market_type)
+        
+        if bid_type == "MONETARY":
+            currency_limit = self.currencies[c_type]
+        else:
+            currency_limit = 9999999999999999999999
+
+        sent_order = False # Flag to return NO_TRADE
+
+        # Try to buy
+        if agent_role == "BUYER":
+            if bid_type == "MONETARY":
+                max_bid = np.min(item_val, currency_limit)
             else:
-                return_msg = Message("NULL", self.name, "BARGAIN", None)
-                self.returned_msg(return_msg)
-                return return_msg
-            
-        else: # for SELLER
-            WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
-            # collect relavent offers
-            offers = []
-            for trader_id in current_offers:
-                if current_offers[trader_id] == None:
-                    continue
-                offer_type = current_offers[trader_id][0]
-                offer_amount = current_offers[trader_id][1]
-                if offer_type == "BID":
-                    offers.append((trader_id, offer_amount))
-            # Now find an offer    
-            if len(offers) > 0:
-                offer = self.find_opt('max', offers)
-                if WTA <= offer[1]:  # offer[1] = buyers willingness to pay
-                    buyer_id = offer[0]
-                    return_msg = Message("SELL", self.name, "BARGAIN", buyer_id)
-                    self.returned_msg(return_msg)
-                    return return_msg    
-                else:
-                    return_msg = Message("NULL", self.name, "BARGAIN", None)
-                    self.returned_msg(return_msg)
-                    return return_msg   
-            else:
-                return_msg = Message("NULL", self.name, "BARGAIN", None)
-                self.returned_msg(return_msg)
-                return return_msg  
+                max_bid = item_val
+            WTP = rnd.randint(self.lower_bound, max_bid)
+            current_offers = order_book[order_book['offer_type']=="ASK"]
+            if len(current_offers) > 0:
+                sorted_offs = current_offers.sort_values(by='price') # Ascending by default
+                offer_id_chosen = sorted_offs['offer_id'].values[0]
+                offer_chosen = order_book[order_book['offer_id']== offer_id_chosen]
+                if WTP >= offer_chosen['price'].values[0]:
+                    return_msg = Message("BUY", self.name, "BARGAIN", offer_id_chosen) # note: now uses the offer_id not seller id
+                    sent_order = True
+                
+        # Try to sell
+        elif agent_role == "SELLER": # for SELLER
+            WTA = rnd.randint(item_val, self.upper_bound)
+            current_offers = order_book[order_book['offer_type']=="BID"]
+
+            if len(current_offers) > 0:
+                sorted_offs = current_offers.sort_values(by='price', ascending=False) # Ascending by default
+                offer_id_chosen = sorted_offs['offer_id'].values[0]
+                offer_chosen = order_book[order_book['offer_id']== offer_id_chosen]
+                if WTA <= offer_chosen['price'].values[0]:
+                    return_msg = Message("SELL", self.name, "BARGAIN", offer_id_chosen)
+                    sent_order = True
+
+        if not sent_order:
+            return_msg = Message("NO_TRADE", self.name, "BARGAIN", None)
+        
+        self.returned_msg(return_msg)
+        return return_msg
  
 class ZIDPA(ZIDP):
     """

@@ -1,4 +1,5 @@
 import random as rnd
+import pandas as pd
 #import operator
 #import os
 #import matplotlib.pyplot as plt                 # import matplotlib
@@ -18,7 +19,8 @@ import environment.env_make_agents as mkt
 class SimPeriod(object):
     """Simulate a market on grid of consisting of weeks and days using two types of trading agents"""
 
-    def __init__(self, sim_name, num_rounds, agents, market, grid_size, debug=False, plot_on=False):
+    def __init__(self, sim_name, num_rounds, agents, market, grid_size, debug=False, plot_on=False, cur_period=0, week=0, market_type="ONE_TYPE", item_types=("C"),
+                bidding_type="ABSTRACT"):
 
         self.sim_name = sim_name            # simulation name
         #self.week = week                    # current week
@@ -32,8 +34,8 @@ class SimPeriod(object):
                                             #(moving history, market conditions), key = week
         self.market = market     # market environment object
         self.travel = None       # current travel institution
-        self.prices = []         # list_of_prices
-        self.contracts = []      # list of contracts
+        self.prices = []        # list_of_prices
+        self.contracts = pd.DataFrame()     # list of contracts
         self.initial_grid = None  # Stores the locations of all the agents at the start of the simulation
 
         self.buyer_surplus = None   # Surplus generate by buyers. Sum of (value-price)
@@ -42,19 +44,41 @@ class SimPeriod(object):
         self.efficiency = None      # (actual_surplus/eq_max_surplus) * 100.
         self.type_surplus = {}      # surplus accrued by trader type
         self.results_period = {}    # complete results record
+        
+        # New Things TODO not especially elegant
+        self.cur_period = cur_period
+        self.week = week
+        self.market_type = market_type
+        self.debug2 = True
+        self.item_types = item_types
+        self.bidding_type = bidding_type
+
+    def set_week(self, week):
+        self.week = week
 
     def match_found(self, agents):
         """Checks to see if there is at least one buyer and one seller at a location to allow bargaining"""
         match = False
-        buyer_found = False
-        seller_found = False
-        for agent in agents:
-            if agent.type == "BUYER":
-                buyer_found = True
-            if agent.type == "SELLER":
-                seller_found = True
-        if buyer_found and seller_found:
-            match = True
+        if self.market_type == "ONE_TYPE":
+            buyer_found = False
+            seller_found = False
+            for agent in agents:
+                if agent.type == "BUYER":
+                    buyer_found = True
+                elif agent.type == "SELLER":
+                    seller_found = True
+            if buyer_found and seller_found:
+                match = True
+        elif self.market_type == "TWO_TYPE":
+            buyers_of = set()
+            sellers_of = set()
+            for agent in agents:
+                buys = agent.item_buyer
+                sells = agent.item_seller
+                buyers_of.add(buys)
+                sellers_of.add(sells)
+            if buyers_of.intersection(sellers_of): # note empty set evaluates to False, non-empty to True
+                match = True
         return match
 
     def _output_format_grid(self, grid):
@@ -73,13 +97,17 @@ class SimPeriod(object):
                     agents make travel decisions
                     make contracts with agents at the same node"""
         
+        if self.debug2: print(f"\tSP.01 in period {self.cur_period}")
+
         # Setup for simulation
         t_inst = dm_travel.Travel(self.grid_size, self.agent_list, self.debug)
         self.travel = t_inst
         t_inst.start_travel()
-        b_inst = dm_bargain.Bargain(self.num_rounds)
-        self.contracts = []
-        self.prices = []
+        b_inst = dm_bargain.Bargain(self.num_rounds, market_type=self.market_type, item_types=self.item_types, bidding_type=self.bidding_type)
+        """__init__(self, rounds, quantity_limit = "HARD", money_limit = "HARD", market_type = "ONE_TYPE", item_types = "C", currency_types = "M",
+        bidding_type = "ABSTRACT", property_rights = "SPOT", week=0, period=0, local_trades_only=True, barg_location=(0, 0)):"""
+        # self.contracts = []
+        # self.prices = []
         
         # Save initial grid locations of agents
         if self.initial_grid is None:
@@ -87,32 +115,49 @@ class SimPeriod(object):
 
         # Simulate Period
 
+        # TODO here add GLOBAL currency issuence
+
         # run travel institution to let agents travel
         t_inst.run()
         g = t_inst.get_grid()
-
+        if self.debug2: print("\tSP.02 Ran Travel")
         # Walk occupied points in grid and run bargain institution at each point
-        period_contracts = []
+        period_contracts = pd.DataFrame()
         for loc in g:
             agents_at = g[loc]
             # Run bargain if you have a BUYER and A Seller
             if self.match_found(agents_at):
+                if self.debug2: print("\tSP.03 Match Found")
+                # TODO here add local currency issuence
                 b_inst.set_agents(agents_at)
                 b_inst.set_debug(self.debug)
+                b_inst.set_location(loc)
+                b_inst.set_period(self.cur_period)
+                b_inst.set_week(self.week)
                 b_inst.run()
                 loc_contracts = b_inst.get_contracts()
-                period_contracts.extend(loc_contracts)
-        self.contracts = period_contracts
-        # save results
+                period_contracts = pd.concat([period_contracts, loc_contracts])
+                if self.debug2: print("\tSP.04 Ran Bargain")
+        
+        # save results for this period
         self.period_results = {}
         history_of_travel = t_inst.get_history()
         self.period_results["Moving_History"] = history_of_travel
-        self.period_results["contracts"] = self.contracts
+        self.period_results["contracts"] = period_contracts.copy()
+        if len(period_contracts) > 0:
+            self.period_results["prices"] = list(period_contracts["price"].values)
+        else:
+            self.period_results["prices"] = []
         
-        self.prices = []
-        # Extract price from each contract
-        for contract in self.contracts:
-            self.prices.append(contract[1])
+        # Save results for all periods
+        self.contracts = pd.concat([self.contracts, period_contracts])
+        if len(self.contracts)>0:
+            self.prices = list(self.contracts["price"].values)
+        else:
+            self.price = []
+
+        # Increment period counter
+        self.cur_period += 1
     
     def get_contracts(self):
         return self.contracts
