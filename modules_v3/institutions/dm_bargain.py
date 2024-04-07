@@ -38,7 +38,7 @@ from institutions.dm_message_model import Message
 class Bargain(object):
     """Governs bargaining between agents in self.agents"""
     def __init__(self, rounds, quantity_limit = "HARD", money_limit = "HARD", market_type = "ONE_TYPE", item_types = ("C"), currency_types = ("M"),
-        bidding_type = "ABSTRACT", property_rights = "SPOT", week=0, period=0, local_trades_only=True, barg_location=(0, 0)):
+        bidding_type = "ABSTRACT", property_rights = "SPOT", week=0, period=0, local_trades_only=True, barg_location=(0, 0), hard_clear=True):
         self.agents = []   # list of agent objects who will bargain
         self.offer_history = []    # list of offer tupples
         contract_columns = ["contract_id", "bid_id", "ask_id", "buyer_id", "seller_id", "placed_location", "accept_location", "property_right", "item_type", 
@@ -81,6 +81,8 @@ class Bargain(object):
 
         self.debug2 = False
         self.debug3 = False
+
+        self.hard_clear = True
 
     def set_location(self, loc):
         self.barg_location = loc
@@ -194,6 +196,10 @@ class Bargain(object):
             print(contract_df)
             test_test = 1
 
+    def reset_order_book(self):
+        """Hard-clears the order-book. Allows totally new bargaining to occur."""
+        self.order_book = pd.DataFrame(columns=self.order_book.columns)
+
     def run(self):
         """Runs bargaining between self.agents
            Accepts BID ASK BUY and SELL messages
@@ -206,9 +212,10 @@ class Bargain(object):
         if self.debug2:
             print("B.01. Ran")
 
-        # Note: Order book resets when Bargain.run is called, and again at every round
+        # Note: Order book resets when Bargain.run is called
+        # CAN rest again at every round
+        self.reset_order_book()
         self.agent_arrangement = self.agents
-        
 
         # Initialize money info for agents
         for agent in self.agent_arrangement:
@@ -232,6 +239,9 @@ class Bargain(object):
 
         # Begin Bargaining
         for round_ in range(self.rounds):
+            if self.hard_clear:
+                self.reset_order_book()
+
             if self.debug2:
                 print(f"B.03. In round {round_}")
 

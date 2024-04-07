@@ -52,6 +52,8 @@ class ProcessResults(object):
         self.item_types = item_types
     
     def get_prices(self, avg_two=True, item=None):
+        if len(self.contracts) == 0:
+            return []
         if self.market_type == "ONE_TYPE":
             return list(self.contracts['price'].values)
         if self.market_type == "TWO_TYPE":
@@ -90,7 +92,11 @@ class ProcessResults(object):
             actual_surplus = 0
             efficiency = 0
 
-            item_contracts = contracts[contracts['item_type']==i_type]
+            if len(contracts) == 0:
+                item_has_contracts = False
+            else:
+                item_contracts = contracts[contracts['item_type']==i_type]
+                item_has_contracts = True
 
             type_surplus = {}
             strategy_buyer_surplus = {}
@@ -107,15 +113,20 @@ class ProcessResults(object):
                         trader_role = "BUYER"
                     elif i_type == trader.item_seller:
                         trader_role = "SELLER"
-                    
+                
+
                 # Calculate the surplus from buying for this trader
                 if trader_role == "BUYER":
-                    res = trader.get_values()
-                    buy_contracts = item_contracts[item_contracts['buyer_id']==trader_id]
-                    bought_units = len(buy_contracts)
-                    util_sum = sum(res[:bought_units])
-                    price_sum = buy_contracts["price"].sum()
-                    buy_surplus = util_sum - price_sum
+                    # Skip if no contracts
+                    if item_has_contracts:
+                        res = trader.get_values()
+                        buy_contracts = item_contracts[item_contracts['buyer_id']==trader_id]
+                        bought_units = len(buy_contracts)
+                        util_sum = sum(res[:bought_units])
+                        price_sum = buy_contracts["price"].sum()
+                        buy_surplus = util_sum - price_sum
+                    else:
+                        buy_surplus = 0
                     buyer_surplus = buyer_surplus + buy_surplus
                     trader_surplus = trader_surplus + buy_surplus
 
@@ -126,12 +137,15 @@ class ProcessResults(object):
 
                 # Calculate the surplus from selling for this trader
                 elif trader_role == "SELLER":
-                    costs = trader.get_costs()
-                    sell_contracts = item_contracts[item_contracts['seller_id']==trader_id]
-                    sold_units = len(sell_contracts)
-                    cost_sum = sum(costs[:sold_units])
-                    price_sum = sell_contracts["price"].sum()
-                    sell_surplus = price_sum - cost_sum
+                    if item_has_contracts:
+                        costs = trader.get_costs()
+                        sell_contracts = item_contracts[item_contracts['seller_id']==trader_id]
+                        sold_units = len(sell_contracts)
+                        cost_sum = sum(costs[:sold_units])
+                        price_sum = sell_contracts["price"].sum()
+                        sell_surplus = price_sum - cost_sum
+                    else:
+                        sell_surplus = 0
                     seller_surplus = seller_surplus + sell_surplus
                     trader_surplus = trader_surplus + buy_surplus
 
