@@ -1,4 +1,5 @@
 import random as rnd
+import pandas as pd
 #import operator
 #import os
 #import matplotlib.pyplot as plt                 # import matplotlib
@@ -19,7 +20,7 @@ import simulations.dm_sim_period as sim#
 
 class ProcessResults(object):
 
-    def __init__(self, market, sim_name, agents, contracts, debug=False):
+    def __init__(self, market, sim_name, agents, contracts, debug=False, market_type="ONE_TYPE", item_types=('C')):
         
         self.debug = debug            # if True print additional information
         self.results = {}             # period simulation results
@@ -37,9 +38,30 @@ class ProcessResults(object):
         self.type_surplus = {}      # surplus accrued by trader type
         self.results_period = {}    # complete results record
 
+        self.market_type = market_type
+
+        self.buyer_surplus = 0
+        self.seller_surplus = 0
+        self.actual_surplus = 0
+        self.efficiency = 0
+        self.type_surplus = {}
+
+        item_eff_cols = ['item_type', 'buyer_surplus', 'seller_surplus', 'actual_surplus', 'efficiency', 'strategy_buyer_surplus', 'strategy_seller_surplus', 
+                            'type_surplus']
+        self.item_eff_df = pd.DataFrame(columns=item_eff_cols)
+        self.item_types = item_types
     
-    def get_prices(self):
-        return list(self.contracts['price'].values)
+    def get_prices(self, avg_two=True, item=None):
+        if self.market_type == "ONE_TYPE":
+            return list(self.contracts['price'].values)
+        if self.market_type == "TWO_TYPE":
+            if avg_two:
+                all_list = list(self.contracts['price'].values)
+                av_list = all_list[::2] # Here average by just taking every other contract
+                return av_list
+            elif not avg_two:
+                assert item is not None
+                return list(self.contracts[self.contracts['item_type']==item]['price'].values)
 
     def plot_prices(self):
         prices = self.get_prices()
@@ -47,51 +69,117 @@ class ProcessResults(object):
 
     def calc_efficiency(self):
         """
+        Calculate the realized efficiency of the total market - so this is for the WHOLE grid
+        
+        TODO Add LOCAL market efficiency calculation
+
         """
+        debug = False
+        if debug:
+            print(self.market_type, self.item_types, self.agent_list[0].type)
 
-        self.buyer_surplus = 0
-        self.seller_surplus = 0
-        self.actual_surplus = 0
-        self.efficiency = 0
+        contracts = self.contracts
+        if self.market_type == "ONE_TYPE":
+            item_list = ['C']
+        elif self.market_type == "TWO_TYPE":
+            item_list = self.item_types
 
-        self.type_surplus = {}
-        for trader in self.agent_list:
-            trader_strategy = trader.name.split("_")[-1]  # trader.name = trader_t_type
-            trader_surplus = 0
-            unit = 0
-            for contract in self.contracts:
-                round_number, price, buyer_name, seller_name, b_cu, b_val, s_cos, s_cu = contract
-                surplus = 0
-                if trader.type == "BUYER":
+        for i_type in item_list:
+            buyer_surplus = 0
+            seller_surplus = 0
+            actual_surplus = 0
+            efficiency = 0
+
+            item_contracts = contracts[contracts['item_type']==i_type]
+
+            type_surplus = {}
+            strategy_buyer_surplus = {}
+            strategy_seller_surplus = {}
+            for trader in self.agent_list:
+                trader_strategy = trader.name.split("_")[-1]  # trader.name = trader_t_type
+                trader_id = trader.name
+                trader_surplus = 0
+
+                if trader.type == "BUYER" or trader.type == "SELLER":
+                    trader_role = trader.type
+                elif trader.type == "TRADER":
+                    if i_type == trader.item_buyer:
+                        trader_role = "BUYER"
+                    elif i_type == trader.item_seller:
+                        trader_role = "SELLER"
+                    
+                # Calculate the surplus from buying for this trader
+                if trader_role == "BUYER":
                     res = trader.get_values()
-                    if trader.name == buyer_name:
-                        surplus = res[unit] - price
-                        unit = unit + 1
-                        trader_surplus = trader_surplus + surplus
-                        self.buyer_surplus = self.buyer_surplus + surplus
-                       # TODO Figure out type surplus
-                        #self.type_surplus[self.current_week][trader_strategy] = \
-                            #self.type_surplus[self.current_week].get(trader_strategy, 0) + surplus
-                        #print(res, surplus, self.buyer_surplus)
-                else:
-                    costs = trader.get_costs()
-                    if trader.name == seller_name:
-                        surplus = price - costs[unit]
-                        unit = unit + 1
-                        trader_surplus = trader_surplus + surplus
-                        self.seller_surplus = self.seller_surplus + surplus
-                        # TODO Figure out type surplus
-                        #self.type_surplus[self.current_week][trader_strategy] = \
-                            #self.type_surplus[self.current_week].get(trader_strategy, 0) + surplus
+                    buy_contracts = item_contracts[item_contracts['buyer_id']==trader_id]
+                    bought_units = len(buy_contracts)
+                    util_sum = sum(res[:bought_units])
+                    price_sum = buy_contracts["price"].sum()
+                    buy_surplus = util_sum - price_sum
+                    buyer_surplus = buyer_surplus + buy_surplus
+                    trader_surplus = trader_surplus + buy_surplus
 
-                if trader_strategy in self.type_surplus:
-                    self.type_surplus[trader_strategy]+=surplus
+                    if trader_strategy in strategy_buyer_surplus:
+                        strategy_buyer_surplus[trader_strategy] += buyer_surplus
+                    else:
+                        strategy_buyer_surplus[trader_strategy] = buyer_surplus
+
+                # Calculate the surplus from selling for this trader
+                elif trader_role == "SELLER":
+                    costs = trader.get_costs()
+                    sell_contracts = item_contracts[item_contracts['seller_id']==trader_id]
+                    sold_units = len(sell_contracts)
+                    cost_sum = sum(costs[:sold_units])
+                    price_sum = sell_contracts["price"].sum()
+                    sell_surplus = price_sum - cost_sum
+                    seller_surplus = seller_surplus + sell_surplus
+                    trader_surplus = trader_surplus + buy_surplus
+
+                    if trader_strategy in strategy_seller_surplus:
+                        strategy_seller_surplus[trader_strategy] += seller_surplus
+                    else:
+                        strategy_seller_surplus[trader_strategy] = seller_surplus
+
+                if trader_strategy in type_surplus:
+                    type_surplus[trader_strategy] += trader_surplus
                 else:
-                    self.type_surplus[trader_strategy] = surplus
- 
-            self.actual_surplus = self.buyer_surplus + self.seller_surplus
-            eq_units, eq_plow, eq_phigh, eq_max_surplus = self.market.get_equilibrium()
-            self.efficiency = (self.actual_surplus / eq_max_surplus) * 100.0
+                    type_surplus[trader_strategy] = trader_surplus
+            
+            # Transform surpluses into effciency
+            actual_surplus = buyer_surplus + seller_surplus
+            eq_units, eq_plow, eq_phigh, eq_max_surplus = self.market.get_equilibrium(item_type=i_type)
+            efficiency = (actual_surplus / eq_max_surplus) * 100.0
+
+            """        item_eff_cols = ['item_type', 'buyer_surplus', 'seller_surplus', 'actual_surplus', 'efficiency', 'strategy_buyer_surplus', 'strategy_seller_surplus', 
+                            'type_surplus']
+            self.item_eff_df = pd.DataFrame(columns=item_eff_cols)"""
+
+            item_eval = (i_type, buyer_surplus, seller_surplus, actual_surplus, efficiency, strategy_buyer_surplus, strategy_seller_surplus, type_surplus)
+            item1df = pd.DataFrame(columns=self.item_eff_df.columns)
+            item1df.loc[0] = item_eval
+            self.item_eff_df = pd.concat([self.item_eff_df, item1df]).reset_index(drop=True)
+        
+        # Calculate and save averages for all item types
+        self.buyer_surplus = self.item_eff_df["buyer_surplus"].mean()
+        self.seller_surplus = self.item_eff_df["seller_surplus"].mean()
+        self.actual_surplus = self.item_eff_df["actual_surplus"].mean()
+        self.efficiency = self.item_eff_df["efficiency"].mean()
+        
+        mean_strat_surplus = {}
+        denom = len(item_list) # How many observations of this type of surplus there are
+        for i_type in item_list:
+            this_item_frame = self.item_eff_df[self.item_eff_df["item_type"]==i_type]
+            type_surpluses = this_item_frame["type_surplus"].values
+            
+            for this_dict in type_surpluses:
+                for this_strat in this_dict.keys():
+                    this_surp = this_dict[this_strat]
+                    if this_strat in mean_strat_surplus:
+                        mean_strat_surplus[this_strat] += this_surp/denom
+                    else:
+                        mean_strat_surplus[trader_strategy] = this_surp/denom
+        self.type_surplus = mean_strat_surplus
+
 
     
     def get_results(self):
@@ -131,6 +219,8 @@ class ProcessResults(object):
         results["seller surplus"] = self.seller_surplus
         results["actual surplus"] = self.actual_surplus
         results["efficiency"] = self.efficiency
+
+        results["item_eff_df"] = self.item_eff_df
         # TODO Strategy type record 
         #for trader_strategy in self.type_surplus[self.current_week]:
             #results[trader_strategy] = self.type_surplus[self.current_week][trader_strategy]

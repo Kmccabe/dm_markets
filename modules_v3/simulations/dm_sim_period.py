@@ -49,9 +49,10 @@ class SimPeriod(object):
         self.cur_period = cur_period
         self.week = week
         self.market_type = market_type
-        self.debug2 = True
         self.item_types = item_types
         self.bidding_type = bidding_type
+        
+        self.debug2 = False
 
     def set_week(self, week):
         self.week = week
@@ -122,7 +123,7 @@ class SimPeriod(object):
         g = t_inst.get_grid()
         if self.debug2: print("\tSP.02 Ran Travel")
         # Walk occupied points in grid and run bargain institution at each point
-        period_contracts = pd.DataFrame()
+        p_contracts = pd.DataFrame()
         for loc in g:
             agents_at = g[loc]
             # Run bargain if you have a BUYER and A Seller
@@ -136,21 +137,23 @@ class SimPeriod(object):
                 b_inst.set_week(self.week)
                 b_inst.run()
                 loc_contracts = b_inst.get_contracts()
-                period_contracts = pd.concat([period_contracts, loc_contracts])
+                p_contracts = pd.concat([p_contracts, loc_contracts])
                 if self.debug2: print("\tSP.04 Ran Bargain")
         
+        self.period_contracts = p_contracts
+
         # save results for this period
         self.period_results = {}
         history_of_travel = t_inst.get_history()
         self.period_results["Moving_History"] = history_of_travel
-        self.period_results["contracts"] = period_contracts.copy()
-        if len(period_contracts) > 0:
-            self.period_results["prices"] = list(period_contracts["price"].values)
+        self.period_results["contracts"] = p_contracts.copy()
+        if len(p_contracts) > 0:
+            self.period_results["prices"] = list(p_contracts["price"].values)
         else:
             self.period_results["prices"] = []
         
         # Save results for all periods
-        self.contracts = pd.concat([self.contracts, period_contracts])
+        self.contracts = pd.concat([self.contracts, p_contracts])
         if len(self.contracts)>0:
             self.prices = list(self.contracts["price"].values)
         else:
@@ -159,8 +162,11 @@ class SimPeriod(object):
         # Increment period counter
         self.cur_period += 1
     
-    def get_contracts(self):
-        return self.contracts
+    def get_contracts(self, all=False):
+        if all:
+            return self.contracts
+        else:
+            return self.period_contracts
     
     def get_prices(self):
         return self.prices

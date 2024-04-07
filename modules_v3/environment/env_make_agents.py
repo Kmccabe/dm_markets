@@ -213,20 +213,50 @@ class MakeAgents(object):
     def make_market(self, market_name):
         """Make MarketEnviornment object from traders
         """
-        # self.build_traders()
-        num_side = self.num_traders // 2
-        self.market = env.SpotMarketEnvironment(name = market_name, num_buyers = num_side, num_sellers = num_side)
-        for index, trader in enumerate(self.agents):
-            if trader.get_type() == "BUYER":
-                values = trader.get_values()
-                self.market.add_buyer(index, values)
-            else:  # this is a seller
-                seller_index = index - num_side  # sellers start at 0 in market environment
-                costs = trader.get_costs()
-                self.market.add_seller(seller_index, costs)
-        self.market.make_demand()
-        self.market.make_supply()
-        self.market.calc_equilibrium()
+        if self.market_type == "ONE_TYPE":
+            # self.build_traders()
+            num_side = self.num_traders // 2
+            self.market = env.SpotMarketEnvironment(name = market_name, num_buyers = num_side, num_sellers = num_side)
+            for index, trader in enumerate(self.agents):
+                if trader.get_type() == "BUYER":
+                    values = trader.get_values()
+                    self.market.add_buyer(index, values)
+                else:  # this is a seller
+                    seller_index = index - num_side  # sellers start at 0 in market environment
+                    costs = trader.get_costs()
+                    self.market.add_seller(seller_index, costs)
+            self.market.make_demand()
+            self.market.make_supply()
+            self.market.calc_equilibrium()
+        
+        if self.market_type == "TWO_TYPE":
+            # self.build_traders()
+            buyer_num = self.num_traders // 2
+            seller_num = self.num_traders - buyer_num
+            self.market = env.SpotMarketEnvironment(name = market_name, num_buyers = buyer_num, num_sellers = seller_num, item_types=self.item_types, 
+                            market_type=self.market_type)
+            for i_type in self.item_types:
+                b_ind = 0
+                s_ind = 0
+                for index, trader in enumerate(self.agents):
+                    if trader.item_buyer == i_type:
+                        trader_role = "BUYER"
+                        t_ind = b_ind
+                        b_ind += 1
+                    elif trader.item_seller == i_type:
+                        trader_role = "SELLER"
+                        t_ind = s_ind
+                        s_ind += 1
+                    
+                    if trader_role == "BUYER":
+                        values = trader.get_values()
+                        self.market.add_buyer(t_ind, values, item_type=i_type)
+                    elif trader_role == "SELLER":
+                        costs = trader.get_costs()
+                        self.market.add_seller(t_ind, costs, item_type=i_type)
+            self.market.make_demand()
+            self.market.make_supply()
+            self.market.calc_equilibrium()
     
     def get_market(self):
         return self.market

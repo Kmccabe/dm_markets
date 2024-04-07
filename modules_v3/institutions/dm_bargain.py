@@ -79,7 +79,7 @@ class Bargain(object):
 
         self.agent_lookup = {} # Dict struct: {agent_id: agent_index}
 
-        self.debug2 = True
+        self.debug2 = False
         self.debug3 = False
 
     def set_location(self, loc):

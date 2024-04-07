@@ -6,6 +6,7 @@ import time
 import copy
 import os
 import json
+import pandas as pd
 
 class SpotMarketEnvironment(object):
     """ A class that makes a market environment consisting of buyers who make
@@ -13,7 +14,7 @@ class SpotMarketEnvironment(object):
         class will also calculate market equilibria and plot the supply and
         demand curves and as an option contract prices."""
 
-    def __init__(self, name="example", num_buyers=2, num_sellers=3):
+    def __init__(self, name="example", num_buyers=2, num_sellers=3, item_types=("C"), market_type="ONE_TYPE"):
         """ name (str) = the name of the market
             num_Buyers (int) = the number of buyers in the market
             num_sellers(int) = the number of sellers in the market
@@ -41,6 +42,41 @@ class SpotMarketEnvironment(object):
             seller_id = "seller" + str(seller_number)
             self.sellers[seller_id] = []  # Empty list of costs for seller_id
 
+        self.market_type = market_type
+        self.item_types = item_types
+
+        # TWO_TYPE
+        self.i_num_buyers = {}
+        self.i_num_sellers = {}
+        self.i_demand = {}
+        self.i_supply = {}
+        self.i_buyers = {}
+        self.i_sellers = {}
+        self.i_eq_units = {}
+        self.i_eq_price_low = {}
+        self.i_eq_price_high = {}
+        self.i_max_surplus = {}
+        for i_type in self.item_types:
+            self.i_num_buyers[i_type] = num_buyers
+            self.i_num_sellers[i_type] = num_sellers
+            self.i_demand[i_type] = []
+            self.i_supply[i_type] = []
+            self.i_buyers[i_type] = {}
+            self.i_sellers[i_type] = {}
+            self.i_eq_units[i_type] = None
+            self.i_eq_price_low[i_type] = None
+            self.i_eq_price_high[i_type] = None
+            self.i_max_surplus[i_type] = None
+
+        for i_type in self.item_types:            
+            for buyer_number in range(self.i_num_buyers[i_type] ):
+                buyer_id = "buyer" + str(buyer_number)
+                self.i_buyers[buyer_id] = []  # Empty list of values for buyer_id
+
+            for seller_number in range(self.i_num_sellers[i_type]):
+                seller_id = "seller" + str(seller_number)
+                self.i_sellers[seller_id] = []  # Empty list of costs for seller_id
+
     def show_market(self):
         """Prints market name, number of buyers and number of sellers
         """
@@ -66,64 +102,134 @@ class SpotMarketEnvironment(object):
             print(f"{seller_id} has costs {self.sellers[seller_id]}")
         print("")
 
-    def add_buyer(self, buyer_number, values):
+    def add_buyer(self, buyer_number, values, item_type="C"):
         """Adds a list of buyer_number's values to the self.buyers dictionary
         """
-        buyer_id = "buyer" + str(buyer_number)
-        self.buyers[buyer_id] = values
 
-    def get_buyer_values(self, buyer_number):
+        # TODO change buyer and seller adder and getter to be uniformed
+        if self.market_type == "ONE_TYPE":
+            buyer_id = "buyer" + str(buyer_number)
+            self.buyers[buyer_id] = values
+        elif self.market_type == "TWO_TYPE":
+            buyer_id = "buyer" + str(buyer_number)
+            self.i_buyers[item_type][buyer_id] = values
+            # self.buyers[buyer_id] = values
+
+    def get_buyer_values(self, buyer_number, item_type):
         """Returns buyer_number's values
         """
-        buyer_id = "buyer" + str(buyer_number)
-        return self.buyers[buyer_id]
+        if self.market_type == "ONE_TYPE":
+            buyer_id = "buyer" + str(buyer_number)
+            return self.buyers[buyer_id]
+        elif self.market_type == "TWO_TYPE":
+            buyer_id = "buyer" + str(buyer_number)
+            return self.i_buyers[item_type][buyer_id]
 
     def get_buyers(self):
         return self.buyers
 
-    def add_seller(self, seller_number, costs):
+    def add_seller(self, seller_number, costs, item_type="C"):
         """Adds a list of seller_number's costs to the self.seller dictionary
         """
-        seller_id = "seller" + str(seller_number)
-        self.sellers[seller_id] = costs
+        if self.market_type == "ONE_TYPE":
+            seller_id = "seller" + str(seller_number)
+            self.sellers[seller_id] = costs
+        elif self.market_type == "TWO_TYPE":
+            seller_id = "seller" + str(seller_number)
+            self.i_sellers[item_type][seller_id] = costs
 
-    def get_seller_costs(self, seller_number):
+            
+
+    def get_seller_costs(self, seller_number, item_type="C"):
         """Returns seller_number_s costs
         """
-        seller_id = "seller" + str(seller_number)
-        return self.sellers[seller_id]
+        if self.market_type == "ONE_TYPE":
+            seller_id = "seller" + str(seller_number)
+            return self.sellers[seller_id]
+        elif self.market_type == "TWO_TYPE":
+            seller_id = "seller" + str(seller_number)
+            return self.i_sellers[item_type][seller_id]
 
     def get_sellers(self):
         return self.sellers
 
-    def make_demand(self):
+    def make_demand(self, avg_two=True):
         """ Makes demand list by adding participant values to the demand list
             and sorting the list from high to low.
         """
-        self.demand = []
-        for buyer_id in self.buyers.keys():
-            for value in self.buyers[buyer_id]:
-                self.demand.append((buyer_id, value))
-        self.demand = sorted(self.demand, key=operator.itemgetter(1), \
-                             reverse=True)
+        if self.market_type == "ONE_TYPE":
+            self.demand = []
+            for buyer_id in self.buyers.keys():
+                for value in self.buyers[buyer_id]:
+                    self.demand.append((buyer_id, value))
+            self.demand = sorted(self.demand, key=operator.itemgetter(1), \
+                                reverse=True)
+        elif self.market_type == "TWO_TYPE":
+            for i_type in self.item_types:
+                demand = []
+                for buyer_id in self.i_buyers[i_type].keys():
+                    for value in self.i_buyers[i_type][buyer_id]:
+                        demand.append((buyer_id, value))
+                demand = sorted(demand, key=operator.itemgetter(1), \
+                    reverse=True)
+                self.i_demand[i_type] = demand
+            if avg_two:
+                d1 = pd.DataFrame(np.array(self.i_demand[self.item_types[0]]))
+                d1 = d1.rename(columns={0:'t_id', 1:'val'})
+                d1 = d1['val'].apply(int).values
+                d2 = pd.DataFrame(np.array(self.i_demand[self.item_types[1]]))
+                d2 = d2.rename(columns={0:'t_id', 1:'val'})
+                d2 = d2['val'].apply(int).values
+                avg_d = list((d1+d2)/2)
+                names = ["Buyer N/A"]*len(avg_d)
+                out = list(zip(names, avg_d))
 
-    def make_supply(self):
+                self.demand = out
+
+    def make_supply(self, avg_two=True):
         """ Makes supply list by adding participant costs to the supply list
             and sorting the list from low to high.
         """
-        self.supply = []
-        for seller_id in self.sellers.keys():
-            for cost in self.sellers[seller_id]:
-                self.supply.append((seller_id, cost))
-        self.supply = sorted(self.supply, key=operator.itemgetter(1), \
-                             reverse=False)
+        if self.market_type == "ONE_TYPE":
+            self.supply = []
+            for seller_id in self.sellers.keys():
+                for cost in self.sellers[seller_id]:
+                    self.supply.append((seller_id, cost))
+            self.supply = sorted(self.supply, key=operator.itemgetter(1), \
+                                reverse=False)
+        elif self.market_type == "TWO_TYPE":
+            for i_type in self.item_types:
+                supply = []
+                for seller_id in self.i_sellers[i_type].keys():
+                    for value in self.i_sellers[i_type][seller_id]:
+                        supply.append((seller_id, value))
+                supply = sorted(supply, key=operator.itemgetter(1), \
+                    reverse=False)
+                self.i_supply[i_type] = supply
+            
+            if avg_two:
+                s1 = pd.DataFrame(np.array(self.i_supply[self.item_types[0]]))
+                s1 = s1.rename(columns={0:'t_id', 1:'val'})
+                s1 = s1['val'].apply(int).values
+                s2 = pd.DataFrame(np.array(self.i_supply[self.item_types[1]]))
+                s2 = s2.rename(columns={0:'t_id', 1:'val'})
+                s2 = s2['val'].apply(int).values
+                avg_s = list((s1+s2)/2)
+                names = ["Buyer N/A"]*len(avg_s)
+                out = list(zip(names, avg_s))
 
-    def show_supply_demand(self):
+                self.supply = out
+
+    def show_supply_demand(self, item_types=["C"], avg_two=False):
         """Prints supply and demand in a table where each row represnts a
            price from high to low.
         """
+
+        # TODO implement for non-avg
+
         supply_and_demand = self.supply + self.demand
         supply_and_demand = sorted(supply_and_demand, key=operator.itemgetter(1), reverse=True)
+
         print("Unit    ID       Cost  | Value     ID")
         print("---------------------------------------------------------")
         for index, unit in enumerate(supply_and_demand):
@@ -141,31 +247,75 @@ class SpotMarketEnvironment(object):
             max_surplus
         """
 
-        self.max_surplus = 0
-        self.eq_units = 0
-        last_accepted_value = 0
-        last_accepted_cost = 0
-        first_rejected_value = 0
-        first_rejected_cost = 999999999  # big number > max cost ever
+        if self.market_type == "ONE_TYPE":
+            self.max_surplus = 0
+            self.eq_units = 0
+            last_accepted_value = 0
+            last_accepted_cost = 0
+            first_rejected_value = 0
+            first_rejected_cost = 999999999  # big number > max cost ever
 
-        for buy_unit, sell_unit in zip(self.demand, self.supply):
-            buyid, value = buy_unit
-            sellid, cost = sell_unit
-            if value >= cost:
-                self.eq_units += 1
-                self.max_surplus += value - cost
-                last_accepted_value = value
-                last_accepted_cost = cost
+            for buy_unit, sell_unit in zip(self.demand, self.supply):
+                buyid, value = buy_unit
+                sellid, cost = sell_unit
+                if value >= cost:
+                    self.eq_units += 1
+                    self.max_surplus += value - cost
+                    last_accepted_value = value
+                    last_accepted_cost = cost
+                else:
+                    first_rejected_value = value
+                    first_rejected_cost = cost
+        
+            #  Now caluclate equilibrium price range
+            if self.eq_units > 1:
+                self.eq_price_high = min(last_accepted_value, first_rejected_cost)
+                self.eq_price_low = max(last_accepted_cost, first_rejected_value)
             else:
-                first_rejected_value = value
-                first_rejected_cost = cost
-                break
-        #  Now caluclate equilibrium price range
-        if self.eq_units > 1:
-            self.eq_price_high = min(last_accepted_value, first_rejected_cost)
-            self.eq_price_low = max(last_accepted_cost, first_rejected_value)
-        else:
-            print("No Equilibrium")
+                print("No Equilibrium") # TODO HERE`
+
+        if self.market_type == "TWO_TYPE":
+            max_surps = []
+            eqs_us = []
+            plows = []
+            phighs = []
+            for i_type in self.item_types:
+                max_surplus = 0 # 
+                eq_units = 0 # 
+                last_accepted_value = 0
+                last_accepted_cost = 0
+                first_rejected_value = 0
+                first_rejected_cost = 999999999  # big number > max cost ever
+
+                for buy_unit, sell_unit in zip(self.i_demand[i_type], self.i_supply[i_type]):
+                    buyid, value = buy_unit
+                    sellid, cost = sell_unit
+                    if value >= cost:
+                        eq_units += 1
+                        max_surplus += value - cost
+                        last_accepted_value = value
+                        last_accepted_cost = cost
+                    else:
+                        first_rejected_value = value
+                        first_rejected_cost = cost
+                
+                self.i_max_surplus[i_type] = max_surplus
+                self.i_eq_units[i_type] = eq_units
+                max_surps.append(max_surplus)
+                eqs_us.append(eq_units)
+
+                #  Now caluclate equilibrium price range
+                if eq_units > 1:
+                    self.i_eq_price_high[i_type] = min(last_accepted_value, first_rejected_cost)
+                    self.i_eq_price_low[i_type] = max(last_accepted_cost, first_rejected_value)
+                phighs.append(self.i_eq_price_high[i_type])
+                plows.append(self.i_eq_price_low[i_type])
+
+            self.max_surplus = sum(max_surps)/len(max_surps)
+            self.eq_units = sum(eqs_us)/len(eqs_us)
+            self.eq_price_high = sum(phighs)/len(phighs)
+            self.eq_price_low = sum(plows)/len(plows)
+
 
     def show_equilibrium(self):
         #  Print out market equilibrium numbers
@@ -176,8 +326,11 @@ class SpotMarketEnvironment(object):
         print("maximum surplus      = {}".format(self.max_surplus))
         print()
 
-    def get_equilibrium(self):
-        return self.eq_units, self.eq_price_low, self.eq_price_high, self.max_surplus
+    def get_equilibrium(self, item_type="C"):
+        if item_type == "C":
+            return self.eq_units, self.eq_price_low, self.eq_price_high, self.max_surplus
+        else:
+            return self.i_eq_units[item_type], self.i_eq_price_low[item_type], self.i_eq_price_high[item_type], self.i_max_surplus[item_type]
 
     def plot_supply_demand(self, prices=[]):
 
