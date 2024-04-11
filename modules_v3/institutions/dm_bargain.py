@@ -200,6 +200,10 @@ class Bargain(object):
         """Hard-clears the order-book. Allows totally new bargaining to occur."""
         self.order_book = pd.DataFrame(columns=self.order_book.columns)
 
+    def reset_contracts(self):
+        """Hard-clears the contracts. Allows totally new period to occur."""
+        self.contracts = pd.DataFrame(columns=self.contracts.columns)
+
     def run(self):
         """Runs bargaining between self.agents
            Accepts BID ASK BUY and SELL messages
@@ -215,6 +219,9 @@ class Bargain(object):
         # Note: Order book resets when Bargain.run is called
         # CAN rest again at every round
         self.reset_order_book()
+
+        if self.hard_clear:
+            self.reset_contracts()
         self.agent_arrangement = self.agents
 
         # Initialize money info for agents
@@ -403,27 +410,47 @@ class Bargain(object):
                                 assert is_filled == False
                                 assert can_fill == True
                             except AssertionError:
-                                print(f"Agent {sender_id} attempted to transact {offer_id_accepted} but it was already filled or is unfillable.")
+                                continue
 
                             # Check the agents can complete contract
                             offer_price = this_order['price'].values[0]
                             placer_id = this_order['agent_id'].values[0]
+                            
+                            #print("Offer_type", offer_type, "by", placer_id, "accept by", agent_id, "for item", i_type)
+                            #print("Quants", self.agent_quantity_info)
 
-                            # Check buyer can accept ask (cash constraint), and seller can fill (quantity constraint)
                             if offer_type == "ASK":
-                                if self.bidding_type == "MONETARY":
-                                    assert self.agent_currency_info[agent_id][c_type] >= offer_price
-                                assert self.agent_quantity_info[placer_id][p_right][i_type] >= 1
+                                # Check buyer can accept ask (cash constraint), and seller can fill (quantity constraint)
+                                try:
+                                    if self.bidding_type == "MONETARY":
+                                        assert self.agent_currency_info[agent_id][c_type] >= offer_price
+                                    assert self.agent_quantity_info[placer_id][p_right][i_type] >= 1
+                                except AssertionError:
+                                    # If now cannot fill, mark as such - redundancy to account for potential lags in processing
+                                    if can_fill:
+                                        this_order_loc = this_order.index.values[0]
+                                        self.order_book['can_fill'].loc[this_order_loc] = False
+                                    continue
+
                                 o_ask_id = offer_id_accepted
                                 o_bid_id = None
                                 o_buyer_id = agent_id
                                 o_seller_id = placer_id
 
-                            # Check seller can accept bid (quantity constraint), and buyer can fill (cash constraint)
+                            
                             if offer_type == "BID":
-                                assert self.agent_quantity_info[agent_id][p_right][i_type] >= 1
-                                if self.bidding_type == "MONETARY":
-                                    assert self.agent_currency_info[placer_id][c_type] >= offer_price
+                                # Check seller can accept bid (quantity constraint), and buyer can fill (cash constraint)
+                                try:
+                                    assert self.agent_quantity_info[agent_id][p_right][i_type] >= 1
+                                    if self.bidding_type == "MONETARY":
+                                        assert self.agent_currency_info[placer_id][c_type] >= offer_price
+                                except AssertionError:
+                                    # If now cannot fill, mark as such - redundancy to account for potential lags in processing
+                                    if can_fill:
+                                        this_order_loc = this_order.index.values[0]
+                                        self.order_book['can_fill'].loc[this_order_loc] = False
+                                    continue
+
                                 o_ask_id = None
                                 o_bid_id = offer_id_accepted
                                 o_buyer_id = placer_id
@@ -433,7 +460,10 @@ class Bargain(object):
                             offer_location = this_order['location'].values[0] # Currently only used for post-processing
                             cur_loc = agent.get_location()
                             if self.local_trades_only:
-                                assert cur_loc == offer_location
+                                try:
+                                    assert cur_loc == offer_location
+                                except AssertionError:
+                                    continue
                             
                             # If here, should be fillable and everything 
                             if len(self.contracts) == 0:

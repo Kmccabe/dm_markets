@@ -20,7 +20,7 @@ class SimPeriod(object):
     """Simulate a market on grid of consisting of weeks and days using two types of trading agents"""
 
     def __init__(self, sim_name, num_rounds, agents, market, grid_size, debug=False, plot_on=False, cur_period=0, week=0, market_type="ONE_TYPE", item_types=("C"),
-                bidding_type="ABSTRACT"):
+                bidding_type="ABSTRACT", cur_local=False):
 
         self.sim_name = sim_name            # simulation name
         #self.week = week                    # current week
@@ -51,6 +51,7 @@ class SimPeriod(object):
         self.market_type = market_type
         self.item_types = item_types
         self.bidding_type = bidding_type
+        self.cur_local = cur_local
         
         self.debug2 = False
 
@@ -181,6 +182,7 @@ class SimPeriod(object):
         """Returns dictionary s_grid[loc] = list of agent names at loc"""
         grid = self.travel.get_grid()
         return self._output_format_grid(grid)
+        
 
     def get_initial_grid(self):
         """Returns the starting (initial) locations of the agents"""

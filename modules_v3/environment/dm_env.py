@@ -272,7 +272,7 @@ class SpotMarketEnvironment(object):
                 self.eq_price_high = min(last_accepted_value, first_rejected_cost)
                 self.eq_price_low = max(last_accepted_cost, first_rejected_value)
             else:
-                print("No Equilibrium") # TODO HERE`
+                print("No Equilibrium")
 
         if self.market_type == "TWO_TYPE":
             max_surps = []

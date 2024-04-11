@@ -41,7 +41,7 @@ class Trader(object):
     """
     
     def __init__(self, name, trader_type="TRADER", payoff=None, money=0, location=(0, 0),
-                 lower_bound = 0, upper_bound = 9999, item_buyer="C", item_seller="C", default_rep=100, payoffs=None):
+                 lower_bound = 0, upper_bound = 9999, item_buyer="C", item_seller="C", default_rep=100, payoffs=None, cur_local=False, gamma=1):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
@@ -93,6 +93,14 @@ class Trader(object):
         self.payoffs = payoffs # Structure {B: units_transacted, S: units_transacted}
 
         self.debug3 = False
+        self.move_debug = False
+        self.trade_debug = False
+
+        self.cur_local = cur_local
+        self.owes_money = False
+        self.loans = {}
+        self.loans["M"] = 0 # TODO fix up currency stuff to other institutions
+        self.gamma = gamma
     
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
@@ -358,16 +366,25 @@ class Trader(object):
 
             total_desire = sum(self.valuations[self.item_buyer]) # the total desired is total willing to spend on buying items
             req_desire = total_desire - cur_val
-        else:
-            return_msg = Message("NULL", self.name, "BARGAIN", 99999999999999)    
+        #else:
+        #    return_msg = Message("NULL", self.name, "BARGAIN", 99999999999999)    
+
+        return req_desire
 
         # Currently all moneys are effectively local because they cannot be transported or communicated at a distance - so just using M type right now
-        return_msg = Message("REQUEST_MONEY", self.name, "BARGAIN", req_desire)
-        return return_msg
+        # return_msg = Message("REQUEST_MONEY", self.name, "BARGAIN", req_desire)
+        # return return_msg
 
-    def report_money(self, payload):
+    def get_rep(self):
+        return self.rep_tokens
+
+    def set_money(self, m_type, m_val):
+        self.loans[m_type] = m_val
+        self.currencies[m_type] = m_val
+
+    def report_money(self, payload="M"):
         """Returns the amount of currency of this type this agent owns"""
-        cur_type = payload['currency']
+        cur_type = payload
         try:
             return_val = self.currencies[cur_type]
         except KeyError:
@@ -377,7 +394,7 @@ class Trader(object):
         return_msg = Message(cur_type, self.name, "REPORT_MONEY", return_val)
         return return_msg
 
-    def repay_loan(self, payload):
+    def repay_loan(self, payload="M"):
         """Returns the requested currency to the currency issuer - currently returns the TOTAL amount of the currency, not just how much was borrowed
             This simplifying assumption alows us to not worry about monetary inflation, only worrying about real prices"""
         cur_type = payload # Currently - repays ALL of the given currency - allows us to not worry about inter-period inflation and only care about real prices
@@ -387,8 +404,23 @@ class Trader(object):
             self.currencies[cur_type] = 0
             onhand_currency = 0
         
-        return_msg = Message("REPAY_LOAN", self.name, "BARGAIN", onhand_currency)
-        return return_msg
+        repaid = False
+        if onhand_currency > self.loans[payload]:
+            repaid = True
+        else:
+            self.rep_tokens = self.rep_tokens - self.gamma*(onhand_currency - self.loans[payload])
+
+        self.currencies[cur_type] = 0
+        self.loans[cur_type] = 0
+        self.owes_money = False
+
+        if repaid:
+            return True
+        return False
+
+        
+        #return_msg = Message("REPAY_LOAN", self.name, "BARGAIN", onhand_currency)
+        #return return_msg
 
     def get_type_valuation(self, i_type="C", market_type="ONE_TYPE"):
         # Get valuations, types
@@ -448,8 +480,10 @@ class ZID(Trader):
         self.cur_unit = 0
         if self.type == "BUYER":
             self.max_units = len(self.values)
+            self.quantities["SPOT"][self.item_buyer] = 0
         elif self.type == "SELLER":
             self.max_units = len(self.costs)
+            self.quantities["SPOT"][self.item_seller] = self.max_units
         elif self.type == "TRADER":
             self.unit_maxs[self.item_buyer] = len(self.values)
             self.unit_maxs[self.item_seller] = len(self.costs)
@@ -457,6 +491,10 @@ class ZID(Trader):
             self.cur_units[self.item_seller] = 0
             self.trx_units[self.item_buyer] = 0
             self.trx_units[self.item_seller] = 0
+            self.quantities["SPOT"][self.item_buyer] = 0
+            self.quantities["SPOT"][self.item_seller] = len(self.costs)
+        self.currencies["M"] = 0
+
         return_msg = Message("Initial", self.name, self.name, "Initialized")
         self.returned_msg(return_msg)
         return return_msg
@@ -466,17 +504,35 @@ class ZID(Trader):
         Make a move in a random direction if you can still trade 
         """
         self.contract_this_period = False  # Use this to see if you get a contract this period
-        direction_list = [-1, 0, +1] # 
-        if self.cur_unit > self.max_units: # Do not move if over-traded - this flag should NEVER be true
+        direction_list = [-1, 0, +1]
+
+        # Check if out of units
+        done_trading = False
+        if self.type == "SELLER" or self.type == "BUYER":
+            if self.cur_unit >= self.max_units:
+                done_trading = True
+        elif self.type == "TRADER": # note BIGGER barrier to moving away and to not trading
+            if self.cur_units[self.item_buyer] >= self.unit_maxs[self.item_buyer] and self.cur_units[self.item_seller] >= self.unit_maxs[self.item_seller]:
+                done_trading = True
+
+        if done_trading: # Do not move if over-traded - this flag should NEVER be true
             return_msg = Message("MOVE", self.name, "Travel", (0, 0))
-            self.returned_msg(return_msg)
-            return return_msg 
+            
         else:
             x_dir = rnd.choice(direction_list)
             y_dir = rnd.choice(direction_list)
             return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
-            self.returned_msg(return_msg)
-            return return_msg 
+
+        # TODO TEMP
+        if self.move_debug:
+            if return_msg.get_payload() == (0,0):
+                print("Not Moving")
+            else:
+                print("Moving by", return_msg.get_payload())
+
+        self.returned_msg(return_msg)
+        #self.contract_this_period = False
+        return return_msg
 
     def offer(self, pl):
         """
@@ -497,8 +553,13 @@ class ZID(Trader):
                 done_trading = True
         if done_trading:
             return_msg = Message("NO_OFFER", self.name, "BARGAIN", None)
+            if self.trade_debug:
+                print("\t\tDone Offering")
             self.returned_msg(return_msg)
             return return_msg
+        
+        if self.trade_debug:
+            print("Still Offering")
         
         # Here if not done trading
         p_type = pl['property_right'] # currently only SPOT market
@@ -513,10 +574,13 @@ class ZID(Trader):
         if agent_role == "BUYER":
             if bidding_type == "MONETARY": # determine if cash-constrained
                 cash_on_hand = self.currencies[c_type]
-                max_bid = np.min(cash_on_hand, item_val) # Cannot bid above cash-on-hand
+                max_bid = int(min(cash_on_hand, item_val)) # Cannot bid above cash-on-hand
             else:
                 max_bid = self.values[self.cur_unit]
-            
+            if self.lower_bound > max_bid:
+                return_msg = Message("NO_OFFER", self.name, "BARGAIN", None)
+                self.returned_msg(return_msg)
+                return return_msg
             send_price = rnd.randint(self.lower_bound, max_bid)
             o_type = "BID"
 
@@ -543,20 +607,25 @@ class ZID(Trader):
         if self.type == "SELLER" or self.type == "BUYER":
             if self.cur_unit >= self.max_units:
                 done_trading = True
-        elif self.type == "TRADER": # note BIGGER barrier to moving away and to not trading
+        elif self.type == "TRADER":
             if self.cur_units[i_type] >= self.unit_maxs[i_type]:
                 done_trading = True
         if done_trading:
             return_msg = Message("NO_TRADE", self.name, "BARGAIN", None)
+            if False: #self.trade_debug:
+                print("Done Trading")
             self.returned_msg(return_msg)
             return return_msg
-            
+        
+        if False: #self.trade_debug:
+                print("Still trading")
+
         order_book = pl['order_book']  # payload from bargain, self.order_book
         market_type = pl['market_type']
         p_type = pl['property_right'] # Currently only SPOT 
         bid_type = pl['bidding_type']
         c_type = pl['currency_type']
-        
+
         agent_role, item_val = self.get_type_valuation(i_type, market_type)
         
         if bid_type == "MONETARY":
@@ -569,9 +638,13 @@ class ZID(Trader):
         # Try to buy
         if agent_role == "BUYER":
             if bid_type == "MONETARY":
-                max_bid = np.min(item_val, currency_limit)
+                max_bid = int(min(item_val, currency_limit))
             else:
                 max_bid = item_val
+            if self.lower_bound > max_bid:
+                return_msg = Message("NO_TRADE", self.name, "BARGAIN", None)
+                self.returned_msg(return_msg)
+                return return_msg
             WTP = rnd.randint(self.lower_bound, max_bid)
             current_offers = order_book[order_book['offer_type']=="ASK"]
             if self.debug3:
@@ -675,17 +748,37 @@ class ZIDA(ZID):
             direction_list = [0, 0, 0]
         else:
             direction_list = [-1, 0, +1]
-        if self.cur_unit > self.max_units: # Should never be true
+        
+        # Check if out of units
+        done_trading = False
+        if self.type == "SELLER" or self.type == "BUYER":
+            if self.cur_unit >= self.max_units:
+                done_trading = True
+        elif self.type == "TRADER": # note BIGGER barrier to moving away and to not trading
+            if self.cur_units[self.item_buyer] >= self.unit_maxs[self.item_buyer] and self.cur_units[self.item_seller] >= self.unit_maxs[self.item_seller]:
+                done_trading = True
+        
+        if done_trading:
             return_msg = Message("MOVE", self.name, "Travel", (0, 0))
-            self.returned_msg(return_msg)
-            return return_msg
         else:
             x_dir = rnd.choice(direction_list)
             y_dir = rnd.choice(direction_list)
             return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
-            #self.contract_this_period = False
-            self.returned_msg(return_msg)
-            return return_msg
+        
+        # TODO TEMP
+        if self.move_debug:
+            if return_msg.get_payload() == (0,0):
+                print("Not Moving")
+            else:
+                print("Moving by", return_msg.get_payload())
+        
+        # If moving, must repay
+        if not return_msg.get_payload() == (0,0) and self.owes_money and self.cur_local:
+            self.repay_loan()
+
+        #self.contract_this_period = False
+        self.returned_msg(return_msg)
+        return return_msg
 
 class ZIDP(ZID):
     """Overrides Bid and Ask Decisions"""
@@ -790,15 +883,23 @@ class ZIDPA(ZIDP):
             direction_list = [-1, 0, +1]
         if self.cur_unit > self.max_units:
             return_msg = Message("MOVE", self.name, "Travel", (0, 0))
-            self.returned_msg(return_msg)
-            return return_msg
         else:
             x_dir = rnd.choice(direction_list)
             y_dir = rnd.choice(direction_list)
             return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
-            self.returned_msg(return_msg)
-            #self.contract_this_period = False
-            return return_msg
+
+        # TODO TEMP
+        if self.move_debug:
+            if return_msg.get_payload() == (0,0):
+                print("Not Moving")
+            else:
+                print("Moving by", return_msg.get_payload())
+
+        self.returned_msg(return_msg)
+        #self.contract_this_period = False
+        return return_msg
+
+        
 
 class ZIDPR(ZIDP):
     """
@@ -822,13 +923,19 @@ class ZIDPR(ZIDP):
             direction_list = [-1, +1]
         if self.cur_unit > self.max_units:
             return_msg = Message("MOVE", self.name, "Travel", (0, 0))
-            self.returned_msg(return_msg)
-            return return_msg
         else:
             x_dir = rnd.choice(direction_list)
             y_dir = rnd.choice(direction_list)
             return_msg = Message("MOVE", self.name, "Travel", (x_dir, y_dir))
-            self.returned_msg(return_msg)
-            #self.contract_this_period = False
-            return return_msg
+
+        # TODO TEMP
+        if self.move_debug:
+            if return_msg.get_payload() == (0,0):
+                print("Not Moving")
+            else:
+                print("Moving by", return_msg.get_payload())
+
+        self.returned_msg(return_msg)
+        #self.contract_this_period = False
+        return return_msg
         

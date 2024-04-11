@@ -16,7 +16,7 @@ debug = False
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
     def __init__(self, num_traders, trader_types, num_units,
-                 grid_size, lower_bound, upper_bound, debug=False, market_type="ONE_TYPE", item_types=("C"), default_rep=100):
+                 grid_size, lower_bound, upper_bound, debug=False, market_type="ONE_TYPE", item_types=("C"), default_rep=100, cur_local=False, gamma=1):
 
         self.num_traders = num_traders       # number of traders divisible by two
         self.trader_types = trader_types     # list of two trader types, should be tuple
@@ -31,6 +31,8 @@ class MakeAgents(object):
         self.market_type = market_type
         self.item_types = item_types
         self.default_rep = default_rep
+        self.cur_local = cur_local
+        self.gamma = gamma
 
     def utility(self, q, m, v, p):
         """Calculates utility payoff
@@ -184,7 +186,7 @@ class MakeAgents(object):
             elif trader_role == "TRADER":
                 agent = agent_model(name, trader_role, payoff, money, location, 
                     lower_bound = self.lb, upper_bound = self.ub, item_buyer=buy_item, 
-                    item_seller=sell_item, default_rep=self.default_rep, payoffs=payoffs)
+                    item_seller=sell_item, default_rep=self.default_rep, payoffs=payoffs, cur_local=self.cur_local, gamma=self.gamma)
 
             # Make Value list or cost list
             if trader_role == "BUYER":
