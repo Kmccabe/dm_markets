@@ -11,12 +11,12 @@ from scipy.stats import sem
 # This works only if notebook is in same folder
 # import dm_bargain
 # import dm_travel
-import dm_agents
+import environment.dm_agents
 #import dm_env as env
 # import dm_utils as dm
-import dm_sim_period as simp
+import simulations.dm_sim_period as simp
 import dm_process_results as pr
-import env_make_agents as mkt
+import environment.env_make_agents as mkt
 
 def make_sim(sim_name, num_periods, num_weeks,
              num_rounds, grid_size,
