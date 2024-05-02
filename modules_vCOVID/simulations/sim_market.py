@@ -21,8 +21,9 @@ grid_size = 4 # grid is grid_size x grid_size
 #
 # Make Agent Traders
 #
+movement_error_rate = 0
 agent_maker = mkt.MakeAgents(num_traders, trader_objects, num_units, 
-                                grid_size, lb, ub, debug)
+                                grid_size, lb, ub, debug, movement_error_rate)
 #agent_maker.make_test_agents()
 agent_maker.make_agents()
 agent_maker.make_locations()

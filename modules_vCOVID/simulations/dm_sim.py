@@ -116,12 +116,11 @@ def analyze_eff_data(num_trials, num_weeks, data_table):
 
     # process efficiencies
     for trial_effs in data:
-      
         for k, eff in enumerate(trial_effs):
             eff_avg[k] += eff
             week_effs[k].append(eff)
             
-    #calculate avg, min, max, and sem for each week
+    # calculate avg, min, max, and sem for each week
     std_errors = [] 
     eff_min = []
     eff_max = []  
@@ -133,6 +132,28 @@ def analyze_eff_data(num_trials, num_weeks, data_table):
         eff_max.append(max(week_effs[k]))
 
     return eff_avg, std_errors, eff_min, eff_max
+
+def get_trial_week_effs(num_trials, num_weeks, data_table):
+
+    # Set up arrays to parse data into weeks
+    week_effs = []
+    eff_avg = []
+
+    for week in range(num_weeks):
+        eff_avg.append(0)
+        week_effs.append([])
+
+    # parse efficiencies
+    data = []
+    for week in range(num_weeks):
+        effs = []
+        for trial in range(num_trials):
+            trial_data = data_table[trial]
+            week_data = trial_data[week]
+            effs.append(week_data['eff'])
+        data.append(effs)
+
+    return data
 
 if __name__ == "__main__":
     # test monte-carlo runner
