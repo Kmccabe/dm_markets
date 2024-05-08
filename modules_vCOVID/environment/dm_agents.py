@@ -398,6 +398,7 @@ class ZIDA(ZID):
 
         # If draw below the error rate randomly, have a COMPLETELY random movement
         np_rand = np.random.default_rng()
+        
         if np_rand.random() < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
         
@@ -520,7 +521,9 @@ class ZIDPA(ZIDP):
 
         # If draw below the error rate randomly, have a COMPLETELY random movement
         np_rand = np.random.default_rng()
-        if np_rand.random() < self.movement_error_rate:
+        rand_draw = np_rand.random()
+        # print(rand_draw)
+        if rand_draw < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
         
         # otherwise employ the movement strategy

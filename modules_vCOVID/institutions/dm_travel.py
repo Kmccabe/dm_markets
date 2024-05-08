@@ -38,6 +38,7 @@ class Travel(object):
         self.debug = debug 
     
     def run(self):
+
         for point in self.grid:
             agent_order =[]
             for agent in self.grid[point]:
