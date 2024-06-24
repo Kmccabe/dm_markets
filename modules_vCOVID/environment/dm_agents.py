@@ -76,7 +76,9 @@ class Trader(object):
     def set_debug(self, flag):
         self.debug = flag
 
-    def set_contract_this_period(self, flag):
+    def set_contract_this_period(self, flag, debug_contract=False):
+        if debug_contract:
+            print("$$$ CONTRACT_THIS_PERIOD_MANUAL TO:", flag)
         self.contract_this_period = flag
  
     def set_values(self, v):
@@ -217,6 +219,8 @@ class ZID(Trader):
             self.max_units = len(self.costs)
         return_msg = Message("Initial", self.name, self.name, "Initialized")
         self.returned_msg(return_msg)
+        ###
+        # self.set_contract_this_period(False)
         return return_msg
 
 
@@ -238,6 +242,7 @@ class ZID(Trader):
         np_rand = np.random.default_rng()
         if np_rand.random() < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
+            self.set_contract_this_period(False)
         
         # otherwise employ the movement strategy
         else:
@@ -249,7 +254,7 @@ class ZID(Trader):
                 y_dir = rnd.choice(direction_list)
                 movement_idea = (x_dir, y_dir)
         
-        self.contract_this_period = False  # Use this to see if you get a contract this period
+        #self.contract_this_period = False  # Use this to see if you get a contract this period
         
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         self.returned_msg(return_msg)
@@ -350,10 +355,15 @@ class ZID(Trader):
                 return return_msg  
                  
 
-    def contract(self, pl):
+    def contract(self, pl, debug_contract=False):
         """
         Update contract information for ZID Trader
         """
+        if debug_contract:
+            if self.contract_this_period == False:
+                print("#### Contract FLIPPED")
+            if self.contract_this_period == True:
+                print("@@@@ contract NO FLIP")
         self.contract_this_period = True  # Got a contract this period
         contract = pl
         price = contract[1]
@@ -401,6 +411,7 @@ class ZIDA(ZID):
         
         if np_rand.random() < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
+            self.set_contract_this_period(False)
         
         # otherwise employ the movement strategy
         else:
@@ -525,11 +536,16 @@ class ZIDPA(ZIDP):
         # print(rand_draw)
         if rand_draw < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
+            self.set_contract_this_period(False)
         
         # otherwise employ the movement strategy
         else:
             if self.contract_this_period:
-                direction_list = [0, 0, 0]
+                if self.num_at_loc > 1:
+                    direction_list = [0, 0, 0]
+                else:
+                    direction_list = [-1, 0, +1]
+                    self.set_contract_this_period(False)
             else:
                 direction_list = [-1, 0, +1]
             if self.cur_unit > self.max_units:
@@ -564,11 +580,18 @@ class ZIDPR(ZIDP):
         np_rand = np.random.default_rng()
         if np_rand.random() < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
+            self.set_contract_this_period(False)
         
         # otherwise employ the movement strategy
         else:
+            # Note: Contract this period is NEVER reset regularly - only if the random error is called
+            # Change: Check if at least one other at location - if not, reset the contract_this_period
             if self.contract_this_period:
-                direction_list = [0, 0, 0]
+                if self.num_at_loc > 1:
+                    direction_list = [0, 0, 0]
+                else:
+                    direction_list = [-1, 0, +1]
+                    self.set_contract_this_period(False)
             else:
                 direction_list = [-1, 0, +1]
             if self.num_at_loc > 2:
