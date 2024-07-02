@@ -10,7 +10,9 @@ class Trader(object):
     """
     
     def __init__(self, name, trader_type, payoff, money, location,
-                 lower_bound = 0, upper_bound = 9999, movement_error_rate = 0):
+                 lower_bound = 0, upper_bound = 9999, movement_error_rate = 0,
+                 reset_flag_frequency=None, reset_flag_min_agents=None,
+                reset_flag_on_random=False, reset_flag_window=None, reset_flag_min_trades=1):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
@@ -40,6 +42,24 @@ class Trader(object):
         self.num_at_loc = 0
 
         self.movement_error_rate  = movement_error_rate
+
+        self.reset_flag_frequency = reset_flag_frequency
+        self.reset_flag_min_agents = reset_flag_min_agents
+        self.reset_flag_on_random = reset_flag_on_random
+
+        # Used if reset_flag_frequency = WINDOW
+        self.reset_flag_window = reset_flag_window
+        if self.reset_flag_frequency == "WINDOW":
+            if self.reset_flag_window is None:
+                raise ValueError("Cannot have undefined window size with window reset frequency")
+            self.current_period = -1
+            self.periods_traded_in = []
+        
+        self.reset_flag_min_trades = reset_flag_min_trades
+
+        # Used if reset_flag_frequency = WEEK
+        self.trades_this_week = 0
+
     
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
@@ -199,6 +219,21 @@ class Trader(object):
     def get_cur_unit(self):
         return self.cur_unit
 
+    def update_flag_window(self):
+        period_span = np.arange(np.max(self.current_period-self.reset_flag_window, 0), self.current_period+1)
+        trades_in_window = 0
+        for p in period_span:
+            if p in self.periods_traded_in:
+                trades_in_window += 1
+        if trades_in_window >= self.reset_flag_min_trades:
+            self.contract_this_period = True
+        else:
+            self.contract_this_period = False
+        
+        #print(period_span)
+        #print(self.periods_traded_in)
+        #print(self.contract_this_period)
+
 
 class ZID(Trader):
     """ 
@@ -219,12 +254,25 @@ class ZID(Trader):
             self.max_units = len(self.costs)
         return_msg = Message("Initial", self.name, self.name, "Initialized")
         self.returned_msg(return_msg)
-        ###
-        # self.set_contract_this_period(False)
+
+        # START flag 
+        if self.reset_flag_frequency == "START":
+            self.set_contract_this_period(False) # TODO: Consider case of trade THIS WEEK - rolling window
+        
+        # WEEK flag
+        if self.reset_flag_frequency == "WEEK":
+            if self.trades_this_week >= self.reset_flag_min_trades:
+                self.contract_this_period = True
+            else:
+                self.contract_this_period = False
+            self.trades_this_week = 0
+
         return return_msg
 
 
     def total_random_move(self, pl):
+        if self.reset_flag_on_random:
+            self.set_contract_this_period(False)
         direction_list = [-1, 0, +1]
         x_dir = rnd.choice(direction_list)
         y_dir = rnd.choice(direction_list)
@@ -254,7 +302,8 @@ class ZID(Trader):
                 y_dir = rnd.choice(direction_list)
                 movement_idea = (x_dir, y_dir)
         
-        #self.contract_this_period = False  # Use this to see if you get a contract this period
+        if self.reset_flag_frequency == "PERIOD":
+            self.contract_this_period = False  # Use this to see if you get a contract this period
         
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         self.returned_msg(return_msg)
@@ -389,6 +438,12 @@ class ZID(Trader):
         return_msg = Message("Update", self.name, "BARGAIN", 
                              "10 Units Updated")
         self.returned_msg(return_msg)
+
+        if self.reset_flag_frequency == "WEEK":
+            self.trades_this_week += 1
+        elif self.reset_flag_frequency == "WINDOW":
+            self.periods_traded_in.append(self.current_period)
+
         return return_msg
 
 class ZIDA(ZID):
@@ -404,6 +459,12 @@ class ZIDA(ZID):
         Stickiness to state quo is determined by the contract number in the last day
         """
 
+        # Check if traded enough in the last window 
+        if self.reset_flag_frequency == "WINDOW":
+            self.update_flag_window()
+
+            self.current_period += 1
+
         movement_idea = None # How to move
 
         # If draw below the error rate randomly, have a COMPLETELY random movement
@@ -411,12 +472,17 @@ class ZIDA(ZID):
         
         if np_rand.random() < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
-            self.set_contract_this_period(False)
         
         # otherwise employ the movement strategy
         else:
             if self.contract_this_period:
                 direction_list = [0, 0, 0]
+                
+                # MIN_AGENTS Move if less than required agents
+                if self.reset_flag_frequency == "MIN_AGENTS" and self.num_at_loc < self.reset_flag_min_agents:
+                    direction_list = [-1, 0, +1]    
+                    self.set_contract_this_period(False)
+
             else:
                 direction_list = [-1, 0, +1]
             if self.cur_unit > self.max_units:
@@ -427,7 +493,10 @@ class ZIDA(ZID):
                 movement_idea = (x_dir, y_dir)
         
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
-        #self.contract_this_period = False
+        
+        if self.reset_flag_frequency == "PERIOD":
+            self.contract_this_period = False
+        
         self.returned_msg(return_msg)
         return return_msg
 
@@ -528,6 +597,13 @@ class ZIDPA(ZIDP):
         """
         Make a move in a random direction but with bias to stay if you made a contract in the past.
         """
+
+        # Check if traded enough in the last window 
+        if self.reset_flag_frequency == "WINDOW":
+            self.update_flag_window()
+
+            self.current_period += 1
+
         movement_idea = None # How to move
 
         # If draw below the error rate randomly, have a COMPLETELY random movement
@@ -540,11 +616,14 @@ class ZIDPA(ZIDP):
         
         # otherwise employ the movement strategy
         else:
+            # Note: Contract this period is NEVER reset regularly - only if the random error is called
+            # Change: Check if there is not too few at location - if so, reset the contract_this_period
             if self.contract_this_period:
-                if self.num_at_loc > 1:
-                    direction_list = [0, 0, 0]
-                else:
-                    direction_list = [-1, 0, +1]
+                direction_list = [0, 0, 0]
+                
+                # MIN_AGENTS Move if less than required agents
+                if self.reset_flag_frequency == "MIN_AGENTS" and self.num_at_loc < self.reset_flag_min_agents:
+                    direction_list = [-1, 0, +1]    
                     self.set_contract_this_period(False)
             else:
                 direction_list = [-1, 0, +1]
@@ -557,7 +636,10 @@ class ZIDPA(ZIDP):
 
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         self.returned_msg(return_msg)
-        #self.contract_this_period = False
+
+        if self.reset_flag_frequency == "PERIOD":
+            self.contract_this_period = False
+
         return return_msg
 
 class ZIDPR(ZIDP):
@@ -574,28 +656,36 @@ class ZIDPR(ZIDP):
         Stickiness to state quo is determined by the contract number in the last day
         """
 
+        # Check if traded enough in the last window 
+        if self.reset_flag_frequency == "WINDOW":
+            self.update_flag_window()
+
+            self.current_period += 1
+
         movement_idea = None # How to move
 
         # If draw below the error rate randomly, have a COMPLETELY random movement
         np_rand = np.random.default_rng()
         if np_rand.random() < self.movement_error_rate:
             movement_idea = self.total_random_move(pl)
-            self.set_contract_this_period(False)
         
         # otherwise employ the movement strategy
         else:
             # Note: Contract this period is NEVER reset regularly - only if the random error is called
-            # Change: Check if at least one other at location - if not, reset the contract_this_period
+            # Change: Check if there is not too few at location - if so, reset the contract_this_period
             if self.contract_this_period:
-                if self.num_at_loc > 1:
-                    direction_list = [0, 0, 0]
-                else:
-                    direction_list = [-1, 0, +1]
+                direction_list = [0, 0, 0]
+
+                # MIN_AGENTS Move if less than required agents
+                if self.reset_flag_frequency == "MIN_AGENTS" and self.num_at_loc < self.reset_flag_min_agents:
+                    direction_list = [-1, 0, +1]    
                     self.set_contract_this_period(False)
+
             else:
                 direction_list = [-1, 0, +1]
+            
+            # Move away if too crowded (>2 traders)
             if self.num_at_loc > 2:
-                # Move away if too crowded (>2 traders)
                 #print('NUMBER AT g', self.num_at_loc)
                 direction_list = [-1, +1]
             if self.cur_unit > self.max_units:
@@ -607,5 +697,8 @@ class ZIDPR(ZIDP):
     
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         self.returned_msg(return_msg)
-        #self.contract_this_period = False
+
+        if self.reset_flag_frequency == "PERIOD":
+            self.contract_this_period = False
+
         return return_msg

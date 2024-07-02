@@ -1,0 +1,2772 @@
+\documentclass{article}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{subcaption}%
+\usepackage{graphicx}%
+%
+%
+%
+\begin{document}%
+\normalsize%
+\section{Results of Different Flag Resetting Rules for Traded Flag (i.e. "should move" rules)}%
+\label{sec:ResultsofDifferentFlagResettingRulesforTradedFlag(i.e.shouldmoverules)}%
+Number of Trials: 1 (line), 10 (boxplot)\newline%
+%
+Number of Weeks: 100 or 500\newline%
+%
+Event Period: 48 to 52, or 240 to 260\newline%
+%
+Number of Periods (Week Length): 7\newline%
+%
+Number of Trading Rounds (In Period): 5\newline%
+%
+Grid Size: 15\newline%
+%
+Number of Traders: 20\newline%
+%
+Number of Units: 8\newline%
+%
+Unit Valuation Range (uniform, symmetric): 200 to 600\newline%
+%
+Trader Types: ZIDPA (non{-}even), ZIDPR (event)\newline%
+%
+Event Compliance (Transformation) Rate: 100\%\newline%
+%
+Reset Flag on Movement Error (Random Move): True\newline%
+%
+\clearpage%
+\subsection{Flag Reset Rule None {-} If Trade Once, Stay Forever}%
+\label{subsec:FlagResetRuleNone{-}IfTradeOnce,StayForever}%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0000fr_None_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0000fr_None_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1000fr_None_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1000fr_None_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2000fr_None_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2000fr_None_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0005fr_None_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0005fr_None_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1005fr_None_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1005fr_None_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2005fr_None_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2005fr_None_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0013fr_None_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0013fr_None_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1013fr_None_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1013fr_None_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2013fr_None_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2013fr_None_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0021fr_None_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0021fr_None_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1021fr_None_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1021fr_None_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2021fr_None_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2021fr_None_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005}%
+\end{figure}
+
+%
+\clearpage%
+\subsection{Flag Reset Rule START {-} Each new week, start with traded=False}%
+\label{subsec:FlagResetRuleSTART{-}Eachnewweek,startwithtraded=False}%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0001fr_START_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0001fr_START_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1001fr_START_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1001fr_START_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2001fr_START_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2001fr_START_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0007fr_START_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0007fr_START_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1007fr_START_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1007fr_START_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2007fr_START_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2007fr_START_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0015fr_START_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0015fr_START_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1015fr_START_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1015fr_START_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2015fr_START_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2015fr_START_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0023fr_START_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0023fr_START_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1023fr_START_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1023fr_START_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2023fr_START_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2023fr_START_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005}%
+\end{figure}
+
+%
+\clearpage%
+\subsection{Flag Reset Rule MIN\_AGENTS {-} If less than minimium agents (2) at location, set traded=False}%
+\label{subsec:FlagResetRuleMINAGENTS{-}Iflessthanminimiumagents(2)atlocation,settraded=False}%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0003fr_MIN_AGENTS_ma_2_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0003fr_MIN_AGENTS_ma_2_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1003fr_MIN_AGENTS_ma_2_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1003fr_MIN_AGENTS_ma_2_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2003fr_MIN_AGENTS_ma_2_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2003fr_MIN_AGENTS_ma_2_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0011fr_MIN_AGENTS_ma_2_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0011fr_MIN_AGENTS_ma_2_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1011fr_MIN_AGENTS_ma_2_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1011fr_MIN_AGENTS_ma_2_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2011fr_MIN_AGENTS_ma_2_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2011fr_MIN_AGENTS_ma_2_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0019fr_MIN_AGENTS_ma_2_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0019fr_MIN_AGENTS_ma_2_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1019fr_MIN_AGENTS_ma_2_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1019fr_MIN_AGENTS_ma_2_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2019fr_MIN_AGENTS_ma_2_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2019fr_MIN_AGENTS_ma_2_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0027fr_MIN_AGENTS_ma_2_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0027fr_MIN_AGENTS_ma_2_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1027fr_MIN_AGENTS_ma_2_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1027fr_MIN_AGENTS_ma_2_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Agents 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2027fr_MIN_AGENTS_ma_2_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2027fr_MIN_AGENTS_ma_2_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Agents 2}%
+\end{figure}
+
+%
+\clearpage%
+\subsection{Flag Reset Rule WEEK {-} Each new week, stay if reached min number of trades LAST week; record number of trades this week}%
+\label{subsec:FlagResetRuleWEEK{-}Eachnewweek,stayifreachedminnumberoftradesLASTweekrecordnumberoftradesthisweek}%
+Iterates over minimum of 1, 2, or 3 trades in One Week (7{-}periods, non{-}rolling)%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0028fr_WEEK_mt_1_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0028fr_WEEK_mt_1_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1028fr_WEEK_mt_1_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1028fr_WEEK_mt_1_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2028fr_WEEK_mt_1_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2028fr_WEEK_mt_1_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0032fr_WEEK_mt_1_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0032fr_WEEK_mt_1_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1032fr_WEEK_mt_1_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1032fr_WEEK_mt_1_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2032fr_WEEK_mt_1_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2032fr_WEEK_mt_1_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0038fr_WEEK_mt_1_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0038fr_WEEK_mt_1_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1038fr_WEEK_mt_1_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1038fr_WEEK_mt_1_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2038fr_WEEK_mt_1_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2038fr_WEEK_mt_1_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0044fr_WEEK_mt_1_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0044fr_WEEK_mt_1_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1044fr_WEEK_mt_1_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1044fr_WEEK_mt_1_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2044fr_WEEK_mt_1_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2044fr_WEEK_mt_1_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 1}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0029fr_WEEK_mt_2_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0029fr_WEEK_mt_2_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1029fr_WEEK_mt_2_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1029fr_WEEK_mt_2_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2029fr_WEEK_mt_2_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2029fr_WEEK_mt_2_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0034fr_WEEK_mt_2_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0034fr_WEEK_mt_2_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1034fr_WEEK_mt_2_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1034fr_WEEK_mt_2_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2034fr_WEEK_mt_2_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2034fr_WEEK_mt_2_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0040fr_WEEK_mt_2_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0040fr_WEEK_mt_2_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1040fr_WEEK_mt_2_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1040fr_WEEK_mt_2_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2040fr_WEEK_mt_2_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2040fr_WEEK_mt_2_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0046fr_WEEK_mt_2_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0046fr_WEEK_mt_2_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1046fr_WEEK_mt_2_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1046fr_WEEK_mt_2_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2046fr_WEEK_mt_2_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2046fr_WEEK_mt_2_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 2}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0030fr_WEEK_mt_3_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0030fr_WEEK_mt_3_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1030fr_WEEK_mt_3_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1030fr_WEEK_mt_3_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2030fr_WEEK_mt_3_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2030fr_WEEK_mt_3_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0036fr_WEEK_mt_3_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0036fr_WEEK_mt_3_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1036fr_WEEK_mt_3_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1036fr_WEEK_mt_3_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2036fr_WEEK_mt_3_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2036fr_WEEK_mt_3_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0042fr_WEEK_mt_3_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0042fr_WEEK_mt_3_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1042fr_WEEK_mt_3_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1042fr_WEEK_mt_3_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2042fr_WEEK_mt_3_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2042fr_WEEK_mt_3_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0048fr_WEEK_mt_3_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0048fr_WEEK_mt_3_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1048fr_WEEK_mt_3_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1048fr_WEEK_mt_3_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2048fr_WEEK_mt_3_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2048fr_WEEK_mt_3_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 3}%
+\end{figure}
+
+%
+\clearpage%
+\subsection{Flag Reset Rule WINDOW {-} Stay if reached min number of trades in a rolling window}%
+\label{subsec:FlagResetRuleWINDOW{-}Stayifreachedminnumberoftradesinarollingwindow}%
+Iterates over minimum of 1, 2, or 3 trades in each window. Window sizes: 7, 14, 21 periods.%
+\subsection{Window size 7}%
+\label{subsec:Windowsize7}%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0049fr_WINDOW_mt_1_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0049fr_WINDOW_mt_1_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1049fr_WINDOW_mt_1_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1049fr_WINDOW_mt_1_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2049fr_WINDOW_mt_1_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2049fr_WINDOW_mt_1_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0059fr_WINDOW_mt_1_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0059fr_WINDOW_mt_1_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1059fr_WINDOW_mt_1_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1059fr_WINDOW_mt_1_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2059fr_WINDOW_mt_1_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2059fr_WINDOW_mt_1_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0077fr_WINDOW_mt_1_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0077fr_WINDOW_mt_1_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1077fr_WINDOW_mt_1_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1077fr_WINDOW_mt_1_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2077fr_WINDOW_mt_1_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2077fr_WINDOW_mt_1_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0095fr_WINDOW_mt_1_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0095fr_WINDOW_mt_1_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1095fr_WINDOW_mt_1_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1095fr_WINDOW_mt_1_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2095fr_WINDOW_mt_1_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2095fr_WINDOW_mt_1_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 1, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0052fr_WINDOW_mt_2_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0052fr_WINDOW_mt_2_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1052fr_WINDOW_mt_2_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1052fr_WINDOW_mt_2_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2052fr_WINDOW_mt_2_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2052fr_WINDOW_mt_2_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0065fr_WINDOW_mt_2_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0065fr_WINDOW_mt_2_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1065fr_WINDOW_mt_2_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1065fr_WINDOW_mt_2_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2065fr_WINDOW_mt_2_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2065fr_WINDOW_mt_2_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0083fr_WINDOW_mt_2_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0083fr_WINDOW_mt_2_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1083fr_WINDOW_mt_2_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1083fr_WINDOW_mt_2_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2083fr_WINDOW_mt_2_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2083fr_WINDOW_mt_2_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0101fr_WINDOW_mt_2_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0101fr_WINDOW_mt_2_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1101fr_WINDOW_mt_2_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1101fr_WINDOW_mt_2_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2101fr_WINDOW_mt_2_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2101fr_WINDOW_mt_2_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 2, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0055fr_WINDOW_mt_3_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0055fr_WINDOW_mt_3_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1055fr_WINDOW_mt_3_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1055fr_WINDOW_mt_3_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2055fr_WINDOW_mt_3_ws_7_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2055fr_WINDOW_mt_3_ws_7_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0071fr_WINDOW_mt_3_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0071fr_WINDOW_mt_3_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1071fr_WINDOW_mt_3_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1071fr_WINDOW_mt_3_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2071fr_WINDOW_mt_3_ws_7_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2071fr_WINDOW_mt_3_ws_7_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0089fr_WINDOW_mt_3_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0089fr_WINDOW_mt_3_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1089fr_WINDOW_mt_3_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1089fr_WINDOW_mt_3_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2089fr_WINDOW_mt_3_ws_7_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2089fr_WINDOW_mt_3_ws_7_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0107fr_WINDOW_mt_3_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0107fr_WINDOW_mt_3_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1107fr_WINDOW_mt_3_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1107fr_WINDOW_mt_3_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2107fr_WINDOW_mt_3_ws_7_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2107fr_WINDOW_mt_3_ws_7_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 3, Window Size 7}%
+\end{figure}
+
+%
+\clearpage
+
+%
+\subsection{Window size 14}%
+\label{subsec:Windowsize14}%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0050fr_WINDOW_mt_1_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0050fr_WINDOW_mt_1_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1050fr_WINDOW_mt_1_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1050fr_WINDOW_mt_1_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2050fr_WINDOW_mt_1_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2050fr_WINDOW_mt_1_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0061fr_WINDOW_mt_1_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0061fr_WINDOW_mt_1_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1061fr_WINDOW_mt_1_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1061fr_WINDOW_mt_1_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2061fr_WINDOW_mt_1_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2061fr_WINDOW_mt_1_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0079fr_WINDOW_mt_1_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0079fr_WINDOW_mt_1_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1079fr_WINDOW_mt_1_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1079fr_WINDOW_mt_1_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2079fr_WINDOW_mt_1_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2079fr_WINDOW_mt_1_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0097fr_WINDOW_mt_1_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0097fr_WINDOW_mt_1_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1097fr_WINDOW_mt_1_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1097fr_WINDOW_mt_1_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2097fr_WINDOW_mt_1_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2097fr_WINDOW_mt_1_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 1, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0053fr_WINDOW_mt_2_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0053fr_WINDOW_mt_2_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1053fr_WINDOW_mt_2_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1053fr_WINDOW_mt_2_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2053fr_WINDOW_mt_2_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2053fr_WINDOW_mt_2_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0067fr_WINDOW_mt_2_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0067fr_WINDOW_mt_2_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1067fr_WINDOW_mt_2_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1067fr_WINDOW_mt_2_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2067fr_WINDOW_mt_2_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2067fr_WINDOW_mt_2_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0085fr_WINDOW_mt_2_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0085fr_WINDOW_mt_2_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1085fr_WINDOW_mt_2_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1085fr_WINDOW_mt_2_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2085fr_WINDOW_mt_2_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2085fr_WINDOW_mt_2_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0103fr_WINDOW_mt_2_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0103fr_WINDOW_mt_2_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1103fr_WINDOW_mt_2_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1103fr_WINDOW_mt_2_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2103fr_WINDOW_mt_2_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2103fr_WINDOW_mt_2_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 2, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0056fr_WINDOW_mt_3_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0056fr_WINDOW_mt_3_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1056fr_WINDOW_mt_3_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1056fr_WINDOW_mt_3_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2056fr_WINDOW_mt_3_ws_14_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2056fr_WINDOW_mt_3_ws_14_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0073fr_WINDOW_mt_3_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0073fr_WINDOW_mt_3_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1073fr_WINDOW_mt_3_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1073fr_WINDOW_mt_3_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2073fr_WINDOW_mt_3_ws_14_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2073fr_WINDOW_mt_3_ws_14_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0091fr_WINDOW_mt_3_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0091fr_WINDOW_mt_3_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1091fr_WINDOW_mt_3_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1091fr_WINDOW_mt_3_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2091fr_WINDOW_mt_3_ws_14_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2091fr_WINDOW_mt_3_ws_14_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0109fr_WINDOW_mt_3_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0109fr_WINDOW_mt_3_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1109fr_WINDOW_mt_3_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1109fr_WINDOW_mt_3_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2109fr_WINDOW_mt_3_ws_14_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2109fr_WINDOW_mt_3_ws_14_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 3, Window Size 14}%
+\end{figure}
+
+%
+\clearpage
+
+%
+\subsection{Window size 21}%
+\label{subsec:Windowsize21}%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0051fr_WINDOW_mt_1_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0051fr_WINDOW_mt_1_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1051fr_WINDOW_mt_1_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1051fr_WINDOW_mt_1_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2051fr_WINDOW_mt_1_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2051fr_WINDOW_mt_1_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0063fr_WINDOW_mt_1_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0063fr_WINDOW_mt_1_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1063fr_WINDOW_mt_1_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1063fr_WINDOW_mt_1_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2063fr_WINDOW_mt_1_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2063fr_WINDOW_mt_1_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0081fr_WINDOW_mt_1_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0081fr_WINDOW_mt_1_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1081fr_WINDOW_mt_1_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1081fr_WINDOW_mt_1_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2081fr_WINDOW_mt_1_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2081fr_WINDOW_mt_1_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0099fr_WINDOW_mt_1_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0099fr_WINDOW_mt_1_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1099fr_WINDOW_mt_1_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1099fr_WINDOW_mt_1_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2099fr_WINDOW_mt_1_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2099fr_WINDOW_mt_1_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 1, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0054fr_WINDOW_mt_2_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0054fr_WINDOW_mt_2_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1054fr_WINDOW_mt_2_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1054fr_WINDOW_mt_2_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2054fr_WINDOW_mt_2_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2054fr_WINDOW_mt_2_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0069fr_WINDOW_mt_2_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0069fr_WINDOW_mt_2_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1069fr_WINDOW_mt_2_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1069fr_WINDOW_mt_2_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2069fr_WINDOW_mt_2_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2069fr_WINDOW_mt_2_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0087fr_WINDOW_mt_2_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0087fr_WINDOW_mt_2_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1087fr_WINDOW_mt_2_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1087fr_WINDOW_mt_2_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2087fr_WINDOW_mt_2_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2087fr_WINDOW_mt_2_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0105fr_WINDOW_mt_2_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0105fr_WINDOW_mt_2_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1105fr_WINDOW_mt_2_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1105fr_WINDOW_mt_2_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2105fr_WINDOW_mt_2_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2105fr_WINDOW_mt_2_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 2, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{0057fr_WINDOW_mt_3_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{0057fr_WINDOW_mt_3_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{1057fr_WINDOW_mt_3_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{1057fr_WINDOW_mt_3_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{2057fr_WINDOW_mt_3_ws_21_er_0_cr_1_t1.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{2057fr_WINDOW_mt_3_ws_21_er_0_cr_1_t10.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0075fr_WINDOW_mt_3_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0075fr_WINDOW_mt_3_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1075fr_WINDOW_mt_3_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1075fr_WINDOW_mt_3_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.05, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2075fr_WINDOW_mt_3_ws_21_er_0.05_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2075fr_WINDOW_mt_3_ws_21_er_0.05_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.05, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0093fr_WINDOW_mt_3_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0093fr_WINDOW_mt_3_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1093fr_WINDOW_mt_3_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1093fr_WINDOW_mt_3_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.005, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2093fr_WINDOW_mt_3_ws_21_er_0.005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2093fr_WINDOW_mt_3_ws_21_er_0.005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.005, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{0111fr_WINDOW_mt_3_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{0111fr_WINDOW_mt_3_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{100 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{1111fr_WINDOW_mt_3_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{1111fr_WINDOW_mt_3_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 48{-}52, Movement Error Rate 0.0005, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+
+
+\begin{figure}[!htb]%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[width=\linewidth]{{2111fr_WINDOW_mt_3_ws_21_er_0.0005_cr_1_t1_fr_T}.png}%
+\caption{One Trial}%
+\end{subfigure}%
+\begin{subfigure}[b]{0.45\linewidth}%
+\includegraphics[clip,width=\linewidth,trim=0 4cm 0 0]{{2111fr_WINDOW_mt_3_ws_21_er_0.0005_cr_1_t10_fr_T}.png}%
+\caption{10 Trials}%
+\end{subfigure}%
+\caption{500 Weeks, Event 240{-}260, Movement Error Rate 0.0005, Min Trades 3, Window Size 21}%
+\end{figure}
+
+%
+\clearpage
+
+%
+\end{document}

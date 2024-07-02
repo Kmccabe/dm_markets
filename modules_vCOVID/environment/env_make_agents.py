@@ -16,7 +16,9 @@ debug = False
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
     def __init__(self, num_traders, trader_types, num_units,
-                 grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0):
+                 grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
+                 reset_flag_frequency=None, reset_flag_min_agents=None, reset_flag_on_random=None,
+                 reset_flag_window=None, reset_flag_min_trades=1):
 
         self.trader_types = trader_types     # list of two trader types, should be tuple
         self.num_traders = num_traders       # number of traders divisible by two
@@ -29,6 +31,12 @@ class MakeAgents(object):
         self.location_list = []
         self.market = None
         self.movement_error_rate = movement_error_rate
+        self.reset_flag_frequency = reset_flag_frequency
+        self.reset_flag_min_agents = reset_flag_min_agents
+        self.reset_flag_on_random = reset_flag_on_random
+
+        self.reset_flag_window = reset_flag_window
+        self.reset_flag_min_trades = reset_flag_min_trades
         
 
     def utility(self, q, m, v, p):
@@ -161,7 +169,13 @@ class MakeAgents(object):
             location = self.location_list[t]   # get initial location
             # initialize agent with info constructed above
             agent = agent_model(name, trader_role, payoff, money, location, 
-                                lower_bound = self.lb, upper_bound = self.ub, movement_error_rate=self.movement_error_rate)
+                                lower_bound = self.lb, upper_bound = self.ub, 
+                                movement_error_rate=self.movement_error_rate,
+                                reset_flag_frequency=self.reset_flag_frequency, 
+                                reset_flag_min_agents=self.reset_flag_min_agents,
+                                reset_flag_on_random=self.reset_flag_on_random,
+                                reset_flag_window = self.reset_flag_window,
+                                reset_flag_min_trades = self.reset_flag_min_trades)
             # Make Value list or cost list
             if agent.get_type() == "BUYER":
                 values = self.gen_res_values(True)
