@@ -48,6 +48,8 @@ class Trader(object):
         self.reset_flag_on_random = reset_flag_on_random
 
         # Used if reset_flag_frequency = WINDOW
+        self.current_period = None
+        self.periods_traded_in = None
         self.reset_flag_window = reset_flag_window
         if self.reset_flag_frequency == "WINDOW":
             if self.reset_flag_window is None:
