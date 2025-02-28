@@ -63,7 +63,7 @@ class ProcessResults(object):
             trader_surplus = 0
             unit = 0
             for contract in self.contracts:
-                round_number, price, buyer_name, seller_name, b_cu, b_val, s_cos, s_cu = contract
+                round_number, price, buyer_name, seller_name, b_cu, b_val, s_cos, s_cu, b_loc, s_loc = contract
                 surplus = 0
                 if trader.type == "BUYER":
                     res = trader.get_values()

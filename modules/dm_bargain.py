@@ -73,6 +73,13 @@ class Bargain(object):
 
         # save extended contract
         ex_contract = (round, price, buyer_id, seller_id, b_cur_unit, b_cur_value, s_cur_unit, s_cur_cost)
+
+        # get locations of contracting agents
+        #b_location = buyer_agent.get_location()
+        #s_location = seller_agent.get_location()
+
+        # save (even more) extended contract
+        #ex_contract = (round, price, buyer_id, seller_id, b_cur_unit, b_cur_value, s_cur_unit, s_cur_cost, b_location, s_location)
         self.contracts.append(ex_contract)
 
         if self.debug:
