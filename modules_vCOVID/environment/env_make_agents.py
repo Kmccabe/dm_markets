@@ -15,13 +15,13 @@ debug = False
 
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
-    def __init__(self, num_traders, trader_types, num_units,
+    def __init__(self, num_traders, trader_class_count, num_units,
                  grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
                  reset_flag_frequency=None, reset_flag_min_agents=None, reset_flag_on_random=None,
-                 reset_flag_window=None, reset_flag_min_trades=1):
+                 reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None):
 
-        self.trader_types = trader_types     # list of two trader types, should be tuple
-        self.num_traders = num_traders       # number of traders divisible by two
+        self.trader_class_count = trader_class_count     # list of trader types, should be tuple
+        self.num_traders = num_traders       # number of traders, summed across types
         self.num_units = num_units           # number of units, same for all traders
         self.debug = debug                   # if True print additional information
         self.grid_size = grid_size           # grid is grid_size x grid_size
@@ -37,7 +37,19 @@ class MakeAgents(object):
 
         self.reset_flag_window = reset_flag_window
         self.reset_flag_min_trades = reset_flag_min_trades
-        
+
+        # Added to allow different mix of agents than 1/2 Buyers and 1/2 Sellers
+        # If not provided, uses default of 1/2 B and 1/2 S - backwards compatibility
+        if agent_types is None:
+            self.agent_types = ('B', 'S')
+            self.agent_type_counts = (self.num_traders//2, self.num_traders//2) # // for clarity - should always be int anyhow
+            if num_traders%2 != 0:
+                raise ValueError("The number of agents passed does not conform to the default agent types requirement of being divisible by 2. If you want custom agent type counts, pass in agent_types and agent_type_counts.")
+        else:
+            if agent_type_counts is None:
+                raise ValueError("You must pass the agent_type_counts in if you want to specify custom agent_types.")
+            self.agent_types = agent_types
+            self.agent_type_counts = agent_type_counts
 
     def utility(self, q, m, v, p):
         """Calculates utility payoff
@@ -136,13 +148,15 @@ class MakeAgents(object):
 
         if debug:
             print("At make agents in make_env")
-            print(f"\tMaking off of {self.trader_types}")
+            print(f"\tMaking off of {self.trader_class_count}")
 
         self.make_locations() # Put traders at random grid point
         # replicate trade_object total_traders//2 times and put in traders list
         # make a shuffled list of trader objects for trader roles
         traders = []
-        for agent_name_number in self.trader_types:
+        print("XXX", self.trader_class_count)
+        for agent_name_number in self.trader_class_count:
+            print("XXY", agent_name_number) # TODO here
             t_name, t_num = agent_name_number
             for k in range(t_num):
                 traders.append(t_name)
@@ -150,7 +164,8 @@ class MakeAgents(object):
         # randomize trader strategies one for each agent
         np.random.shuffle(traders)
 
-        # Assign trader objects to buyer/seller roles and assign values and costs
+        # Assign trader objects to agent type roles and assign values and costs
+        self.agent_types = None # TODO here
         self.agents = []
         for t in range(self.num_traders):
             # make buyer and seller name, intitialize type, set money endowment
@@ -227,7 +242,7 @@ if __name__ == "__main__":
     ZID = dm_agents.ZID
     ZIDA = dm_agents.ZIDA
 
-    trader_objects = [(ZID, 2), (ZIDA, 8)]     # List of artificial traders length 2
+    trader_class_count = [(ZID, 2), (ZIDA, 8)]     # List of artificial traders length 2
     debug = False
     num_traders = 10                  # traders (multiple of two)
     num_units = 4                     # Number of units per trader
@@ -240,7 +255,7 @@ if __name__ == "__main__":
     #
 
     # set up agents
-    agent_maker = MakeAgents(num_traders, trader_objects, num_units, grid_size, lb, ub, debug)
+    agent_maker = MakeAgents(num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
     agent_maker.make_test_agents()
     agents = agent_maker.get_agents()
     agent_maker.print_agents(agents)
@@ -256,7 +271,7 @@ if __name__ == "__main__":
     #
 
     # set up agents
-    agent_r = MakeAgents(num_traders, trader_objects, num_units, grid_size, lb, ub, debug)
+    agent_r = MakeAgents(num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
     agent_r.make_agents()
     agents = agent_r.get_agents()
     agent_r.print_agents(agents)

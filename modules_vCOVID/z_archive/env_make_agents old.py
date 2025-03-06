@@ -1,3 +1,7 @@
+"""
+TODO check is this version is necessary still or should be just archived
+"""
+
 import random as rnd
 import operator
 import matplotlib.pyplot as plt                 # import matplotlib
@@ -13,10 +17,10 @@ import dm_env as env
 
 class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
-    def __init__(self, num_traders, trader_types, num_units,
+    def __init__(self, num_traders, trader_class_count, num_units,
                  grid_size, lower_bound, upper_bound, debug=False):
 
-        self.trader_types = trader_types     # list of two trader types, should be tuple
+        self.trader_class_count = trader_class_count     # list of two trader types, should be tuple
         self.num_traders = num_traders       # number of traders divisible by two
         self.num_units = num_units           # number of units, same for all traders
         self.debug = debug                   # if True print additional information
@@ -126,7 +130,7 @@ class MakeAgents(object):
         # make a shuffled list of trader objects for trader roles
         traders = []
         for k in range(self.num_traders // 2):
-            traders = traders + self.trader_types
+            traders = traders + self.trader_class_count
         # randomize trader startegies one for each agent
         np.random.shuffle(traders)
 
@@ -202,7 +206,7 @@ if __name__ == "__main__":
     ZID = dm_agents.ZID
     ZIDA = dm_agents.ZIDA
 
-    trader_objects = [ZID, ZIDA]     # List of artificial traders length 2
+    trader_class_count = ((ZID, 5), (ZIDA, 5))     # List of artificial traders length 2
     debug = False
     num_traders = 10                  # traders (multiple of two)
     num_units = 4                     # Number of units per trader
@@ -215,7 +219,7 @@ if __name__ == "__main__":
     #
 
     # set up agents
-    agent_maker = MakeAgents(num_traders, trader_objects, num_units, grid_size, lb, ub, debug)
+    agent_maker = MakeAgents(num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
     agent_maker.make_test_agents()
     agents = agent_maker.get_agents()
     agent_maker.print_agents(agents)
@@ -231,7 +235,7 @@ if __name__ == "__main__":
     #
 
     # set up agents
-    agent_r = MakeAgents(num_traders, trader_objects, num_units, grid_size, lb, ub, debug)
+    agent_r = MakeAgents(num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
     agent_r.make_agents()
     agents = agent_r.get_agents()
     agent_r.print_agents(agents)

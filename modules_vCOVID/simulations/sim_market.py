@@ -10,7 +10,7 @@ import dm_process_results as pr
 debug = False  # if True prints debug info on terminal
 ZID = dm_agents.ZID # an agent strategy
 ZIDA = dm_agents.ZIDA # another agent strategy
-trader_objects = [ZID, ZID] # used to compare up to two agent strategies, 
+trader_class_count = ((ZID, 5), (ZID, 5)) # used to compare up to two agent strategies, 
                             # but in this case the same
 num_traders = 10 # number of traders
 num_units = 8 # number of units buyers can buy and sellers can sell.  
@@ -22,7 +22,7 @@ grid_size = 4 # grid is grid_size x grid_size
 # Make Agent Traders
 #
 movement_error_rate = 0
-agent_maker = mkt.MakeAgents(num_traders, trader_objects, num_units, 
+agent_maker = mkt.MakeAgents(num_traders, trader_class_count, num_units, 
                                 grid_size, lb, ub, debug, movement_error_rate)
 #agent_maker.make_test_agents()
 agent_maker.make_agents()

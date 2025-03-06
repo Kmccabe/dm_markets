@@ -22,7 +22,7 @@ def make_sim(sim_name, num_periods, num_weeks,
              num_rounds, grid_size,
              num_traders, num_units,
              lower_bound, upper_bound,
-             trader_objects):
+             trader_class_count):
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
     """ 
@@ -31,7 +31,7 @@ def make_sim(sim_name, num_periods, num_weeks,
     data = {}
 
     # make agents
-    agent_maker = mkt.MakeAgents(num_traders, trader_objects, num_units, 
+    agent_maker = mkt.MakeAgents(num_traders, trader_class_count, num_units, 
                                 grid_size, lower_bound, upper_bound)
     agent_maker.make_agents()
     agent_maker.set_locations(grid_size)
@@ -74,7 +74,7 @@ def make_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
                     num_rounds, grid_size,
                     num_traders, num_units,
                     lower_bound, upper_bound,
-                    trader_objects):
+                    trader_class_count):
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
     """ 
@@ -83,14 +83,14 @@ def make_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
     sim_data['parms'] = {'sim_name': sim_name, 'num_traders': num_traders, 'num_units': num_units,
                          'num_weeks': num_weeks, 'num_periods': num_periods, 'num_rounds': num_rounds,
                          'grid_size': grid_size, 'lower_bound':lower_bound, 'upper_bound': upper_bound,
-                         'trader_objects': trader_objects}
+                         'trader_class_count': trader_class_count}
 
     for trial in range(num_trials):
         sim_data[trial]  = make_sim(sim_name, num_periods, num_weeks,
                                     num_rounds, grid_size,
                                     num_traders, num_units,
                                     lower_bound, upper_bound,
-                                    trader_objects)
+                                    trader_class_count)
     return sim_data
 
 # Analyze Efficiency Data
@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
     num_trials = 5
     ZID = dm_agents.ZID   # name of agent class
-    trader_objects =[(ZID,10), (ZID,10)] # run simulation with just ZID agents
+    trader_class_count =[(ZID,10), (ZID,10)] # run simulation with just ZID agents
 
     sim_name = "ZID MONTE-CARLO"
     num_periods = 7
@@ -176,7 +176,7 @@ if __name__ == "__main__":
                                 num_rounds, grid_size,
                                 num_traders, num_units,
                                 lower_bound, upper_bound,
-                                trader_objects)
+                                trader_class_count)
     """
     # show data_structure for data_table
     print(trial, 'parms', data_table['parms'])

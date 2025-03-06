@@ -50,6 +50,7 @@ class ProcessResults(object):
 
     def calc_efficiency(self):
         """
+        Calculate the efficiency for trader types. TODO expand to beyond buyer and seller types.
         """
 
         self.buyer_surplus = 0
@@ -177,7 +178,7 @@ if __name__ == "__main__":
     ZID = dm_agents.ZID
     ZIDA = dm_agents.ZIDA
 
-    trader_objects = [ZID, ZID]     # List of artificial traders length 2
+    trader_class_count = ((ZID, 4), (ZID, 4))     # List of artificial traders length 2
     debug = False
     num_traders = 10                  # traders (multiple of two)
     num_units = 8                     # Number of units per trader
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     #
 
     # set up agents
-    agent_maker = mkt.MakeAgents(num_traders, trader_objects, num_units, 
+    agent_maker = mkt.MakeAgents(num_traders, trader_class_count, num_units, 
                                  grid_size, lb, ub, debug)
     #agent_maker.make_test_agents()
     agent_maker.make_agents()
