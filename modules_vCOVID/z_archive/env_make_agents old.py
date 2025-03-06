@@ -156,10 +156,11 @@ class MakeAgents(object):
             agent = agent_model(name, trader_type, payoff, money, location, 
                                 lower_bound = self.lb, upper_bound = self.ub)
             # Make Value list or cost list
-            if agent.get_type() == "BUYER":
+            ag_typ = agent.get_type()
+            if ag_typ == "BUYER" or ag_typ == "B":
                 values = self.gen_res_values(True)
                 agent.set_values(values)
-            else:
+            elif ag_typ == "SELLER" or ag_typ == "S":
                 costs = self.gen_res_values(False)
                 agent.set_costs(costs)
             # add agent to self.agents list
@@ -180,10 +181,11 @@ class MakeAgents(object):
         num_side = self.num_traders // 2
         self.market = env.SpotMarketEnvironment(name = market_name, num_buyers = num_side, num_sellers = num_side)
         for index, trader in enumerate(self.agents):
-            if trader.get_type() == "BUYER":
+            t_typ = trader.get_type()
+            if t_typ == "BUYER" or t_typ == "B":
                 values = trader.get_values()
                 self.market.add_buyer(index, values)
-            else:  # this is a seller
+            elif t_typ == "SELLER" or t_typ == "S":  # this is a seller
                 seller_index = index - num_side  # sellers start at 0 in market environment
                 costs = trader.get_costs()
                 self.market.add_seller(seller_index, costs)

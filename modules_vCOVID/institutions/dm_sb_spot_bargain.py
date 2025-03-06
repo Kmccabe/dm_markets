@@ -206,10 +206,10 @@ class SB_Spot_Bargain(Base_Bargain):
         prices = []
         for contract in self.contracts:
             round_t, price, buyer_id, seller_id = contract
-            if typ == "BUYER":
+            if typ == "BUYER" or typ == "B":
                 if name == buyer_id:
                     prices.append(price)
-            elif typ == "SELLER":
+            elif typ == "SELLER" or typ == "S":
                 if name == seller_id:
                     prices.append(price)
         return prices
@@ -218,12 +218,12 @@ class SB_Spot_Bargain(Base_Bargain):
         print(f"PAYOFFS")
         print("--------")
         for agent in self.agents:
-            if agent.type == "BUYER":
+            if agent.type == "BUYER" or agent.type == "B":
                 prices = self.get_prices(agent.type, agent.name)
                 utility = agent.get_payoff(prices)
                 print(f"Buyer  {agent.name} has utility {utility}")
         for agent in self.agents:
-            if agent.type == "SELLER":
+            if agent.type == "SELLER" or agent.type == "S":
                 prices = self.get_prices(agent.type, agent.name)
                 profit = agent.get_payoff(prices)
                 print(f"Seller {agent.name} has profit  {profit}")

@@ -49,9 +49,9 @@ class SimPeriod(object):
         buyer_found = False
         seller_found = False
         for agent in agents:
-            if agent.type == "BUYER":
+            if agent.type == "BUYER" or agent.type == "B":
                 buyer_found = True
-            if agent.type == "SELLER":
+            if agent.type == "SELLER" or agent.type == "S":
                 seller_found = True
         if buyer_found and seller_found:
             match = True

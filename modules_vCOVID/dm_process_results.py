@@ -66,7 +66,8 @@ class ProcessResults(object):
             for contract in self.contracts:
                 round_number, price, buyer_name, seller_name, b_cu, b_val, s_cos, s_cu, b_loc, s_loc = contract
                 surplus = 0
-                if trader.type == "BUYER":
+                t_typ = trader.type
+                if t_typ == "BUYER" or t_typ == "B":
                     res = trader.get_values()
                     if trader.name == buyer_name:
                         surplus = res[unit] - price
@@ -77,7 +78,7 @@ class ProcessResults(object):
                         #self.type_surplus[self.current_week][trader_strategy] = \
                             #self.type_surplus[self.current_week].get(trader_strategy, 0) + surplus
                         #print(res, surplus, self.buyer_surplus)
-                else:
+                elif t_typ == "SELLER" or t_typ == "S":
                     costs = trader.get_costs()
                     if trader.name == seller_name:
                         surplus = price - costs[unit]

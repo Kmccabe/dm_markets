@@ -2,6 +2,7 @@ import random as rnd
 import operator
 import matplotlib.pyplot as plt                 # import matplotlib
 import numpy as np                              # import numpy
+import types
 import time
 import copy
 import os
@@ -18,7 +19,7 @@ class MakeAgents(object):
     def __init__(self, num_traders, trader_class_count, num_units,
                  grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
                  reset_flag_frequency=None, reset_flag_min_agents=None, reset_flag_on_random=None,
-                 reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None):
+                 reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None):
 
         self.trader_class_count = trader_class_count     # list of trader types, should be tuple
         self.num_traders = num_traders       # number of traders, summed across types
@@ -43,6 +44,8 @@ class MakeAgents(object):
         if agent_types is None:
             self.agent_types = ('B', 'S')
             self.agent_type_counts = (self.num_traders//2, self.num_traders//2) # // for clarity - should always be int anyhow
+            agent_endows = (500, 0) # Buyers start with 500 cash, sellers 0
+            agent_payoffs = (self.utility, self.profit) # Buyers have utility, sellers have profit
             if num_traders%2 != 0:
                 raise ValueError("The number of agents passed does not conform to the default agent types requirement of being divisible by 2. If you want custom agent type counts, pass in agent_types and agent_type_counts.")
         else:
@@ -50,6 +53,66 @@ class MakeAgents(object):
                 raise ValueError("You must pass the agent_type_counts in if you want to specify custom agent_types.")
             self.agent_types = agent_types
             self.agent_type_counts = agent_type_counts
+        
+        # Save agent endowments (money) that they will begin with
+        if agent_endows is None:
+            raise ValueError("Must specify custom agent_endows when specifying custom agent_types.")
+        elif type(agent_endows) is int or type(agent_endows) is float: # Symmetric endowments
+            self.agent_endows = (agent_endows,)*self.num_traders
+        elif len(agent_endows) == self.num_traders: # Individual endowments per agent
+            self.agent_endows = agent_endows
+        elif self.agent_types is not None and len(agent_endows) == len(self.agent_types): # Endowments based on type of agent
+            ag_endows = np.zeros(self.num_traders)
+            t = 0
+            for i in range(len(self.agent_types)):
+                typ_num = self.agent_type_counts[i]
+                typ_endow = agent_endows[i]
+                for j in range(typ_num):
+                    ag_endows[t] = typ_endow
+                    t += 1
+            self.agent_endows = tuple(ag_endows)
+        else:
+            raise ValueError("Cannot pass a list of agent_endows with a length not equal to number of types or number of agents.")
+
+        # Save agent payoffs that they will optimize (or be evaluated against)
+        # Note: not duck-typed
+        if agent_payoffs is None:
+            raise ValueError("Must specify custom agent_payoffs when specifying custom agent_types.")
+        elif type(agent_payoffs) is str and (agent_payoffs=="utility" or agent_payoffs=="profit"):
+            if agent_payoffs=="utility":
+                self.agent_payoffs = (self.utility,)*self.num_traders
+            elif agent_payoffs=="profit":
+                self.agent_payoffs = (self.profit,)*self.num_traders
+        elif type(agent_payoffs) is types.FunctionType:
+            self.agent_payoffs = (agent_payoffs, )*self.num_traders
+        elif type(agent_payoffs) is tuple or type(agent_payoffs) is list:
+            ag_payoffs = []
+            p1 = agent_payoffs[0]
+            if len(agent_payoffs) == self.num_traders:
+                if type(p1) is str:
+                    for pn in agent_payoffs:
+                        if pn == "utility":
+                            ag_payoffs.append(self.utility)
+                        elif pn == "profit":
+                            ag_payoffs.append(self.profit)
+                elif callable(p1):
+                    for pn in agent_payoffs:
+                        ag_payoffs.append(pn)
+            elif len(agent_payoffs) == len(self.agent_types):
+                for i in range(len(self.agent_types)):
+                    typ_num = self.agent_type_counts[i]
+                    for j in range(typ_num):
+                        pt = agent_payoffs[i]
+                        if type(p1) is str:
+                            if pt == "utility":
+                                ag_payoffs.append(self.utility)
+                            elif pt == "profit":
+                                ag_payoffs.append(self.profit)
+                        elif callable(p1):
+                            ag_payoffs.append(pt)
+            self.agent_payoffs = tuple(ag_payoffs)
+        else:
+            raise ValueError("Ambigiuous defintion for agent_payoffs.")
 
     def utility(self, q, m, v, p):
         """Calculates utility payoff
@@ -154,9 +217,9 @@ class MakeAgents(object):
         # replicate trade_object total_traders//2 times and put in traders list
         # make a shuffled list of trader objects for trader roles
         traders = []
-        print("XXX", self.trader_class_count)
+        # print("XXX", self.trader_class_count)
         for agent_name_number in self.trader_class_count:
-            print("XXY", agent_name_number) # TODO here
+            # print("XXY", agent_name_number) # TODO here
             t_name, t_num = agent_name_number
             for k in range(t_num):
                 traders.append(t_name)
@@ -165,25 +228,24 @@ class MakeAgents(object):
         np.random.shuffle(traders)
 
         # Assign trader objects to agent type roles and assign values and costs
-        self.agent_types = None # TODO here
         self.agents = []
-        for t in range(self.num_traders):
-            # make buyer and seller name, intitialize type, set money endowment
-            name = f"B_{t+1}"
-            trader_role = "BUYER"
-            payoff = self.utility  
-            money = 500
-            if t >= self.num_traders // 2:
-                name = f"S_{t + 1 - self.num_traders // 2}"
-                trader_role = "SELLER"
-                payoff = self.profit            
-            agent_model = traders[t] # Get agent class  
-            # Get agent class name
-            agent_kind = str(agent_model.__name__)
-            name = f"{name}_{agent_kind}"
-            location = self.location_list[t]   # get initial location
-            # initialize agent with info constructed above
-            agent = agent_model(name, trader_role, payoff, money, location, 
+        t = 0 # Agent index (across types)
+        print(self.agent_payoffs)
+        print("na", self.num_traders)
+        for i in range(len(self.agent_types)):
+            ag_typ = self.agent_types[i] # Type of agent this is
+            typ_ct = self.agent_type_counts[i] # Count of these types of agents
+            for j in range(typ_ct):
+                sname = f"{ag_typ}_{j+1}" # Name is Type + NumInType (1-indexed)
+                trader_role = ag_typ
+                payoff = self.agent_payoffs[t]
+                money = self.agent_endows[t]
+                agent_model = traders[t] # Get agent class
+                agent_kind = str(agent_model.__name__) # Get class name
+                name = f"{sname}_{agent_kind}"
+                location = self.location_list[t]   # get initial location
+                # initialize agent with info constructed above
+                agent = agent_model(name, trader_role, payoff, money, location, 
                                 lower_bound = self.lb, upper_bound = self.ub, 
                                 movement_error_rate=self.movement_error_rate,
                                 reset_flag_frequency=self.reset_flag_frequency, 
@@ -191,15 +253,16 @@ class MakeAgents(object):
                                 reset_flag_on_random=self.reset_flag_on_random,
                                 reset_flag_window = self.reset_flag_window,
                                 reset_flag_min_trades = self.reset_flag_min_trades)
-            # Make Value list or cost list
-            if agent.get_type() == "BUYER":
-                values = self.gen_res_values(True)
-                agent.set_values(values)
-            else:
-                costs = self.gen_res_values(False)
-                agent.set_costs(costs)
-            # add agent to self.agents list
-            self.agents.append(agent)  # List of agent objects
+                            # Make Value list or cost list
+                if trader_role == "BUYER" or trader_role == "B":
+                    values = self.gen_res_values(True)
+                    agent.set_values(values)
+                elif trader_role == "SELLER" or trader_role == "S":
+                    costs = self.gen_res_values(False)
+                    agent.set_costs(costs)
+                # add agent to self.agents list
+                self.agents.append(agent)  # List of agent objects
+                t += 1
 
 
     def get_agents(self):
@@ -216,10 +279,11 @@ class MakeAgents(object):
         num_side = self.num_traders // 2
         self.market = env.SpotMarketEnvironment(name = market_name, num_buyers = num_side, num_sellers = num_side)
         for index, trader in enumerate(self.agents):
-            if trader.get_type() == "BUYER":
+            t_typ = trader.get_type()
+            if t_typ == "BUYER" or t_typ == "B":
                 values = trader.get_values()
                 self.market.add_buyer(index, values)
-            else:  # this is a seller
+            if t_typ == "SELER" or t_typ == "S":  # this is a seller
                 seller_index = index - num_side  # sellers start at 0 in market environment
                 costs = trader.get_costs()
                 self.market.add_seller(seller_index, costs)

@@ -65,7 +65,7 @@ class Trader(object):
     
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
-        if self.type == "BUYER":
+        if self.type == "BUYER" or self.type == "B":
             for k, value in enumerate(self.values):
                 if k == 0:
                     s = s + f"[{value:5},"
@@ -73,7 +73,7 @@ class Trader(object):
                     s = s + f"{value:5}]"
                 else:
                     s = s + f"{value:5},"
-        else:
+        elif self.type == "SELLER" or self.type == "S":
             for k, cost in enumerate(self.costs):
                 if k == 0:
                     s = s + f"[{cost:5},"
@@ -193,10 +193,10 @@ class Trader(object):
         return self.name
     
     def get_payoff(self, prices):
-        if self.type == "BUYER":
+        if self.type == "BUYER" or self.type == "B":
             utility = self.payoff(self.units_transacted, self.money, self.values, prices)
             return utility
-        if self.type == "SELLER":
+        elif self.type == "SELLER" or self.type == "S":
             profit = self.payoff(self.units_transacted, self.money, self.costs, prices)
             return profit
         
@@ -250,9 +250,9 @@ class ZID(Trader):
         """
         self.units_transacted = 0
         self.cur_unit = 0
-        if self.type == "BUYER":
+        if self.type == "BUYER" or self.type == "B":
             self.max_units = len(self.values)
-        else:
+        elif self.type == "SELLER" or self.type == "S":
             self.max_units = len(self.costs)
         return_msg = Message("Initial", self.name, self.name, "Initialized")
         self.returned_msg(return_msg)
@@ -325,13 +325,13 @@ class ZID(Trader):
             
         current_offers = pl  # payload from bargain, self.order_book
         
-        if self.type == "BUYER":
+        if self.type == "BUYER" or self.type == "B":
             WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
             return_msg = Message("BID", self.name, "BARGAIN", WTP)
             self.returned_msg(return_msg)
             return return_msg   
 
-        else: # for SELLER
+        elif self.type == "SELLER" or self.type == "S": # for SELLER
             WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
             return_msg = Message("ASK", self.name, "BARGAIN", WTA)
             self.returned_msg(return_msg)
@@ -351,7 +351,7 @@ class ZID(Trader):
             
         current_offers = pl  # payload from bargain, self.order_book
         
-        if self.type == "BUYER":
+        if self.type == "BUYER" or self.type == "B":
             WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
             offers = []
             for trader_id in current_offers:
@@ -378,7 +378,7 @@ class ZID(Trader):
                 self.returned_msg(return_msg)
                 return return_msg
             
-        else: # for SELLER
+        elif self.type == "SELLER" or self.type == "S": # for SELLER
             WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
             offers = []
             for trader_id in current_offers:
@@ -420,7 +420,7 @@ class ZID(Trader):
         price = contract[1]
         buyer_id = contract[2]
         seller_id = contract[3]
-        if self.type == 'BUYER':
+        if self.type == 'BUYER' or self.type == "B":
             if self.get_name() != buyer_id:
                 return_msg = Message("BAD", self.name, "BARGAIN", 
                                 "08 Not buyer contract")
@@ -428,7 +428,7 @@ class ZID(Trader):
                 return return_msg                
             self.units_transacted += 1
             self.cur_unit += 1
-        else:  # SELLER
+        elif self.type == "SELLER" or self.type == "S":  # SELLER
             if self.get_name() != seller_id:
                 return_msg = Message("BAD", self.name, "BARGAIN", 
                        "09 Not seller contract")
@@ -532,7 +532,7 @@ class ZIDP(ZID):
             
         current_offers = pl  # payload from bargain, self.order_book
         
-        if self.type == "BUYER":
+        if self.type == "BUYER" or self.type == "B":
             WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
             # collect relavent offers
             offers = []
@@ -560,7 +560,7 @@ class ZIDP(ZID):
                 self.returned_msg(return_msg)
                 return return_msg
             
-        else: # for SELLER
+        elif self.type == "SELLER" or self.type == "S": # for SELLER
             WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
             # collect relavent offers
             offers = []
