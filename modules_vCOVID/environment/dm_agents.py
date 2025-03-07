@@ -10,7 +10,7 @@ class Trader(object):
     """
     
     def __init__(self, name, trader_type, payoff, money, location,
-                 lower_bound = 0, upper_bound = 9999, movement_error_rate = 0,
+                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0,
                  reset_flag_frequency=None, reset_flag_min_agents=None,
                 reset_flag_on_random=False, reset_flag_window=None, reset_flag_min_trades=1):
         """ name = name of trader
@@ -26,6 +26,7 @@ class Trader(object):
         self.location = location  # starting location a tuple (x, y)
         self.lower_bound = lower_bound # on bids, asks, prices, values, costs
         self.upper_bound = upper_bound # on above
+        self.num_units = num_units
 
         self.values = []  # BUYER values are set by self.set_values(list) 
         self.costs = []   # SELLER costs are set by self.set_costs(list)
@@ -109,7 +110,7 @@ class Trader(object):
         """
         self.values = v
         self.max_units = len(v) 
-        self.cur_unit = 0 
+        self.cur_unit = 0
     
     def set_costs(self, c):
         """
@@ -175,7 +176,11 @@ class Trader(object):
             msg = self.contract(payload)
         self.returned_msg(msg)
         return(msg)
-          
+
+    def gen_res_values(self):
+        """Stub - overwritten by child."""
+        pass
+
     def start(self, payload):
         """
         Overridden by child
@@ -243,13 +248,40 @@ class ZID(Trader):
         a budget constrained ZI 
     """
     
+    def gen_res_values(self):
+        """Returns a sorted list of values or costs drawn from a sequence of uniform distributions"
+            buyer_flag = True if a buyer else a seller
+            units = number of draws
+        """
+        ub = self.upper_bound
+        lb = self.lower_bound
+        interval = int((ub-lb)/4) # TODO figure out why dividing by 4 here
+
+        if self.type == "BUYER" or self.type == "B":
+            values = []
+            upper = ub
+            lower = lb + interval
+            for unit in range(self.num_units):
+                value = np.random.randint(lower, upper+1)
+                values.append(value)
+            self.set_values(sorted(values, reverse=True))  # Insures declining marginal value
+        elif self.type == "SELLER" or self.type == "S":
+            costs = []
+            upper = ub - interval
+            lower = lb
+            for unit in range(self.num_units):
+                cost = np.random.randint(lower, upper+1)
+                costs.append(cost)
+            self.set_costs(sorted(costs, reverse=False))  # Insures increasing marginal cost
+
     def start(self, pl):
         """
-        Sets up values for trading
+        Sets up values for trading. Re-draws these values randomly. Previously, only reset the cur_item indicator to 0.
         Does not use payload - pl
         """
         self.units_transacted = 0
         self.cur_unit = 0
+        self.gen_res_values()
         if self.type == "BUYER" or self.type == "B":
             self.max_units = len(self.values)
         elif self.type == "SELLER" or self.type == "S":
@@ -259,7 +291,7 @@ class ZID(Trader):
 
         # START flag 
         if self.reset_flag_frequency == "START":
-            self.set_contract_this_period(False) # TODO: Consider case of trade THIS WEEK - rolling window
+            self.set_contract_this_period(False)
         
         # WEEK flag
         if self.reset_flag_frequency == "WEEK":
@@ -273,6 +305,7 @@ class ZID(Trader):
 
 
     def total_random_move(self, pl):
+        """Move in a completely random direction (stay is 1/9th of cases if unblocked)."""
         if self.reset_flag_on_random:
             self.set_contract_this_period(False)
         direction_list = [-1, 0, +1]

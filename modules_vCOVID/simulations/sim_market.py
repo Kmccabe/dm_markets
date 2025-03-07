@@ -1,3 +1,7 @@
+"""
+Simulation file for testing the environment.
+"""
+
 import dm_agents
 import env_make_agents as mkt
 import dm_sim_period as simp

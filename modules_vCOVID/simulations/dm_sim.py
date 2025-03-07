@@ -46,6 +46,7 @@ def make_sim(sim_name, num_periods, num_weeks,
         data[week] = {}
         for agent in agents:
             agent.start(None)
+            print(agent.get_name(), ":", agent.get_values())
         contracts = []
         sim_grids = []
         sim1 = simp.SimPeriod(sim_name, num_rounds, agents, 

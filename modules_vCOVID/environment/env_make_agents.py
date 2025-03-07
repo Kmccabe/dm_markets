@@ -26,8 +26,7 @@ class MakeAgents(object):
         self.num_units = num_units           # number of units, same for all traders
         self.debug = debug                   # if True print additional information
         self.grid_size = grid_size           # grid is grid_size x grid_size
-        self.lb = lower_bound
-        self.ub = upper_bound
+        
         self.agents = []                     # contains list of agents
         self.location_list = []
         self.market = None
@@ -54,6 +53,32 @@ class MakeAgents(object):
             self.agent_types = agent_types
             self.agent_type_counts = agent_type_counts
         
+        # Allow lower and upper bound to differ for agent types (type heterogeneity) or by agent (agent heterogeneity)
+        if type(lower_bound) is int or type(lower_bound) is float:
+            self.lb = (lower_bound,)*self.num_traders
+        elif type(lower_bound) is tuple or type(lower_bound) is list:
+            if len(lower_bound) == self.num_traders:
+                self.lb = lower_bound
+            elif len(lower_bound) == len(self.agent_types):
+                self.lb = self.relist_to_types(self.agent_types, self.agent_type_counts, lower_bound)
+            else:
+                raise ValueError("Length of lower_bound on agent values must be the number of agents or agent_types.")
+        else:
+            raise ValueError("Ambiguous lower_bound on agent values.")
+        
+        if type(upper_bound) is int or type(upper_bound) is float:
+            self.ub = (upper_bound,)*self.num_traders
+        elif type(upper_bound) is tuple or type(upper_bound) is list:
+            if len(upper_bound) == self.num_traders:
+                self.ub = upper_bound
+            elif len(upper_bound) == len(self.agent_types):
+                self.ub = self.relist_to_types(self.agent_types, self.agent_type_counts, upper_bound)
+            else:
+                raise ValueError("Length of upper_bound on agent values must be the number of agents or agent_types.")
+        else:
+            raise ValueError("Ambiguous upper_bound on agent values.")
+
+
         # Save agent endowments (money) that they will begin with
         if agent_endows is None:
             raise ValueError("Must specify custom agent_endows when specifying custom agent_types.")
@@ -62,15 +87,7 @@ class MakeAgents(object):
         elif len(agent_endows) == self.num_traders: # Individual endowments per agent
             self.agent_endows = agent_endows
         elif self.agent_types is not None and len(agent_endows) == len(self.agent_types): # Endowments based on type of agent
-            ag_endows = np.zeros(self.num_traders)
-            t = 0
-            for i in range(len(self.agent_types)):
-                typ_num = self.agent_type_counts[i]
-                typ_endow = agent_endows[i]
-                for j in range(typ_num):
-                    ag_endows[t] = typ_endow
-                    t += 1
-            self.agent_endows = tuple(ag_endows)
+            self.agent_endows = self.relist_to_types(self.agent_types, self.agent_type_counts, agent_endows)
         else:
             raise ValueError("Cannot pass a list of agent_endows with a length not equal to number of types or number of agents.")
 
@@ -113,6 +130,17 @@ class MakeAgents(object):
             self.agent_payoffs = tuple(ag_payoffs)
         else:
             raise ValueError("Ambigiuous defintion for agent_payoffs.")
+
+    def relist_to_types(self, agent_types, agent_type_counts, relist_item):
+        blank = np.zeros(self.num_traders)
+        t = 0
+        for i in range(len(agent_types)):
+            typ_num = agent_type_counts[i]
+            typ_endow = relist_item[i]
+            for j in range(typ_num):
+                blank[t] = typ_endow
+                t += 1
+        return tuple(blank)
 
     def utility(self, q, m, v, p):
         """Calculates utility payoff
@@ -181,29 +209,36 @@ class MakeAgents(object):
             agent.set_location(loc)
      
     
-    def gen_res_values(self, buyer_flag):
+    def gen_res_values(self):
         """Returns a sorted list of values or costs drawn from a sequence of uniform distributions"
             buyer_flag = True if a buyer else a seller
             units = number of draws
         """
-        interval = int((self.ub-self.lb)/4)
+        raise ValueError("This function is deprecated. Use the one in agent class.")
+
+        """
+        # print("XXX")
+        ub = self.ub[agent_index]
+        lb = self.lb[agent_index]
+        interval = int((ub-lb)/4) # TODO figure out why dividing by 4 here
         if buyer_flag:
             values = []
-            upper = self.ub
-            lower = self.lb + interval
+            upper = ub
+            lower = lb + interval
             for unit in range(self.num_units):
                 value = np.random.randint(lower, upper+1)
                 values.append(value)
             return sorted(values, reverse=True)  # Insures declining marginal value
         else:
             costs = []
-            upper = self.ub - interval
-            lower = self.lb
+            upper = ub - interval
+            lower = lb
             for unit in range(self.num_units):
                 cost = np.random.randint(lower, upper+1)
                 costs.append(cost)
             return sorted(costs, reverse=False)  # Insures increasing marginal cost
-
+        """
+    
     def make_agents(self):
         """
         build list self.agents of agent objects
@@ -217,9 +252,7 @@ class MakeAgents(object):
         # replicate trade_object total_traders//2 times and put in traders list
         # make a shuffled list of trader objects for trader roles
         traders = []
-        # print("XXX", self.trader_class_count)
         for agent_name_number in self.trader_class_count:
-            # print("XXY", agent_name_number) # TODO here
             t_name, t_num = agent_name_number
             for k in range(t_num):
                 traders.append(t_name)
@@ -230,8 +263,6 @@ class MakeAgents(object):
         # Assign trader objects to agent type roles and assign values and costs
         self.agents = []
         t = 0 # Agent index (across types)
-        print(self.agent_payoffs)
-        print("na", self.num_traders)
         for i in range(len(self.agent_types)):
             ag_typ = self.agent_types[i] # Type of agent this is
             typ_ct = self.agent_type_counts[i] # Count of these types of agents
@@ -245,21 +276,29 @@ class MakeAgents(object):
                 name = f"{sname}_{agent_kind}"
                 location = self.location_list[t]   # get initial location
                 # initialize agent with info constructed above
+                lb = self.lb[t]; ub = self.ub[t]
                 agent = agent_model(name, trader_role, payoff, money, location, 
-                                lower_bound = self.lb, upper_bound = self.ub, 
+                                lower_bound = lb, upper_bound = ub,
+                                num_units = self.num_units,
                                 movement_error_rate=self.movement_error_rate,
                                 reset_flag_frequency=self.reset_flag_frequency, 
                                 reset_flag_min_agents=self.reset_flag_min_agents,
                                 reset_flag_on_random=self.reset_flag_on_random,
                                 reset_flag_window = self.reset_flag_window,
                                 reset_flag_min_trades = self.reset_flag_min_trades)
-                            # Make Value list or cost list
+                
+                # Make Value list or cost list - now inside the agent model
+                agent.gen_res_values() # Required for EQ calculation - note now equilibrium is only ex ante equivalent to the realized b/c res values redrawn
+
+                """
                 if trader_role == "BUYER" or trader_role == "B":
-                    values = self.gen_res_values(True)
+                    values = self.gen_res_values(True, t)
                     agent.set_values(values)
                 elif trader_role == "SELLER" or trader_role == "S":
-                    costs = self.gen_res_values(False)
+                    costs = self.gen_res_values(False, t)
                     agent.set_costs(costs)
+                """
+
                 # add agent to self.agents list
                 self.agents.append(agent)  # List of agent objects
                 t += 1
