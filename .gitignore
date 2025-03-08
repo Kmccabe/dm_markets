@@ -104,7 +104,12 @@ ENV/
 
 .idea/
 .DS_Store
-*.csv
+
+# Folder for large simulation results - instead place using dropbox
+data/simulation_data/
+
+# Folder for experimental data
+data/experiment_data/
 
 # VS Code Settings
 .vscode
