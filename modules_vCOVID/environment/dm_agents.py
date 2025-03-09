@@ -12,7 +12,8 @@ class Trader(object):
     def __init__(self, name, trader_type, payoff, money, location,
                  lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0,
                  reset_flag_frequency=None, reset_flag_min_agents=None,
-                reset_flag_on_random=False, reset_flag_window=None, reset_flag_min_trades=1):
+                reset_flag_on_random=False, reset_flag_window=None, reset_flag_min_trades=1,
+                redraw_values = False):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
@@ -62,6 +63,9 @@ class Trader(object):
 
         # Used if reset_flag_frequency = WEEK
         self.trades_this_week = 0
+
+        # Determines if you want to re-generate random valuations for each agent at the start of each week
+        self.redraw_values = redraw_values
 
     
     def __repr__(self):
@@ -281,7 +285,8 @@ class ZID(Trader):
         """
         self.units_transacted = 0
         self.cur_unit = 0
-        self.gen_res_values()
+        if self.redraw_values:
+            self.gen_res_values()
         if self.type == "BUYER" or self.type == "B":
             self.max_units = len(self.values)
         elif self.type == "SELLER" or self.type == "S":
