@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*/__pycache__/
 
 # C extensions
 *.so
@@ -116,3 +117,34 @@ data/experiment_data/
 
 # Savepoints in ipynb 
 .ipynb_checkpoints
+.virtual_documents
+
+# Outputs from Tests
+# Within Tests
+modules_vCOVID/assets/outputs/deep_test_config
+
+modules_vCOVID/assets/outputs/small_grid_tests
+modules_vCOVID/assets/outputs/small_grid_tests_2
+modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_within_compare_error.csv
+modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_within_compare.csv
+modules_vCOVID/assets/outputs/type_comp_tests
+modules_vCOVID/assets/outputs/week_grid_tests
+
+# Search huristic comparisons
+modules_vCOVID/assets/outputs/flag_reset_comparison_2
+modules_vCOVID/assets/outputs/flag_reset_comparison_old
+modules_vCOVID/assets/outputs/flag_reset_comparison_t
+
+# Location Plots
+modules_vCOVID/assets/outputs/loc_plots/*
+
+# Exploratory small grid tests
+
+# Keep the compiled verision of the movement heuristic tests
+!modules_vCOVID/assets/outputs/flag_reset_comparison_2/flag_comparator.pdf
+
+# Within small grid tests (note - keeping the across used for power analysis of experimental design)
+# modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_across_compare_error.csv
+# modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_across_compare.csv
+
+# But keep these
