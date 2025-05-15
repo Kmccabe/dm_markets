@@ -119,32 +119,30 @@ data/experiment_data/
 .ipynb_checkpoints
 .virtual_documents
 
-# Outputs from Tests
-# Within Tests
+# Deep comparison tests
 modules_vCOVID/assets/outputs/deep_test_config
 
-modules_vCOVID/assets/outputs/small_grid_tests
-modules_vCOVID/assets/outputs/small_grid_tests_2
-modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_within_compare_error.csv
-modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_within_compare.csv
+# Exploratory tests
 modules_vCOVID/assets/outputs/type_comp_tests
 modules_vCOVID/assets/outputs/week_grid_tests
 
 # Search huristic comparisons
-modules_vCOVID/assets/outputs/flag_reset_comparison_2
 modules_vCOVID/assets/outputs/flag_reset_comparison_old
 modules_vCOVID/assets/outputs/flag_reset_comparison_t
+# Keep the compiled verision of the movement heuristic tests
+modules_vCOVID/assets/outputs/flag_reset_comparison_2/*
+!modules_vCOVID/assets/outputs/flag_reset_comparison_2/flag_comparator.pdf
 
 # Location Plots
 modules_vCOVID/assets/outputs/loc_plots/*
 
 # Exploratory small grid tests
-
-# Keep the compiled verision of the movement heuristic tests
-!modules_vCOVID/assets/outputs/flag_reset_comparison_2/flag_comparator.pdf
-
-# Within small grid tests (note - keeping the across used for power analysis of experimental design)
+modules_vCOVID/assets/outputs/small_grid_tests
+modules_vCOVID/assets/outputs/small_grid_tests_2
+# Within small grid tests (note - keeping the across used for power analysis of 
+modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_within_compare_error.csv
+modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_within_compare.csv
+experimental design)
 # modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_across_compare_error.csv
 # modules_vCOVID/assets/outputs/small_grid_tests_calc/stat_across_compare.csv
 
-# But keep these
