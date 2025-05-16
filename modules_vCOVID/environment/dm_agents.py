@@ -631,6 +631,7 @@ class ZIDPA(ZIDP):
         Zero Intelligence variant for decentralized market
         with Affinity to other traders
         <==> Bias to stay in current location
+        Uses a passed movement heuristic/rule.
     """
 
     def move_requested(self, pl):
@@ -656,8 +657,7 @@ class ZIDPA(ZIDP):
         
         # otherwise employ the movement strategy
         else:
-            # Note: Contract this period is NEVER reset regularly - only if the random error is called
-            # Change: Check if there is not too few at location - if so, reset the contract_this_period
+            # Note: If have "NONE" (no) movement heuristic, contract this period is NEVER reset regularly - only if the random error is called
             if self.contract_this_period:
                 direction_list = [0, 0, 0]
                 
@@ -696,7 +696,7 @@ class ZIDPR(ZIDP):
         Stickiness to state quo is determined by the contract number in the last day
         """
 
-        # Check if traded enough in the last window 
+        # If movement rulse is based on if traded enough in the last window 
         if self.reset_flag_frequency == "WINDOW":
             self.update_flag_window()
 
@@ -716,7 +716,7 @@ class ZIDPR(ZIDP):
             if self.contract_this_period:
                 direction_list = [0, 0, 0]
 
-                # MIN_AGENTS Move if less than required agents
+                # MIN_AGENTS Move if less than required agents at the location
                 if self.reset_flag_frequency == "MIN_AGENTS" and self.num_at_loc < self.reset_flag_min_agents:
                     direction_list = [-1, 0, +1]    
                     self.set_contract_this_period(False)
@@ -738,6 +738,7 @@ class ZIDPR(ZIDP):
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         self.returned_msg(return_msg)
 
+        # If movement rule is rest move flag every period
         if self.reset_flag_frequency == "PERIOD":
             self.contract_this_period = False
 
