@@ -743,3 +743,5 @@ class ZIDPR(ZIDP):
             self.contract_this_period = False
 
         return return_msg
+
+# TODO Make ZIT (ZI+) Traders with opportunity cost calculation
