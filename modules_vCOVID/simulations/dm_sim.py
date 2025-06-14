@@ -15,7 +15,7 @@ import environment.dm_agents
 #import dm_env as env
 # import dm_utils as dm
 import simulations.dm_sim_period as simp
-import dm_process_results as pr
+import utils.dm_process_results as pr
 import environment.env_make_agents as mkt
 
 def make_sim(sim_name, num_periods, num_weeks,

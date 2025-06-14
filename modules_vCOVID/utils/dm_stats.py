@@ -1,6 +1,6 @@
 import pandas as pd
 import scipy
-import dm_res_helpers as res2
+import utils.dm_res_helpers as res2
 
 def conduct_stat_test(measure_a, measure_b, test_method, hypothesis_sidedness="one", measure_list=None):
     if measure_a is None and measure_b is None:
