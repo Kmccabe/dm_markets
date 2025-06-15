@@ -18,7 +18,7 @@ class MakeAgents(object):
     """Class to make agents to be used in centralized and decentralized trading"""
     def __init__(self, num_traders, trader_class_count, num_units,
                  grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
-                 reset_flag_frequency=None, reset_flag_min_agents=None, reset_flag_on_random=None,
+                 reset_flag_frequency="WINDOW", reset_flag_min_agents=None, reset_flag_on_random=True,
                  reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None):
 
         self.trader_class_count = trader_class_count     # list of trader types, should be tuple
@@ -214,7 +214,6 @@ class MakeAgents(object):
             buyer_flag = True if a buyer else a seller
             units = number of draws
         """
-        raise ValueError("This function is deprecated. Use the one in agent class.")
 
         """
         # print("XXX")
@@ -238,6 +237,8 @@ class MakeAgents(object):
                 costs.append(cost)
             return sorted(costs, reverse=False)  # Insures increasing marginal cost
         """
+
+        raise ValueError("This function is deprecated. Use the one in agent class.")
     
     def make_agents(self):
         """

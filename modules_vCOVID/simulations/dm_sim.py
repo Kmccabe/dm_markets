@@ -16,13 +16,13 @@ import environment.dm_agents
 # import dm_utils as dm
 import simulations.dm_sim_period as simp
 import utils.dm_process_results as pr
-import environment.env_make_agents as mkt
+import environment.env_make_agents as agent_mkr
 
 def make_sim(sim_name, num_periods, num_weeks,
              num_rounds, grid_size,
              num_traders, num_units,
              lower_bound, upper_bound,
-             trader_class_count):
+             trader_class_count, reset_flag_window=None):
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
     """ 
@@ -31,8 +31,8 @@ def make_sim(sim_name, num_periods, num_weeks,
     data = {}
 
     # make agents
-    agent_maker = mkt.MakeAgents(num_traders, trader_class_count, num_units, 
-                                grid_size, lower_bound, upper_bound)
+    agent_maker = agent_mkr.MakeAgents(num_traders, trader_class_count, num_units, 
+                                grid_size, lower_bound, upper_bound, reset_flag_window=reset_flag_window)
     agent_maker.make_agents()
     agent_maker.set_locations(grid_size)
     agents = agent_maker.get_agents()
@@ -46,12 +46,12 @@ def make_sim(sim_name, num_periods, num_weeks,
         data[week] = {}
         for agent in agents:
             agent.start(None)
-            print(agent.get_name(), ":", agent.get_values())
+            # print(agent.get_name(), ":", agent.get_values())
         contracts = []
         sim_grids = []
         sim1 = simp.SimPeriod(sim_name, num_rounds, agents, 
                market, grid_size)
-        for period in range(num_periods):
+        for _ in range(num_periods):
             sim1.run_period()
             grid = sim1.get_grid()
             sim_grids.append(grid)
@@ -75,7 +75,7 @@ def make_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
                     num_rounds, grid_size,
                     num_traders, num_units,
                     lower_bound, upper_bound,
-                    trader_class_count):
+                    trader_class_count, reset_flag_window=None):
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
     """ 
@@ -86,12 +86,16 @@ def make_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
                          'grid_size': grid_size, 'lower_bound':lower_bound, 'upper_bound': upper_bound,
                          'trader_class_count': trader_class_count}
 
+    # TODO Refactor Agent specifications as a package
+    if reset_flag_window is None:
+        reset_flag_window=num_periods
+
     for trial in range(num_trials):
         sim_data[trial]  = make_sim(sim_name, num_periods, num_weeks,
                                     num_rounds, grid_size,
                                     num_traders, num_units,
                                     lower_bound, upper_bound,
-                                    trader_class_count)
+                                    trader_class_count, reset_flag_window=reset_flag_window)
     return sim_data
 
 # Analyze Efficiency Data
