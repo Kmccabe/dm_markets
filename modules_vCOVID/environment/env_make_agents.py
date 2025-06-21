@@ -15,8 +15,18 @@ import environment.dm_env as env
 debug = False
 
 class MakeAgents(object):
-    """Class to make agents to be used in centralized and decentralized trading"""
-    def __init__(self, num_traders, trader_class_count, num_units,
+    """
+    Class to make agents to be used in centralized and decentralized trading
+    
+    Traders can be specified in two ways
+    1. Default Traders defined by only their trader type, with symmetric lower_bound, upper_bound, 
+        - TODO: Create a helper function which provides example agents, instead of doing it this way as below!!!!
+        
+    """
+    def __init__(self):
+        pass
+        
+    def gen_default_agents(self, num_traders, trader_class_count, num_units,
                  grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
                  reset_flag_frequency="WINDOW", reset_flag_min_agents=None, reset_flag_on_random=True,
                  reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None):
@@ -130,6 +140,19 @@ class MakeAgents(object):
             self.agent_payoffs = tuple(ag_payoffs)
         else:
             raise ValueError("Ambigiuous defintion for agent_payoffs.")
+
+    def gen_advanced_agents(self, agent_defs, debug=False):
+        """
+         num_traders, trader_class_count, num_units,
+                 grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
+                 reset_flag_frequency="WINDOW", reset_flag_min_agents=None, reset_flag_on_random=True,
+                 reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None
+
+        Builds the set of agents for the simulation based on the passed agent_defs DataFrame.
+        The DataFrame should be structured as such:
+            number_of | type |  lower_bound |   upper_bound | endowment |   strategy | strategy_params | payoff_function
+        """
+        pass
 
     def relist_to_types(self, agent_types, agent_type_counts, relist_item):
         blank = np.zeros(self.num_traders)
