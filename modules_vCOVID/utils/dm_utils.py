@@ -1,5 +1,37 @@
 import environment.dm_agents as dma
 
+def get_agent_class(class_name):
+    """
+    Maps a string name of dm_agent.Class to a dm_agent.Class object.
+    Not necessary, but provided for user-friendliness.
+    """
+    class_name_map = {
+        "ZID": dma.ZID,
+        "ZIDA": dma.ZIDA,
+        "ZIDP": dma.ZIDP,
+        "ZIDPA": dma.ZIDPA,
+        "ZIDPR": dma.ZIDPR,
+        "ZIDT": dma.ZIDT,
+        "ZIDTR": dma.ZIDTR
+    }
+    return class_name_map[class_name]
+
+def get_agent_str(agent_class):
+    """
+    Maps a dm_agent.Class to a str representation.
+    Useful for back-propagation of code.
+    """
+    class_name_map = {
+        dma.ZID: "ZID",
+        dma.ZIDA: "ZIDA",
+        dma.ZIDP: "ZIDP",
+        dma.ZIDPA: "ZIDPA",
+        dma.ZIDPR: "ZIDPR",
+        dma.ZIDT: "ZIDT",
+        dma.ZIDTR: "ZIDTR"
+    }
+    return class_name_map[agent_class]
+
 def test_agents(debug):
     """Helper function to initialize test agents"""
     b_1 = dma.ZID('B1', 'BUYER', utility, 500, (0, 0))

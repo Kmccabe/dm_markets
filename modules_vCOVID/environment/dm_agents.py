@@ -4,16 +4,14 @@ from institutions.dm_message_model import Message
 #from dm_zida import ZIDA
 
 class Trader(object):
-    """Base class for Buyers or Seller Agents
-       Decision making is provided by a child class where 
-       overridden methods are those called in process_message
+    """
+    Base class for Buyers or Seller Agents
+    Decision making is provided by a child class where 
+        overridden methods are those called in process_message
     """
     
-    def __init__(self, name, trader_type, payoff, money, location,
-                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0,
-                 reset_flag_frequency=None, reset_flag_min_agents=None,
-                reset_flag_on_random=False, reset_flag_window=None, reset_flag_min_trades=1,
-                redraw_values = False):
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None, redraw_values = False):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
@@ -39,34 +37,13 @@ class Trader(object):
         self.valid_directives = ["START", "MOVE_REQUESTED", "OFFER", "TRANSACT", "CONTRACT"]
         #TODO: make directives lower case (maybe)
         self.simulation = None    # get access to class SimulateMarket
-        #TODO: explain above better and why the flag below
         self.contract_this_period = False
         self.num_at_loc = 0
 
         self.movement_error_rate  = movement_error_rate
 
-        self.reset_flag_frequency = reset_flag_frequency
-        self.reset_flag_min_agents = reset_flag_min_agents
-        self.reset_flag_on_random = reset_flag_on_random
-
-        # Used if reset_flag_frequency = WINDOW
-        self.current_period = None
-        self.periods_traded_in = None
-        self.reset_flag_window = reset_flag_window
-        if self.reset_flag_frequency == "WINDOW":
-            if self.reset_flag_window is None:
-                raise ValueError("Cannot have undefined window size with window reset frequency")
-            self.current_period = -1
-            self.periods_traded_in = []
-        
-        self.reset_flag_min_trades = reset_flag_min_trades
-
-        # Used if reset_flag_frequency = WEEK
-        self.trades_this_week = 0
-
         # Determines if you want to re-generate random valuations for each agent at the start of each week
         self.redraw_values = redraw_values
-
     
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
@@ -259,7 +236,7 @@ class ZID(Trader):
         """
         ub = self.upper_bound
         lb = self.lower_bound
-        interval = int((ub-lb)/4) # TODO figure out why dividing by 4 here
+        interval = int((ub-lb)/4) # Division by four here to allow more overlap
 
         if self.type == "BUYER" or self.type == "B":
             values = []
@@ -311,8 +288,10 @@ class ZID(Trader):
 
     def total_random_move(self, pl):
         """Move in a completely random direction (stay is 1/9th of cases if unblocked)."""
-        if self.reset_flag_on_random:
-            self.set_contract_this_period(False)
+        
+        # Reset the contract this period flag since randomly moved
+        self.set_contract_this_period(False)
+        
         direction_list = [-1, 0, +1]
         x_dir = rnd.choice(direction_list)
         y_dir = rnd.choice(direction_list)
@@ -490,10 +469,44 @@ class ZIDA(ZID):
     """
         Zero Intelligence variant for decentralized market
         with Affinity to other traders
-        <==> Bias to stay in current location
+        <==> Bias to stay in current location; Uses the strategy specified
     """
 
-    def move_requested(self, pl):
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+                redraw_values = False
+            ):
+        super().__init__(name, trader_type, payoff, money, location,
+                 lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values)
+        
+        # Trappings for movement strategy
+        self.reset_flag_frequency = None
+        self.current_period = None
+        self.periods_traded_in = None
+        self.reset_flag_min_agents = None
+        self.reset_flag_min_trades = None
+
+        self.reset_flag_on_random = True
+
+        if strategy_params is not None:
+            self.reset_flag_frequency = strategy_params['reset_flag_frequency']
+        else:
+            self.reset_flag_frequency = "NONE"
+        
+        rf = self.reset_flag_frequency
+
+        if rf == "WINDOW":
+            self.reset_flag_window = strategy_params['reset_flag_window']  
+            self.current_period = -1
+            self.periods_traded_in = []
+            self.reset_flag_min_trades = strategy_params['reset_flag_min_trades']
+        elif rf == "MIN_AGENTS":
+            self.reset_flag_min_agents = strategy_params['reset_flag_min_agents']
+        elif rf == "WEEK":
+            self.trades_this_week = 0
+            self.reset_flag_min_trades = strategy_params['reset_flag_min_trades']
+
+    def move_requested(self, pl, silence_log=False):
         """
         Make a move in a random direction but with bias to stay if you can still trade
         Stickiness to state quo is determined by the contract number in the last day
@@ -534,10 +547,8 @@ class ZIDA(ZID):
         
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         
-        if self.reset_flag_frequency == "PERIOD":
-            self.contract_this_period = False
-        
-        self.returned_msg(return_msg)
+        if not silence_log:
+            self.returned_msg(return_msg)
         return return_msg
 
 class ZIDP(ZID):
@@ -626,7 +637,7 @@ class ZIDP(ZID):
                 self.returned_msg(return_msg)
                 return return_msg  
  
-class ZIDPA(ZIDP):
+class ZIDPA(ZIDA, ZIDP):
     """
         Zero Intelligence variant for decentralized market
         with Affinity to other traders
@@ -634,55 +645,11 @@ class ZIDPA(ZIDP):
         Uses a passed movement heuristic/rule.
     """
 
-    def move_requested(self, pl):
-        """
-        Make a move in a random direction but with bias to stay if you made a contract in the past.
-        """
+    # def move_requested(self, pl):
+    # Dropped - works with multiple inheritence
 
-        # Check if traded enough in the last window 
-        if self.reset_flag_frequency == "WINDOW":
-            self.update_flag_window()
 
-            self.current_period += 1
-
-        movement_idea = None # How to move
-
-        # If draw below the error rate randomly, have a COMPLETELY random movement
-        np_rand = np.random.default_rng()
-        rand_draw = np_rand.random()
-        # print(rand_draw)
-        if rand_draw < self.movement_error_rate:
-            movement_idea = self.total_random_move(pl)
-            self.set_contract_this_period(False)
-        
-        # otherwise employ the movement strategy
-        else:
-            # Note: If have "NONE" (no) movement heuristic, contract this period is NEVER reset regularly - only if the random error is called
-            if self.contract_this_period:
-                direction_list = [0, 0, 0]
-                
-                # MIN_AGENTS Move if less than required agents
-                if self.reset_flag_frequency == "MIN_AGENTS" and self.num_at_loc < self.reset_flag_min_agents:
-                    direction_list = [-1, 0, +1]    
-                    self.set_contract_this_period(False)
-            else:
-                direction_list = [-1, 0, +1]
-            if self.cur_unit > self.max_units:
-                movement_idea = (0, 0)
-            else:
-                x_dir = rnd.choice(direction_list)
-                y_dir = rnd.choice(direction_list)
-                movement_idea = (x_dir, y_dir)
-
-        return_msg = Message("MOVE", self.name, "Travel", movement_idea)
-        self.returned_msg(return_msg)
-
-        if self.reset_flag_frequency == "PERIOD":
-            self.contract_this_period = False
-
-        return return_msg
-
-class ZIDPR(ZIDP):
+class ZIDPR(ZIDA, ZIDP):
     """
         Zero Intelligence variant for decentralized market
         with Affinity to other traders
@@ -692,56 +659,36 @@ class ZIDPR(ZIDP):
 
     def move_requested(self, pl):
         """
-        Make a move in a random direction but with bias to stay if you can still trade
-        Stickiness to state quo is determined by the contract number in the last day
+        Make a move based on the movement rule - but override move if you have too many individuals at the location
         """
+        return_msg = super().move_requested(pl, silence_log=True)
 
-        # If movement rulse is based on if traded enough in the last window 
-        if self.reset_flag_frequency == "WINDOW":
-            self.update_flag_window()
-
-            self.current_period += 1
-
-        movement_idea = None # How to move
-
-        # If draw below the error rate randomly, have a COMPLETELY random movement
-        np_rand = np.random.default_rng()
-        if np_rand.random() < self.movement_error_rate:
-            movement_idea = self.total_random_move(pl)
-        
-        # otherwise employ the movement strategy
-        else:
-            # Note: Contract this period is NEVER reset regularly - only if the random error is called
-            # Change: Check if there is not too few at location - if so, reset the contract_this_period
-            if self.contract_this_period:
-                direction_list = [0, 0, 0]
-
-                # MIN_AGENTS Move if less than required agents at the location
-                if self.reset_flag_frequency == "MIN_AGENTS" and self.num_at_loc < self.reset_flag_min_agents:
-                    direction_list = [-1, 0, +1]    
-                    self.set_contract_this_period(False)
-
-            else:
-                direction_list = [-1, 0, +1]
-            
-            # Move away if too crowded (>2 traders)
-            if self.num_at_loc > 2:
-                #print('NUMBER AT g', self.num_at_loc)
-                direction_list = [-1, +1]
-            if self.cur_unit > self.max_units:
-                movement_idea = (0, 0)
-            else:
+        # Move away if too crowded (>2 traders)
+        if self.num_at_loc > 2:
+            #print('NUMBER AT g', self.num_at_loc)
+            found_move = False
+            direction_list = [-1, 0, +1]
+            while found_move == False:
                 x_dir = rnd.choice(direction_list)
                 y_dir = rnd.choice(direction_list)
                 movement_idea = (x_dir, y_dir)
+                
+                # Forbidden to stay in place
+                if movement_idea != (0, 0):
+                    found_move == True
     
-        return_msg = Message("MOVE", self.name, "Travel", movement_idea)
-        self.returned_msg(return_msg)
+            return_msg = Message("MOVE", self.name, "Travel", movement_idea)
 
-        # If movement rule is rest move flag every period
-        if self.reset_flag_frequency == "PERIOD":
-            self.contract_this_period = False
+        self.returned_msg(return_msg)
 
         return return_msg
 
+
+class ZIDT(ZID):
+    # TODO: Implement
+    pass
+
+class ZIDTR(ZIDT):
+    # TODO: Implement
+    pass
 # TODO Make ZIT (ZI+) Traders with opportunity cost calculation

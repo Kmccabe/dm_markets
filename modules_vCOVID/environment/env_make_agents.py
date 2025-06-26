@@ -7,152 +7,218 @@ import time
 import copy
 import os
 import json
+import pandas as pd
 
 import environment.dm_agents as dm_agents
 import environment.dm_env as env
+import utils.dm_utils as dm_utils
 
 # Flag for debugging
 debug = False
 
 class MakeAgents(object):
     """
-    Class to make agents to be used in centralized and decentralized trading
+    Class to make agents to be used in centralized and decentralized trading.
     
-    Traders can be specified in two ways
-    1. Default Traders defined by only their trader type, with symmetric lower_bound, upper_bound, 
-        - TODO: Create a helper function which provides example agents, instead of doing it this way as below!!!!
+    To create agents, first initialize an instance of MakeAgents, then pass a DataFrame specifying the Agent specifications to init_agents().
+
+    If you do not want to make the DataFrame by hand, you can use two of the methods documented below, which will return a DataFrame formatted as would be required by the init_agents() function
+
+    gen_default_agents (Default Trader Specification)
+    1. Default Traders defined by only their trader strategy type, with full symmetry and an equal number of buyers and sellers. Num_traders must equal to the sum across trader types. Requires EVEN trader counts, so num_traders and each class count in trader_class_counts must be even.
+
+    gen_custom_agents (Custom Trader Specification)
+    2. Custom Traders for which you can specify value/cost bounds, number of buyers and sellers, endowments, movement error rates, custom strategy behavior (for ZIDA derivatives). Num_traders must equal to the count of all defined traders. 
         
     """
-    def __init__(self):
-        pass
-        
-    def gen_default_agents(self, num_traders, trader_class_count, num_units,
-                 grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
-                 reset_flag_frequency="WINDOW", reset_flag_min_agents=None, reset_flag_on_random=True,
-                 reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None):
-
-        self.trader_class_count = trader_class_count     # list of trader types, should be tuple
-        self.num_traders = num_traders       # number of traders, summed across types
-        self.num_units = num_units           # number of units, same for all traders
-        self.debug = debug                   # if True print additional information
-        self.grid_size = grid_size           # grid is grid_size x grid_size
-        
-        self.agents = []                     # contains list of agents
-        self.location_list = []
-        self.market = None
-        self.movement_error_rate = movement_error_rate
-        self.reset_flag_frequency = reset_flag_frequency
-        self.reset_flag_min_agents = reset_flag_min_agents
-        self.reset_flag_on_random = reset_flag_on_random
-
-        self.reset_flag_window = reset_flag_window
-        self.reset_flag_min_trades = reset_flag_min_trades
-
-        # Added to allow different mix of agents than 1/2 Buyers and 1/2 Sellers
-        # If not provided, uses default of 1/2 B and 1/2 S - backwards compatibility
-        if agent_types is None:
-            self.agent_types = ('B', 'S')
-            self.agent_type_counts = (self.num_traders//2, self.num_traders//2) # // for clarity - should always be int anyhow
-            agent_endows = (500, 0) # Buyers start with 500 cash, sellers 0
-            agent_payoffs = (self.utility, self.profit) # Buyers have utility, sellers have profit
-            if num_traders%2 != 0:
-                raise ValueError("The number of agents passed does not conform to the default agent types requirement of being divisible by 2. If you want custom agent type counts, pass in agent_types and agent_type_counts.")
-        else:
-            if agent_type_counts is None:
-                raise ValueError("You must pass the agent_type_counts in if you want to specify custom agent_types.")
-            self.agent_types = agent_types
-            self.agent_type_counts = agent_type_counts
-        
-        # Allow lower and upper bound to differ for agent types (type heterogeneity) or by agent (agent heterogeneity)
-        if type(lower_bound) is int or type(lower_bound) is float:
-            self.lb = (lower_bound,)*self.num_traders
-        elif type(lower_bound) is tuple or type(lower_bound) is list:
-            if len(lower_bound) == self.num_traders:
-                self.lb = lower_bound
-            elif len(lower_bound) == len(self.agent_types):
-                self.lb = self.relist_to_types(self.agent_types, self.agent_type_counts, lower_bound)
-            else:
-                raise ValueError("Length of lower_bound on agent values must be the number of agents or agent_types.")
-        else:
-            raise ValueError("Ambiguous lower_bound on agent values.")
-        
-        if type(upper_bound) is int or type(upper_bound) is float:
-            self.ub = (upper_bound,)*self.num_traders
-        elif type(upper_bound) is tuple or type(upper_bound) is list:
-            if len(upper_bound) == self.num_traders:
-                self.ub = upper_bound
-            elif len(upper_bound) == len(self.agent_types):
-                self.ub = self.relist_to_types(self.agent_types, self.agent_type_counts, upper_bound)
-            else:
-                raise ValueError("Length of upper_bound on agent values must be the number of agents or agent_types.")
-        else:
-            raise ValueError("Ambiguous upper_bound on agent values.")
-
-
-        # Save agent endowments (money) that they will begin with
-        if agent_endows is None:
-            raise ValueError("Must specify custom agent_endows when specifying custom agent_types.")
-        elif type(agent_endows) is int or type(agent_endows) is float: # Symmetric endowments
-            self.agent_endows = (agent_endows,)*self.num_traders
-        elif len(agent_endows) == self.num_traders: # Individual endowments per agent
-            self.agent_endows = agent_endows
-        elif self.agent_types is not None and len(agent_endows) == len(self.agent_types): # Endowments based on type of agent
-            self.agent_endows = self.relist_to_types(self.agent_types, self.agent_type_counts, agent_endows)
-        else:
-            raise ValueError("Cannot pass a list of agent_endows with a length not equal to number of types or number of agents.")
-
-        # Save agent payoffs that they will optimize (or be evaluated against)
-        # Note: not duck-typed
-        if agent_payoffs is None:
-            raise ValueError("Must specify custom agent_payoffs when specifying custom agent_types.")
-        elif type(agent_payoffs) is str and (agent_payoffs=="utility" or agent_payoffs=="profit"):
-            if agent_payoffs=="utility":
-                self.agent_payoffs = (self.utility,)*self.num_traders
-            elif agent_payoffs=="profit":
-                self.agent_payoffs = (self.profit,)*self.num_traders
-        elif type(agent_payoffs) is types.FunctionType:
-            self.agent_payoffs = (agent_payoffs, )*self.num_traders
-        elif type(agent_payoffs) is tuple or type(agent_payoffs) is list:
-            ag_payoffs = []
-            p1 = agent_payoffs[0]
-            if len(agent_payoffs) == self.num_traders:
-                if type(p1) is str:
-                    for pn in agent_payoffs:
-                        if pn == "utility":
-                            ag_payoffs.append(self.utility)
-                        elif pn == "profit":
-                            ag_payoffs.append(self.profit)
-                elif callable(p1):
-                    for pn in agent_payoffs:
-                        ag_payoffs.append(pn)
-            elif len(agent_payoffs) == len(self.agent_types):
-                for i in range(len(self.agent_types)):
-                    typ_num = self.agent_type_counts[i]
-                    for j in range(typ_num):
-                        pt = agent_payoffs[i]
-                        if type(p1) is str:
-                            if pt == "utility":
-                                ag_payoffs.append(self.utility)
-                            elif pt == "profit":
-                                ag_payoffs.append(self.profit)
-                        elif callable(p1):
-                            ag_payoffs.append(pt)
-            self.agent_payoffs = tuple(ag_payoffs)
-        else:
-            raise ValueError("Ambigiuous defintion for agent_payoffs.")
-
-    def gen_advanced_agents(self, agent_defs, debug=False):
+    def __init__(self, debug=False):
         """
-         num_traders, trader_class_count, num_units,
-                 grid_size, lower_bound, upper_bound, debug=False, movement_error_rate=0, 
-                 reset_flag_frequency="WINDOW", reset_flag_min_agents=None, reset_flag_on_random=True,
-                 reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None
+        Initialize the MakeAgents objects which allows the creation of agents.
 
-        Builds the set of agents for the simulation based on the passed agent_defs DataFrame.
-        The DataFrame should be structured as such:
-            number_of | type |  lower_bound |   upper_bound | endowment |   strategy | strategy_params | payoff_function
+        params
+            debug (bool, optional - default = False): Set equal to true if you want to see debug strings printed to the console.
         """
-        pass
+
+        self.debug = debug  # if True print additional information
+        self.agents = [] # Stores agents in the environment
+    
+    # - TODO: Create a helper function which provides example agents, instead of doing it this way as below!!!!
+
+    def gen_loc(self, grid_size):
+        return (np.random.randint(grid_size), np.random.randint(grid_size))
+
+    def get_payoff(self, payoff_name):
+        px_map = {
+            "utility": self.utility,
+            "profit": self.profit
+        }
+        return px_map[payoff_name]
+        
+
+    def gen_default_agents(self, num_traders, trader_class_counts, num_units,
+                 grid_size, lower_bound, upper_bound, movement_error_rate=0, strategy_params=None):
+        """
+        Generate the baseline agents used to test the effects of grid parameters and agent strategy in an otherwise homogenous environment.
+
+        Agents are assumed to be symmetric in all supplied parameters, with the exception of half of each agent class being buyers and half being sellers. Agents also vary in strategy, according to their class.
+
+        Utilizes the gen_custom_agents function. Pushes constructed agent-group level data to the gen_custom_agents function.
+
+        Args:
+            num_traders (int): Total number of traders. Must be even. Must be the sum of all values in trader_class_counts
+            trader_class_counts: tuple of tuple of (str, int). Format of ((str count),). Defines the number of agents which are of one agent strategy type (agent/trader class). Each count must be even. Half of each kind of agent will be buyers and half sellers. Can also pass a dm_agents.Class instead for niceness.
+            num_units (int): The number of units each trader demands (buyers) or supplies (sellers) per week.
+            grid_size (int): s as in the sxs dimension of the grid.
+            lower_bound (int): The lowest amount that would be demanded for a unit/lowest cost of a unit.
+            upper_bound (int): The highest utility for a unit / highest cost for a unit.
+            movement_error_rate (double in [0, 1], optional - default 0): The probability that the agent will make a completely random movement decision. Such moves supersede the agent's inherent movement strategy.
+
+        Returns:
+            pandas.DataFrame: a dataframe with defined per-agent initialization data. Named ag_df within the function.
+            , 
+                 reset_flag_frequency="WINDOW", reset_flag_min_agents=None, reset_flag_on_random=True,
+                 reset_flag_window=None, reset_flag_min_trades=1):
+        """
+
+        """
+        ZID = dm_agents.ZID
+        ZIDA = dm_agents.ZIDA
+
+        trader_class_counts = [(ZID, 2), (ZIDA, 8)]     # List of artificial traders length 2
+        debug = False
+        num_traders = 10                  # traders (multiple of two)
+        num_units = 4                     # Number of units per trader
+        grid_size = 4
+        lb = 200  # lower bound of values and costs
+        ub = 600  # upper bound of values and costs
+        """
+
+        # Check numbers add up correctly, are even
+        counted = 0
+        if num_traders%2 != 0:
+            raise ValueError("The number of traders must be even")
+        for tc_i in range(len(trader_class_counts)):
+            ag_cl, ag_num = trader_class_counts[tc_i]
+            if ag_num%2 != 0:
+                raise ValueError("Each agent class definition must contain an even number of agents")
+            counted += ag_num
+        if num_traders != counted:
+            raise ValueError("The number of traders must add up to the number in each type")
+
+
+        # Translate the traditional agent class definitions to the agent group definitions
+        group_defs = []
+        for tc_i in range(len(trader_class_counts)):
+            ag_cl, ag_num = trader_class_counts[tc_i]
+
+            if type(ag_cl) is not str:
+                ag_cl = dm_utils.get_agent_str(ag_cl)
+            
+            # Divide the trader-class definition group into 2
+            g_num = ag_num/2
+
+            # Strategy params only necessary for derivatives of ZIDA and ZIDT
+            if strategy_params is None:
+                if ag_cl in ['ZIDA', 'ZIDPA', 'ZIDPR']:
+                    s_params = {'reset_flag_frequency': 'WINDOW',
+                                'reset_flag_window': num_units # Default window = num units - for lack of a better option (but should be = week length, passed on)
+                    }
+                elif ag_cl in ['ZIDT', 'ZIDTR']:
+                    pass
+            else:
+                s_params = strategy_params
+                    
+            # Define group of Buyers
+            gr_b = (g_num, "B", ag_cl, s_params, lower_bound, upper_bound, num_units, 500, "utility", movement_error_rate, None)
+            group_defs.append(gr_b)
+
+            # Define group of Sellers
+            gr_s = (g_num, "S", ag_cl, s_params, lower_bound, upper_bound, num_units, 0, "profit", movement_error_rate, None)
+            group_defs.append(gr_s)
+        
+        if self.debug:
+             print(f"gen_default_agents: Creating Default agents with definitions of: {group_defs}")
+
+        cust_def = self.gen_custom_agents(num_traders, group_defs, grid_size)
+
+        return cust_def
+
+    def gen_custom_agents(self, num_traders, agent_groups, grid_size=None):
+        """
+        Creates a custom dataframe for advanced agent creation. Requires detailed specification of agent types at the agent-group level.
+        
+        Specify the num_traders, which is the total number of agents, I. Sum of all counts of groups of group_i agents must sum to I.
+
+        Agent groups are defined as a set of group_i (int count) agents which are all of the same agent_type (buyer, seller), trader_class (strategy), strategy_params (parameters used for strategy-specific configuration), lower_bound, upper_bound, num_units, endowment, payoff_function (str, optional if specifying agent_type, then default to corresponding), movement_error_rate (float optional, default 0), agent_location (optional if specifying grid_size, default None).
+
+        If you do not specify agent_location for agent groups, it is mandatory to specify the grid_size, corresponding to the dimension s of 
+        
+        Args:
+            num_traders (int): 
+
+            agent_groups (tuple of tuple of (group_i (int), agent_type (str), trader_class (str), strategy_params (list), lower_bound (int), upper_bound (int), num_units (int), endowment (int), payoff_function (callable, optional, default None), movement_error_rate (float 0-1, optional default 0), agent_location (tuple of (int, int), optional, default None).
+
+            grid_size (int, optional, default None): s as in the sxs dimension of the grid. Required if any agent_location not specified.
+
+        Returns:
+            pandas.DataFrame: a dataframe with defined per-agent initialization data. Named ag_df within the function.
+        """
+
+        # Verify number of agents in groups add up to the number of traders
+        counted = 0
+        for ag_i in range(len(agent_groups)):
+            ag_n = agent_groups[ag_i][0]
+            counted += ag_n
+
+        agent_defs = []
+        ag_j = 0
+        # Go over each agent group definition and create the agents
+        for ag_i in range(len(agent_groups)):
+            ag_group = agent_groups[ag_i]
+            ag_n = ag_group[0] # Number of Agents
+            ag_t = ag_group[1] # Agent Type (Buyer/Seller)
+            ag_cl = ag_group[2] # Agent Class (strategy)
+            # Handle the passing of dm_agent classes as class names instead
+            if type(ag_cl) is not str:
+                ag_cl = dm_utils.get_agent_str(ag_cl)
+
+            ag_sp = ag_group[3] # Agent strategy parameters
+            ag_lb = ag_group[4] # Agent lower bound
+            ag_ub = ag_group[5] # Agent upper bound
+            ag_ub = ag_group[6] # Agent's num units
+            ag_edw = ag_group[7] # Agent endowment - not used in base model, other than to account for endowment value of selling
+            ag_fx = ag_group[8] # Agent payoff function - can be None if agent type is S/Seller or B/Buyer
+            if ag_fx is None:
+                if ag_t == 'S' or ag_t == 'SELLER':
+                    ag_fx = "profit"
+                elif ag_t == 'B' or ag_t == 'BUYER':
+                    ag_fx = "utility"
+            
+            ag_me = ag_group[9] # Agent movement error - can be None or 0
+            ag_loc = ag_group[10] # Agent location - can be None (if grid_size specified)
+
+            # Create entries for 
+            for li in range(ag_n):
+                if ag_loc is None:
+                    if grid_size is None:
+                        raise ValueError("Cannot provide undefined agent locations without defining the grid_size")
+                    al = self.gen_loc(grid_size)
+                else:
+                    al = ag_loc
+                
+                # Agent name (Type, index, class)
+                ag_nm = f"{ag_t}_{ag_j}_{ag_cl}"
+                
+                one_row = [ag_nm, ag_t, ag_cl, ag_sp, ag_lb, ag_ub, ag_edw, ag_fx, ag_me, al]
+
+                agent_defs.append(one_row)
+
+                ag_j += 1
+            
+        ag_df = pd.DataFrame(data = agent_defs, columns=['name', 'type', 'class', 'strategy_params', 'lower_bound', 'upper_bound', 'num_units', 'endowment', 'payoff_function', 'movement_error_rate', 'location'])
+
+        return ag_df
+
 
     def relist_to_types(self, agent_types, agent_type_counts, relist_item):
         blank = np.zeros(self.num_traders)
@@ -219,6 +285,10 @@ class MakeAgents(object):
 
     def make_locations(self):
         """Initialize trader locations for make_agents."""
+
+        if debug:
+            print("env_make_agents: Called make_locations")
+
         self.location_list = []
         for i in range(self.num_traders):
             x = rnd.randint(0,self.grid_size-1)
@@ -263,20 +333,66 @@ class MakeAgents(object):
 
         raise ValueError("This function is deprecated. Use the one in agent class.")
     
+    def init_agents(self, trader_data):
+        """
+        Builds the set of agents for the simulation based on the passed agent_defs DataFrame.
+
+        The DataFrame should be structured as such:
+            agent_name | type | agent_class | strategy_params |  lower_bound |   upper_bound | endowment | payoff_function | movement_error_rate | location
+        """
+
+        # Iterate over the trader_data DataFrame and initiate each agent
+        # Agents stored in self.agents (a list)
+        self.agents = []
+        for ri in range(len(trader_data)):
+            r_df = trader_data.iloc[ri]
+            n = r_df['name']
+            t = r_df['type']
+            cl = r_df['class']
+            sp = r_df['strategy_params']
+            lb = r_df['lower_bound']
+            ub = r_df['upper_bound']
+            nu = r_df['num_units']
+            en = r_df['endowment']
+            pf = r_df['payoff_function']
+            me = r_df['movement_error_rate']
+            loc = r_df['location']
+
+            self.make_one_agent(n, t, cl, sp, lb, ub, nu, en, pf, me, loc)
+        
+        if self.debug:
+            print("Initiated agents in env_make_agents")
+
+    def make_one_agent(self, name, trader_role, agent_class, strat_params,
+                       lower_bound, upper_bound, num_units, endow, payoff_fx,
+                       mv_error, location):
+        """(self, name, trader_type, payoff, money=None, location=None,
+                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None, redraw_values = False):"""
+        
+        ag_cl = dm_utils.get_agent_class(agent_class)
+        ag_fx = self.get_payoff(payoff_fx)
+        new_agent = ag_cl(name, trader_role, ag_fx, endow, location,
+                        lower_bound, upper_bound, num_units,
+                        mv_error, strat_params, False)
+        new_agent.gen_res_values()
+        self.agents.append(new_agent)
+
     def make_agents(self):
         """
         build list self.agents of agent objects
         """
-
-        if debug:
+        
+        """if debug:
             print("At make agents in make_env")
-            print(f"\tMaking off of {self.trader_class_count}")
+            print(f"\tMaking off of {self.trader_class_counts}")
 
         self.make_locations() # Put traders at random grid point
         # replicate trade_object total_traders//2 times and put in traders list
         # make a shuffled list of trader objects for trader roles
         traders = []
-        for agent_name_number in self.trader_class_count:
+        for ri in trader_data:
+             trader
+        for agent_name_number in self.trader_class_counts:
             t_name, t_num = agent_name_number
             for k in range(t_num):
                 traders.append(t_name)
@@ -291,20 +407,19 @@ class MakeAgents(object):
             ag_typ = self.agent_types[i] # Type of agent this is
             typ_ct = self.agent_type_counts[i] # Count of these types of agents
             for j in range(typ_ct):
-                sname = f"{ag_typ}_{j+1}" # Name is Type + NumInType (1-indexed)
+                sname = f"{ag_typ}_{j+1}"
+                name = f"{sname}_{agent_kind}" # Name is Type + NumInType (1-indexed)
                 trader_role = ag_typ
                 payoff = self.agent_payoffs[t]
                 money = self.agent_endows[t]
                 agent_model = traders[t] # Get agent class
                 agent_kind = str(agent_model.__name__) # Get class name
-                name = f"{sname}_{agent_kind}"
+                
                 location = self.location_list[t]   # get initial location
                 # initialize agent with info constructed above
                 lb = self.lb[t]; ub = self.ub[t]
-                agent = agent_model(name, trader_role, payoff, money, location, 
-                                lower_bound = lb, upper_bound = ub,
-                                num_units = self.num_units,
-                                movement_error_rate=self.movement_error_rate,
+
+                
                                 reset_flag_frequency=self.reset_flag_frequency, 
                                 reset_flag_min_agents=self.reset_flag_min_agents,
                                 reset_flag_on_random=self.reset_flag_on_random,
@@ -314,19 +429,11 @@ class MakeAgents(object):
                 # Make Value list or cost list - now inside the agent model
                 agent.gen_res_values() # Required for EQ calculation - note now equilibrium is only ex ante equivalent to the realized b/c res values redrawn
 
-                """
-                if trader_role == "BUYER" or trader_role == "B":
-                    values = self.gen_res_values(True, t)
-                    agent.set_values(values)
-                elif trader_role == "SELLER" or trader_role == "S":
-                    costs = self.gen_res_values(False, t)
-                    agent.set_costs(costs)
-                """
-
                 # add agent to self.agents list
                 self.agents.append(agent)  # List of agent objects
                 t += 1
-
+            """
+        raise ValueError("Deprecated")
 
     def get_agents(self):
         return self.agents
@@ -346,7 +453,7 @@ class MakeAgents(object):
             if t_typ == "BUYER" or t_typ == "B":
                 values = trader.get_values()
                 self.market.add_buyer(index, values)
-            if t_typ == "SELER" or t_typ == "S":  # this is a seller
+            if t_typ == "SELLER" or t_typ == "S":  # this is a seller
                 seller_index = index - num_side  # sellers start at 0 in market environment
                 costs = trader.get_costs()
                 self.market.add_seller(seller_index, costs)
@@ -366,11 +473,8 @@ class MakeAgents(object):
 
 if __name__ == "__main__":
 
-    ZID = dm_agents.ZID
-    ZIDA = dm_agents.ZIDA
-
-    trader_class_count = [(ZID, 2), (ZIDA, 8)]     # List of artificial traders length 2
-    debug = False
+    trader_class_counts = [("ZID", 10)]     # List of artificial traders length 2
+    debug = True
     num_traders = 10                  # traders (multiple of two)
     num_units = 4                     # Number of units per trader
     grid_size = 4
@@ -378,35 +482,46 @@ if __name__ == "__main__":
     ub = 600  # upper bound of values and costs
 
     #
-    # test agents
+    # ZID test agents
     #
 
     # set up agents
-    agent_maker = MakeAgents(num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
-    agent_maker.make_test_agents()
-    agents = agent_maker.get_agents()
-    agent_maker.print_agents(agents)
-    agent_maker.make_locations()
+    ag1 = MakeAgents(debug)
+    ag_df = ag1.gen_default_agents(num_traders, trader_class_counts, num_units, grid_size, lb, ub)
+    ag1.init_agents(ag_df)
+    # agent_maker.make_test_agents()
+    agents = ag1.get_agents()
+    ag1.print_agents(agents)
+    # agent_maker.make_locations()
 
     # set up market
-    agent_maker.make_market("test_market")
-    agent_maker.show_equilibrium()
-    agent_maker.plot_market()
+    ag1.make_market("test_market")
+    ag1.show_equilibrium()
+    ag1.plot_market()
 
     #
-    # random agents
+    # ZIDA test agents
     #
+
+    trader_class_counts = [("ZIDA", 10)]
 
     # set up agents
-    agent_r = MakeAgents(num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
-    agent_r.make_agents()
-    agents = agent_r.get_agents()
-    agent_r.print_agents(agents)
+    ag2 = MakeAgents(debug)
+    ag_df = ag2.gen_default_agents(num_traders, trader_class_counts, num_units, grid_size, lb, ub)
+    ag2.init_agents(ag_df)
+    # agent_maker.make_test_agents()
+    agents = ag2.get_agents()
+    ag2.print_agents(agents)
 
     # set up market
-    agent_r.make_market("test_market")
-    agent_r.show_equilibrium()
-    agent_r.plot_market()
+    ag2.make_market("test_market")
+    ag2.show_equilibrium()
+    ag2.plot_market()
+
+    # Custom ZIDA agents
+    ag3 = MakeAgents(debug)
+    ag_df = ag3.gen_default_agents(num_traders, trader_class_counts, num_units, grid_size, lb, ub)
+
 
 
 

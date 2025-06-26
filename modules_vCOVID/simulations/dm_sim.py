@@ -19,10 +19,8 @@ import utils.dm_process_results as pr
 import environment.env_make_agents as agent_mkr
 
 def make_sim(sim_name, num_periods, num_weeks,
-             num_rounds, grid_size,
-             num_traders, num_units,
-             lower_bound, upper_bound,
-             trader_class_count, reset_flag_window=None):
+     num_rounds, num_traders, agent_groups, grid_size=None):
+    
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
     """ 
@@ -31,10 +29,10 @@ def make_sim(sim_name, num_periods, num_weeks,
     data = {}
 
     # make agents
-    agent_maker = agent_mkr.MakeAgents(num_traders, trader_class_count, num_units, 
-                                grid_size, lower_bound, upper_bound, reset_flag_window=reset_flag_window)
-    agent_maker.make_agents()
-    agent_maker.set_locations(grid_size)
+    debug = False
+    agent_maker = agent_mkr.MakeAgents(debug)
+    ag_df = agent_maker.gen_custom_agents(num_traders, agent_groups, grid_size)
+    agent_maker.init_agents(ag_df)
     agents = agent_maker.get_agents()
   
     # set up market
@@ -72,30 +70,26 @@ def make_sim(sim_name, num_periods, num_weeks,
 
 
 def make_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
-                    num_rounds, grid_size,
-                    num_traders, num_units,
-                    lower_bound, upper_bound,
-                    trader_class_count, reset_flag_window=None):
-    """Runs one complete simulation and returns data in
+                    num_rounds, num_traders, agent_groups, grid_size=None):
+    """
+    Runs one complete simulation and returns data in
         effs[treatment][trial]
+
+    Can provide the 
     """ 
 
     sim_data = {}
-    sim_data['parms'] = {'sim_name': sim_name, 'num_traders': num_traders, 'num_units': num_units,
-                         'num_weeks': num_weeks, 'num_periods': num_periods, 'num_rounds': num_rounds,
-                         'grid_size': grid_size, 'lower_bound':lower_bound, 'upper_bound': upper_bound,
-                         'trader_class_count': trader_class_count}
-
-    # TODO Refactor Agent specifications as a package
-    if reset_flag_window is None:
-        reset_flag_window=num_periods
+    sim_data['params'] = {'sim_name': sim_name, 'num_trials': num_trials,
+                         'num_periods': num_periods,
+                         'num_weeks': num_weeks,
+                         'num_rounds': num_rounds,
+                         'num_traders': num_traders,
+                         'agent_groups': agent_groups, 'grid_size': grid_size}
 
     for trial in range(num_trials):
-        sim_data[trial]  = make_sim(sim_name, num_periods, num_weeks,
-                                    num_rounds, grid_size,
-                                    num_traders, num_units,
-                                    lower_bound, upper_bound,
-                                    trader_class_count, reset_flag_window=reset_flag_window)
+        sim_data[trial] = make_sim(sim_name, num_periods, num_weeks,
+                                    num_rounds, num_traders, agent_groups, grid_size)
+        
     return sim_data
 
 # Analyze Efficiency Data
