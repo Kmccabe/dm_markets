@@ -271,18 +271,6 @@ class ZID(Trader):
         return_msg = Message("Initial", self.name, self.name, "Initialized")
         self.returned_msg(return_msg)
 
-        # START flag 
-        if self.reset_flag_frequency == "START":
-            self.set_contract_this_period(False)
-        
-        # WEEK flag
-        if self.reset_flag_frequency == "WEEK":
-            if self.trades_this_week >= self.reset_flag_min_trades:
-                self.contract_this_period = True
-            else:
-                self.contract_this_period = False
-            self.trades_this_week = 0
-
         return return_msg
 
 
@@ -320,9 +308,7 @@ class ZID(Trader):
                 x_dir = rnd.choice(direction_list)
                 y_dir = rnd.choice(direction_list)
                 movement_idea = (x_dir, y_dir)
-        
-        if self.reset_flag_frequency == "PERIOD":
-            self.contract_this_period = False  # Use this to see if you get a contract this period
+
         
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         self.returned_msg(return_msg)
@@ -458,11 +444,6 @@ class ZID(Trader):
                              "10 Units Updated")
         self.returned_msg(return_msg)
 
-        if self.reset_flag_frequency == "WEEK":
-            self.trades_this_week += 1
-        elif self.reset_flag_frequency == "WINDOW":
-            self.periods_traded_in.append(self.current_period)
-
         return return_msg
 
 class ZIDA(ZID):
@@ -550,6 +531,38 @@ class ZIDA(ZID):
         if not silence_log:
             self.returned_msg(return_msg)
         return return_msg
+    
+    def start(self, pl):
+        """
+        Override the super to check if you need to reset movement flags.
+
+        Otherwise proceed as in super; reset value/cost flags.
+        """
+        # START flag 
+        if self.reset_flag_frequency == "START":
+            self.set_contract_this_period(False)
+        
+        # WEEK flag
+        if self.reset_flag_frequency == "WEEK":
+            if self.trades_this_week >= self.reset_flag_min_trades:
+                self.contract_this_period = True
+            else:
+                self.contract_this_period = False
+            self.trades_this_week = 0
+        
+        return super().start(pl)
+    
+    def contract(self, pl, debug_contract=False):
+        """
+        Override super to keep track of trades this week and periods traded in. Otherwise proceed as in super.
+        """
+        
+        if self.reset_flag_frequency == "WEEK":
+            self.trades_this_week += 1
+        elif self.reset_flag_frequency == "WINDOW":
+            self.periods_traded_in.append(self.current_period)
+
+        return super().contract(pl, debug_contract)
 
 class ZIDP(ZID):
     """Overrides Bid and Ask Decisions"""

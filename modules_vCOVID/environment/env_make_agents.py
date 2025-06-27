@@ -48,6 +48,9 @@ class MakeAgents(object):
         return (np.random.randint(grid_size), np.random.randint(grid_size))
 
     def get_payoff(self, payoff_name):
+        """
+        Map a string name for payoff function to the callable payoff function.
+        """
         px_map = {
             "utility": self.utility,
             "profit": self.profit
@@ -121,7 +124,8 @@ class MakeAgents(object):
             if strategy_params is None:
                 if ag_cl in ['ZIDA', 'ZIDPA', 'ZIDPR']:
                     s_params = {'reset_flag_frequency': 'WINDOW',
-                                'reset_flag_window': num_units # Default window = num units - for lack of a better option (but should be = week length, passed on)
+                                'reset_flag_window': num_units, # Default window = num units - for lack of a better option (but should be = week length, passed on)
+                                'reset_flag_min_trades': 1 # Default at least one trade in window
                     }
                 elif ag_cl in ['ZIDT', 'ZIDTR']:
                     pass
@@ -185,7 +189,7 @@ class MakeAgents(object):
             ag_sp = ag_group[3] # Agent strategy parameters
             ag_lb = ag_group[4] # Agent lower bound
             ag_ub = ag_group[5] # Agent upper bound
-            ag_ub = ag_group[6] # Agent's num units
+            ag_un = ag_group[6] # Agent's num units
             ag_edw = ag_group[7] # Agent endowment - not used in base model, other than to account for endowment value of selling
             ag_fx = ag_group[8] # Agent payoff function - can be None if agent type is S/Seller or B/Buyer
             if ag_fx is None:
@@ -197,7 +201,7 @@ class MakeAgents(object):
             ag_me = ag_group[9] # Agent movement error - can be None or 0
             ag_loc = ag_group[10] # Agent location - can be None (if grid_size specified)
 
-            # Create entries for 
+            # Create each agent entry for a DF creation
             for li in range(ag_n):
                 if ag_loc is None:
                     if grid_size is None:
@@ -209,12 +213,13 @@ class MakeAgents(object):
                 # Agent name (Type, index, class)
                 ag_nm = f"{ag_t}_{ag_j}_{ag_cl}"
                 
-                one_row = [ag_nm, ag_t, ag_cl, ag_sp, ag_lb, ag_ub, ag_edw, ag_fx, ag_me, al]
+                one_row = [ag_nm, ag_t, ag_cl, ag_sp, ag_lb, ag_ub, ag_un, ag_edw, ag_fx, ag_me, al]
 
                 agent_defs.append(one_row)
 
                 ag_j += 1
             
+        print(agent_defs)
         ag_df = pd.DataFrame(data = agent_defs, columns=['name', 'type', 'class', 'strategy_params', 'lower_bound', 'upper_bound', 'num_units', 'endowment', 'payoff_function', 'movement_error_rate', 'location'])
 
         return ag_df
@@ -255,7 +260,8 @@ class MakeAgents(object):
 
     def make_test_agents(self):
         """Helper function to initialize test agents"""
-
+        
+        """
         ZID = dm_agents.ZID
 
         b_1 = ZID('B1', 'BUYER', self.utility, 500, (0, 0), 20, 100)
@@ -281,25 +287,29 @@ class MakeAgents(object):
         self.num_traders = 8
         self.num_units = 4
 
-        self.agents = [b_1, s_1, b_2, s_2, b_3, s_3, b_4, s_4]
+        self.agents = [b_1, s_1, b_2, s_2, b_3, s_3, b_4, s_4]"""
+        raise ValueError("env_make_agents.make_test_agents. Unimplemented for new design")
 
-    def make_locations(self):
+    def randomize_agent_locations(self, grid_size):
         """Initialize trader locations for make_agents."""
 
         if debug:
             print("env_make_agents: Called make_locations")
 
-        self.location_list = []
-        for i in range(self.num_traders):
-            x = rnd.randint(0,self.grid_size-1)
-            y = rnd.randint(0,self.grid_size-1)
-            self.location_list.append((x, y))
+        for ag in self.agents:
+            x = np.random.randint(0,grid_size) # TODO: Refactor with numpy generator class
+            y = np.random.randint(0,grid_size)
+            ag.set_location((x, y))
     
+    def make_locations(self):
+        raise ValueError("env_make_agents.make_locations Deprecated")
+
     def set_locations(self, grid_size):
-        self.grid_size = grid_size
+        """self.grid_size = grid_size
         self.make_locations()
         for loc, agent in zip(self.location_list, self.agents):
-            agent.set_location(loc)
+            agent.set_location(loc)"""
+        raise ValueError("env_make_agents.set_locations Deprecated")
      
     
     def gen_res_values(self):
@@ -331,7 +341,7 @@ class MakeAgents(object):
             return sorted(costs, reverse=False)  # Insures increasing marginal cost
         """
 
-        raise ValueError("This function is deprecated. Use the one in agent class.")
+        raise ValueError("env_make_agents.gen_res_values Deprecated. This function is deprecated. Use the one in agent class.")
     
     def init_agents(self, trader_data):
         """
@@ -366,6 +376,10 @@ class MakeAgents(object):
     def make_one_agent(self, name, trader_role, agent_class, strat_params,
                        lower_bound, upper_bound, num_units, endow, payoff_fx,
                        mv_error, location):
+        """
+        Create one agent based on the passed parameters and append it to self.agents.
+        """
+
         """(self, name, trader_type, payoff, money=None, location=None,
                  lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None, redraw_values = False):"""
         
@@ -433,30 +447,51 @@ class MakeAgents(object):
                 self.agents.append(agent)  # List of agent objects
                 t += 1
             """
-        raise ValueError("Deprecated")
+        raise ValueError("env_make_agents.make_agents Deprecated")
 
     def get_agents(self):
+        """Getter for agents list"""
         return self.agents
        
     def print_agents(self, agent_list):
+        """Print agents."""
         for agent in agent_list:
             print(agent)
 
-    def make_market(self, market_name):
-        """Make MarketEnviornment object from traders
+    def make_market(self, market_name="env_spot_market"):
         """
-        # self.build_traders()
-        num_side = self.num_traders // 2
-        self.market = env.SpotMarketEnvironment(name = market_name, num_buyers = num_side, num_sellers = num_side)
+        Make MarketEnviornment object from traders.
+        
+        This market is a spot market with all agents in the same location - gives the max efficiency (globally).
+        """
+        
+        # Count number of buyers and sellers
+        b_num = 0; s_num = 0
+        for ag in self.agents:
+            tp = ag.get_type()
+            if tp in ['B', 'BUYER']:
+                b_num+=1
+            elif tp in ['S', 'SELLER']:
+                s_num+=1
+        
+        # Create the spot market
+        self.market = env.SpotMarketEnvironment(name = market_name, num_buyers = b_num, num_sellers = s_num)
+        b_ind = 0; s_ind = 0
         for index, trader in enumerate(self.agents):
             t_typ = trader.get_type()
+            
+            # Add a buyer
             if t_typ == "BUYER" or t_typ == "B":
                 values = trader.get_values()
-                self.market.add_buyer(index, values)
-            if t_typ == "SELLER" or t_typ == "S":  # this is a seller
-                seller_index = index - num_side  # sellers start at 0 in market environment
+                self.market.add_buyer(b_ind, values)
+                b_ind += 1
+            
+            # Add a seller
+            elif t_typ == "SELLER" or t_typ == "S":
                 costs = trader.get_costs()
-                self.market.add_seller(seller_index, costs)
+                self.market.add_seller(s_ind, costs)
+                s_ind += 1
+
         self.market.make_demand()
         self.market.make_supply()
         self.market.calc_equilibrium()

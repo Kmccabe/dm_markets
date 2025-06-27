@@ -32,6 +32,36 @@ def get_agent_str(agent_class):
     }
     return class_name_map[agent_class]
 
+def agent_strategy_helper(agent_class_name=None):
+    """
+    Returns a list of possible agent strategies or potential strategy parameters.
+
+    Args:
+        agent_class_name (str, optional, default None): The agent class you want to print strategy parameters for. If None, prints potential agent class names instead.
+    """
+    class_list = ["ZID", "ZIDA", "ZIDP", "ZIDPA", "ZIDPR", "ZIDT", "ZIDTR"]
+
+    if agent_class_name is None:
+        print("Agent Classes Available")
+        print(class_list)
+    elif agent_class_name in ["ZID", "ZIDP"]:
+        print(f"{agent_class_name} takes no strategy parameters. Pass {None} in instead.")
+    elif agent_class_name in ["ZIDA", "ZIDPA"]:
+        print(f"{agent_class_name} takes \"reset_flag_frequency\", representing the rule on which to resume movement, as a parameter. Additional parameters may be required, as specified below.")
+        print("\"reset_flag_frequency\" can take the values of [\"NONE\", \"START\", \"WEEK\", \"MIN_AGENTS\", \"WINDOW\"]")
+        print("NONE: Never resume movement after trading. No additional parameters")
+        print("START: Resume movement at the start of each week (every time agent.start is called). No additional parameters.")
+        print("WEEK: Resume movement is did not trade at least \"reset_flag_min_trades\" in the past week (time between agent.start is called).")
+        print("MIN_AGENTS: Resume movement is there are less than \"reset_flag_min_agents\" agents at the same location as this agent.")
+        print("WINDOW: Resume movement is did not trade at least \"reset_flag_min_trades\" in the last \"reset_flag_window\" periods.")
+    elif agent_class_name == "ZIDPR":
+        print(f"{agent_class_name} takes the same parameters as ZIDA, along with \"max_agents_allowed\", representing the maximum agents allowed in one location by the distancing rule.")
+    elif agent_class_name == "ZIDT":
+        print(f"{agent_class_name} requires the \"memory_length\" (2eta) representing how many periods the agent calculates their payoff contentness over and \"down_tolerance\" (nu) representing how significant of a decline in payoff and agent is willing to tolerate, relative to the first half of their memory.")
+    elif agent_class_name == "ZIDTR":
+        print(f"{agent_class_name} takes the same parameters as ZIDT, along with \"max_agents_allowed\", representing the maximum agents allowed in one location by the distancing rule.")
+        
+
 def test_agents(debug):
     """Helper function to initialize test agents"""
     b_1 = dma.ZID('B1', 'BUYER', utility, 500, (0, 0))

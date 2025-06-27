@@ -69,8 +69,9 @@ def make_sim(sim_name, num_periods, num_weeks,
     return data
 
 
-def make_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
-                    num_rounds, num_traders, agent_groups, grid_size=None):
+def make_monte_carlo(sim_name, 
+                     num_trials, num_periods, num_weeks, num_rounds, 
+                     num_traders, agent_groups, grid_size=None):
     """
     Runs one complete simulation and returns data in
         effs[treatment][trial]

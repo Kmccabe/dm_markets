@@ -13,11 +13,11 @@ class SpotMarketEnvironment(object):
         class will also calculate market equilibria and plot the supply and
         demand curves and as an option contract prices."""
 
-    def __init__(self, name="example", num_buyers=2, num_sellers=3):
+    def __init__(self, name="example", num_buyers=2, num_sellers=2):
         """ name (str) = the name of the market
             num_Buyers (int) = the number of buyers in the market
             num_sellers(int) = the number of sellers in the market
-            Builds buyers and sellers dictioanry entries
+            Builds buyers and sellers dictionary entries
         """
         self.name = name
         self.num_buyers = num_buyers
@@ -56,26 +56,26 @@ class SpotMarketEnvironment(object):
         print("BUYERS")
         print("------")
         for buyer_number in range(self.num_buyers):
-            buyer_id = "buyer" + str(buyer_number)
+            buyer_id = "buyer_" + str(buyer_number)
             print(f"{buyer_id} has values {self.buyers[buyer_id]}")
         print()
         print("SELLERS")
         print("-------")
         for seller_number in range(self.num_sellers):
-            seller_id = "seller" + str(seller_number)
+            seller_id = "seller_" + str(seller_number)
             print(f"{seller_id} has costs {self.sellers[seller_id]}")
         print("")
 
     def add_buyer(self, buyer_number, values):
         """Adds a list of buyer_number's values to the self.buyers dictionary
         """
-        buyer_id = "buyer" + str(buyer_number)
+        buyer_id = "buyer_" + str(buyer_number)
         self.buyers[buyer_id] = values
 
     def get_buyer_values(self, buyer_number):
         """Returns buyer_number's values
         """
-        buyer_id = "buyer" + str(buyer_number)
+        buyer_id = "buyer_" + str(buyer_number)
         return self.buyers[buyer_id]
 
     def get_buyers(self):
@@ -84,13 +84,13 @@ class SpotMarketEnvironment(object):
     def add_seller(self, seller_number, costs):
         """Adds a list of seller_number's costs to the self.seller dictionary
         """
-        seller_id = "seller" + str(seller_number)
+        seller_id = "seller_" + str(seller_number)
         self.sellers[seller_id] = costs
 
     def get_seller_costs(self, seller_number):
         """Returns seller_number_s costs
         """
-        seller_id = "seller" + str(seller_number)
+        seller_id = "seller_" + str(seller_number)
         return self.sellers[seller_id]
 
     def get_sellers(self):
@@ -233,8 +233,8 @@ class SpotMarketEnvironment(object):
         ax = plt.gca()
         plt.legend(loc='upper center', frameon=False)
         plt.title('Supply and Demand')
-        plt.xlabel('units')
-        plt.ylabel('currrency')
+        plt.xlabel('Units')
+        plt.ylabel('Utils')
 
         # Save figure in the working directory
         #plt.savefig(self.name+'supply_demand.jpg')
