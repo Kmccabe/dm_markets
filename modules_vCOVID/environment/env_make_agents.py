@@ -141,7 +141,7 @@ class MakeAgents(object):
             group_defs.append(gr_s)
         
         if self.debug:
-             print(f"gen_default_agents: Creating Default agents with definitions of: {group_defs}")
+            print(f"gen_default_agents: Creating Default agents with definitions of: {group_defs}")
 
         cust_def = self.gen_custom_agents(num_traders, group_defs, grid_size)
 
@@ -218,8 +218,10 @@ class MakeAgents(object):
                 agent_defs.append(one_row)
 
                 ag_j += 1
-            
-        print(agent_defs)
+        
+        if self.debug:
+            print(agent_defs)
+        
         ag_df = pd.DataFrame(data = agent_defs, columns=['name', 'type', 'class', 'strategy_params', 'lower_bound', 'upper_bound', 'num_units', 'endowment', 'payoff_function', 'movement_error_rate', 'location'])
 
         return ag_df

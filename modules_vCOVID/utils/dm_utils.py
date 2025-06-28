@@ -1,4 +1,6 @@
 import environment.dm_agents as dma
+import simulations.dm_sim as dm_sim
+import matplotlib.pyplot as plt
 
 def get_agent_class(class_name):
     """
@@ -130,6 +132,63 @@ def print_contracts(contracts):
         buyer = contract[2]
         seller = contract[3]
         print(f"{round:2} {price:3} {buyer:3} {seller:3}")
+
+def draw_efficiency(sim_data, labels=None, title=None):
+    """
+    Simple drawer to create line-based efficiencies, one per simulation, with error bars. Can pass one or a list of simulations. Can define custom labels and a custom title.
+    """
+
+    # Unify types
+    if type(sim_data) is not list:
+        sim_data = [sim_data]
+    
+    # Unify types, extract labels
+    if labels is not None and type(labels) is not list:
+        labels = [labels]
+    elif labels is None:
+        labels = []
+        for sd in sim_data:
+            labels.append(sd['params']['sim_name'])
+    
+    if title is None:
+        title = "Efficiencies over Weeks"
+    
+    # Get data to plot (xs, efficiencies, errors)
+    nws = []
+    eff_avgs = []
+    eff_stds = []
+    
+    for sd in sim_data:
+        nw = sd['params']['num_weeks']
+        nt = sd['params']['num_trials']
+        nws.append(nw)
+        eff_avg, std_error, eff_min, eff_max = dm_sim.analyze_eff_data(nt, nw, sd)
+        eff_avgs.append(eff_avg)
+        eff_stds.append(std_error)
+    
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Plot each sim's data
+    for i in range(len(sim_data)):
+        x = range(1, nws[i]+1)
+        e_avg = eff_avgs[i]
+        e_std = eff_stds[i]
+        lab = labels[i]
+
+        ax.plot(x, e_avg, label = lab, lw =3)
+        ax.errorbar(x, e_avg, yerr=e_std, fmt='.k')
+
+    x_max = max(nws)
+    ax.set_xlabel('Week', size = 'x-large') 
+    ax.set_xbound(0, x_max)
+    ax.set_ybound(0, 100)
+    ax.grid(1)
+    ax.set_ylabel('Efficiency', size = 'x-large') 
+    ax.set_title(title, size = 'x-large')
+    ax.legend(fontsize='x-large')
+    plt.show()
+    
 
 if __name__ == "__main__":
 
