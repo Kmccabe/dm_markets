@@ -236,7 +236,8 @@ class ZID(Trader):
         """
         ub = self.upper_bound
         lb = self.lower_bound
-        interval = int((ub-lb)/4) # Division by four here to allow more overlap
+        interval = 0
+        # Archival - int((ub-lb)/4) # Division by four here to allow more overlap
 
         if self.type == "BUYER" or self.type == "B":
             values = []

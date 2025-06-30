@@ -123,15 +123,46 @@ def profit(q, m, c, p):
     return m + sum_p - sum_c
 
 
-def print_contracts(contracts):
-    print("CONTRACTS: (round, price, buyer, seller")
-    print("---------------------------------------")
+def print_contracts(contracts, extended=True):
+    if extended:
+        print_contracts_extended(contracts)
+    else:
+        print("CONTRACTS: (round, price, buyer, seller")
+        print("---------------------------------------")
+        for contract in contracts:
+            round = contract[0]
+            price = contract[1]
+            buyer = contract[2]
+            seller = contract[3]
+            print(f"{round:2} {price:3} {buyer:3} {seller:3}")
+
+def print_contracts_extended(contracts):
+    print("CONTRACTS:")
+    print("rnd, b_cu:b_val -price- s_cos:s_cu  buyer_id, seller_id")
+    print("-------------------------------------------------------")
     for contract in contracts:
         round = contract[0]
         price = contract[1]
         buyer = contract[2]
         seller = contract[3]
-        print(f"{round:2} {price:3} {buyer:3} {seller:3}")
+        b_cur = contract[4]
+        b_val = contract[5]
+        s_cur = contract[6]
+        s_cos = contract[7]
+        print(f"{round:2} {b_cur:3}:{b_val:<4}-{price:4} -{s_cos:>4}:{s_cur:<3}    {buyer:10} {seller:10}")
+
+
+def pretty_print_grid(grid):
+    """Prettily print the passed grid"""
+    for k_loc in grid:
+        print('point', k_loc,' --> ',grid[k_loc])
+
+def get_agent_locs(agents):
+    x = []
+    for agent in agents:
+        y = agent.get_location()
+        x.append(y)
+    return x
 
 def draw_efficiency(sim_data, labels=None, title=None):
     """
@@ -188,7 +219,57 @@ def draw_efficiency(sim_data, labels=None, title=None):
     ax.set_title(title, size = 'x-large')
     ax.legend(fontsize='x-large')
     plt.show()
+
+def gen_agent_groups(num_agents, agent_type, agent_class, strategy_params, lower_bound, upper_bound, num_units, endowment, payoff_function=None, move_error_rate=0, starting_location=None, return_names=False):
+    """
+    Generate agent groups based on the passed parameters. Optionally returns generated names for these groups.
+
+    Can be improved by duck-typing instead of checking for list type.
+    """
+
+    # Gather the variables
+    varlist = [num_agents, agent_type, agent_class, strategy_params, lower_bound, upper_bound, num_units, endowment, payoff_function, move_error_rate, starting_location]
+
+    # Check which items were sent as lists
+    as_list = []
+    for i in range(len(varlist)):
+        as_list.append(type(varlist[i]) is list)
+
+    # If none of the items are lists, simply set all as a list of length 1
+    if not any(as_list):
+        for i in range(len(varlist)):
+            varlist[i] = [varlist[i]]
+        list_len = 1
     
+    # Otherwise, check the length of the lists are the same and broadcast non-lists
+    else:
+        list_len = None
+        for i in range(len(varlist)):
+            if as_list[i]:
+                ln = len(varlist[i])
+                if list_len is None:
+                    list_len = ln
+                elif list_len != ln:
+                    raise ValueError("All lists passed to gen_agent_groups must be of the same length")
+        for i in range(len(varlist)):
+            if not as_list[i]:
+                varlist[i] = [varlist[i]]*list_len
+    
+    # Create the agent_defs
+    ag_groups = []
+    gr_names = []
+    for i in range(list_len):
+        ag_vars = [x[i] for x in varlist]
+
+        ag_groups.append(ag_vars)
+
+        nm = f"{varlist[1][i]}_{varlist[2][i]}_gr_{i}"
+        gr_names.append(nm)
+
+    if return_names:
+        return ag_groups, gr_names
+    else:
+        return ag_groups
 
 if __name__ == "__main__":
 

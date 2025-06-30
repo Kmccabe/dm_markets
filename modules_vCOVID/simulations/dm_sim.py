@@ -18,8 +18,8 @@ import simulations.dm_sim_period as simp
 import utils.dm_process_results as pr
 import environment.env_make_agents as agent_mkr
 
-def make_sim(sim_name, num_periods, num_weeks,
-     num_rounds, num_traders, agent_groups, grid_size=None):
+def make_sim(sim_name, num_weeks, num_periods,
+     num_rounds, num_traders, agent_groups, grid_size=None, group_names=None):
     
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
@@ -64,13 +64,13 @@ def make_sim(sim_name, num_periods, num_weeks,
         pr1.get_results()
         eff = pr1.get_efficiency()
         type_eff = pr1.get_type_surplus()
-        data[week]['eff'] = eff # single item put in list to faciliatate looping through data 
+        data[week]['eff'] = eff # single item put in list to facilitate looping through data 
         data[week]['type_effs'] = type_eff
     return data
 
 
 def make_monte_carlo(sim_name, 
-                     num_trials, num_periods, num_weeks, num_rounds, 
+                     num_trials, num_weeks, num_periods, num_rounds, 
                      num_traders, agent_groups, grid_size=None):
     """
     Runs one complete simulation and returns data in
@@ -81,15 +81,16 @@ def make_monte_carlo(sim_name,
 
     sim_data = {}
     sim_data['params'] = {'sim_name': sim_name, 'num_trials': num_trials,
-                         'num_periods': num_periods,
                          'num_weeks': num_weeks,
+                         'num_periods': num_periods,
                          'num_rounds': num_rounds,
                          'num_traders': num_traders,
                          'agent_groups': agent_groups, 'grid_size': grid_size}
 
     for trial in range(num_trials):
-        sim_data[trial] = make_sim(sim_name, num_periods, num_weeks,
-                                    num_rounds, num_traders, agent_groups, grid_size)
+        sim_data[trial] = make_sim(sim_name, 
+                                   num_weeks, num_periods, num_rounds, 
+                                   num_traders, agent_groups, grid_size)
         
     return sim_data
 
