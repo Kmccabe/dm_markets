@@ -455,9 +455,9 @@ class MakeAgents(object):
         """Getter for agents list"""
         return self.agents
        
-    def print_agents(self, agent_list):
+    def print_agents(self):
         """Print agents."""
-        for agent in agent_list:
+        for agent in self.agents:
             print(agent)
 
     def make_market(self, market_name="env_spot_market"):
@@ -528,7 +528,7 @@ if __name__ == "__main__":
     ag1.init_agents(ag_df)
     # agent_maker.make_test_agents()
     agents = ag1.get_agents()
-    ag1.print_agents(agents)
+    ag1.print_agents()
     # agent_maker.make_locations()
 
     # set up market
@@ -548,7 +548,7 @@ if __name__ == "__main__":
     ag2.init_agents(ag_df)
     # agent_maker.make_test_agents()
     agents = ag2.get_agents()
-    ag2.print_agents(agents)
+    ag2.print_agents()
 
     # set up market
     ag2.make_market("test_market")

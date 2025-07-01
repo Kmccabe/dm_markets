@@ -5,14 +5,19 @@ import numpy as np
 import pandas as pd
 import copy
 import simulations.dm_sim as simulate
-import utils.dm_process_results as results
 import environment.env_make_agents as make_env
 
-def change_agents(agents, ratio=1):
-    ZIDPR = dm_agents.ZIDPR
+import utils.dm_process_results as results
+import utils.dm_utils as dm_utils
+
+def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
+    
     """
-    make a copy of agents at current location and change strategy to ZIDPR
+    make a copy of agents at current location and change a proportion of agents (default 1.0) to a new strategy to (default ZIDPR) or to a new strategy_parameters (default None - keep original)
     """
+
+    new_class = dm_utils.get_agent_class(new_strategy)
+    
 
     # Pick a random set of agents to mutate (randomly at passed proportion - policy compliance rate)
     rn = np.random.default_rng()
@@ -32,28 +37,57 @@ def change_agents(agents, ratio=1):
     for k, agent in enumerate(agents):
         # change name
         if k in complying_inds: # These ones get Transformed
+
             name = agent.name
             s1 = name.split('_')
-            name = s1[0] + '_' + s1[1] + '_ZIDPR'
-
+            name = s1[0] + '_' + s1[1] + f'_{new_strategy}'
             trader_type = agent.type
             payoff = agent.payoff
             money = agent.money
             location = agent.location
             lower_bound = agent.lower_bound
             upper_bound = agent.upper_bound
+            num_units = agent.num_units
             move_error_rate = agent.movement_error_rate 
-            # Added New
+            strategy_params = agent.strategy_params
+            redraw_values = agent.redraw_values
+            group_name = agent.group_name
+
+            # make a new_class agent
+            new_agent = new_class(name, trader_type, payoff, money, location, 
+                                   lower_bound, upper_bound, num_units, move_error_rate, 
+                                   strategy_params, redraw_values, group_name)
+
+            # Copy contract flag
             cont_flag = agent.contract_this_period
-            reset_flag_frequency = agent.reset_flag_frequency
-            reset_flag_min_agents = agent.reset_flag_min_agents
-            reset_flag_on_random = agent.reset_flag_on_random
-            reset_flag_window = agent.reset_flag_window
-            reset_flag_min_trades = agent.reset_flag_min_trades
-            # make a ZIDPR agent
-            new_agent = dm_agents.ZIDPR(name, trader_type, payoff, money, location, 
-                                   lower_bound, upper_bound, move_error_rate, reset_flag_frequency, reset_flag_min_agents,
-                                    reset_flag_on_random, reset_flag_window, reset_flag_min_trades)
+            new_agent.set_contract_this_period(cont_flag)
+
+            # Copy costs and values
+            nag_typ = new_agent.get_type()
+            if nag_typ == "BUYER" or nag_typ == "B":
+                vals = agent.get_values()
+                new_agent.set_values(vals)
+            elif nag_typ == "SELLER" or nag_typ == "S":
+                cos = agent.get_costs()
+                new_agent.set_costs(cos)
+
+            # Handle special values based on agent families
+            agent_family = agent.agent_family
+
+            # Handle special values for ZIDA-Derivatives
+            if agent_family == 'ZIDA':
+                new_agent.reset_flag_frequency = agent.reset_flag_frequency
+                new_agent.current_period = agent.current_period
+                new_agent.periods_traded_in = agent.periods_traded_in
+                new_agent.reset_flag_min_agents = agent.reset_flag_min_agents
+                new_agent.reset_flag_min_trades = agent.reset_flag_min_trades
+                new_agent.trades_this_week = agent.trades_this_week
+
+            # Handle special values for ZIDT-Derivatives
+            elif agent_family == 'ZIDT':
+                # TODO: implement
+                raise ValueError('NOT IMPLEMENTED ZIDT')
+                pass
 
             # For Week Flag Rule
             new_agent.trades_this_week = agent.trades_this_week
@@ -62,16 +96,10 @@ def change_agents(agents, ratio=1):
             new_agent.current_period = agent.current_period
             new_agent.periods_traded_in = agent.periods_traded_in # test x1
             
-            new_agent.set_contract_this_period(cont_flag)
+            
         
-            nag_typ = new_agent.get_type()
-            if nag_typ == "BUYER" or nag_typ == "B":
-                vals = agent.get_values()
-                new_agent.set_values(vals)
-            elif nag_typ == "SELLER" or nag_typ == "S":
-                cos = agent.get_costs()
-                new_agent.set_costs(cos)
-        else: # These ones do not
+            
+        else: # These ones do not change
             new_agent = copy.deepcopy(agent)
             
         new_agents.append(new_agent)

@@ -32,7 +32,7 @@ agent_maker = mkt.MakeAgents(num_traders, trader_class_count, num_units,
 agent_maker.make_agents()
 agent_maker.make_locations()
 agents = agent_maker.get_agents()
-agent_maker.print_agents(agents)
+agent_maker.print_agents()
 
 # set up market
 agent_maker.make_market("test_market")

@@ -96,10 +96,6 @@ def test_agents(debug):
     
     return agent_list
 
-def print_agents(agent_list):
-    for agent in agent_list:
-        print(agent)
-
 def utility(q, m, v, p):
     """Calculates utility payoff
        args:  q = quantity bought
@@ -158,11 +154,28 @@ def pretty_print_grid(grid):
         print('point', k_loc,' --> ',grid[k_loc])
 
 def get_agent_locs(agents):
+    """Return agent locations"""
     x = []
     for agent in agents:
         y = agent.get_location()
         x.append(y)
     return x
+
+def print_agent_locations(agents):
+    """Print agent names and locations to the console"""
+    for agent in agents:
+        print(f"agent {agent.name} is at location {str(agent.get_location())}")
+
+def chk(x, index=0):
+    """Check if x if of an allowable type
+    If int, return self, if a list, return the value at index.
+    """
+    typ = type(x)
+    assert typ == int or typ == list, "bad type"
+    if type(x) == int:
+        return x
+    elif type(x) == list:
+        return x[index]
 
 def draw_efficiency(sim_data, labels=None, title=None):
     """
@@ -270,6 +283,14 @@ def gen_agent_groups(num_agents, agent_type, agent_class, strategy_params, lower
         return ag_groups, gr_names
     else:
         return ag_groups
+
+def print_agents(agents, print_types=False):
+    """Print the passed list of agents"""
+    for agent in agents:
+        if print_types:
+            print(agent, type(agent))
+        else:
+            print(agent)
 
 if __name__ == "__main__":
 

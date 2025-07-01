@@ -186,6 +186,7 @@ class MakeAgents(object):
 
     def make_test_agents(self):
         """Helper function to initialize test agents"""
+        # TODO: Test if this works. Revise so this actually works
 
         ZID = dm_agents.ZID
 
@@ -328,8 +329,8 @@ class MakeAgents(object):
     def get_agents(self):
         return self.agents
        
-    def print_agents(self, agent_list):
-        for agent in agent_list:
+    def print_agents(self):
+        for agent in self.agents:
             print(agent)
 
     def make_market(self, market_name):
@@ -380,10 +381,9 @@ if __name__ == "__main__":
 
     # set up agents
     agent_maker = MakeAgents(debug=True)
-    num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
     agent_maker.make_test_agents()
     agents = agent_maker.get_agents()
-    agent_maker.print_agents(agents)
+    agent_maker.print_agents()
     agent_maker.make_locations()
 
     # set up market
@@ -399,7 +399,7 @@ if __name__ == "__main__":
     agent_r = MakeAgents(num_traders, trader_class_count, num_units, grid_size, lb, ub, debug)
     agent_r.make_agents()
     agents = agent_r.get_agents()
-    agent_r.print_agents(agents)
+    agent_r.print_agents()
 
     # set up market
     agent_r.make_market("test_market")

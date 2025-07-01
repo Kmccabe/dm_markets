@@ -9,10 +9,6 @@ import time
 import matplotlib.colors as colors
 import moviepy
 
-def print_agents(agents):
-    for agent in agents:
-        print(agent, type(agent))
-
 def format_df_for_boxplot(data_df, x_var, y_var, x_range=None):
     """Reformats dataframe to be a matrix of [[y_1, ..., y_n]], [[y_2, ..., y_n]], ...]; length = length of x; indexes correspond to x's; for use in the box-plotting functions
         x_range (iterable): If using non-numeric x, need to specify a custom range for these, as the function cannot otherwise parse the data range.

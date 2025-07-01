@@ -11,7 +11,8 @@ class Trader(object):
     """
     
     def __init__(self, name, trader_type, payoff, money=None, location=None,
-                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None, redraw_values = False):
+                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None, redraw_values = False,
+                 group_name = None):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
@@ -44,6 +45,12 @@ class Trader(object):
 
         # Determines if you want to re-generate random valuations for each agent at the start of each week
         self.redraw_values = redraw_values
+
+        if group_name is None:
+            group_name = f't:{trader_type}_c:{self.__class__}_lb:{lower_bound}_ub:{upper_bound}_nu:{num_units}_mer:{movement_error_rate}_sp:{strategy_params}'
+        self.group_name = group_name
+
+        self.agent_family = 'TRA'
     
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
@@ -228,6 +235,10 @@ class ZID(Trader):
         Zero Intelligence variant for decentralized market
         a budget constrained ZI 
     """
+    def __init__(self, name, trader_type, payoff, money=None, location=None, lower_bound=0, upper_bound=9999, num_units=8, movement_error_rate=0, strategy_params=None, redraw_values=False, group_name=None):
+        super().__init__(name, trader_type, payoff, money, location, lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name)
+        
+        self.agent_family = 'ZID'
     
     def gen_res_values(self):
         """Returns a sorted list of values or costs drawn from a sequence of uniform distributions"
@@ -456,10 +467,12 @@ class ZIDA(ZID):
 
     def __init__(self, name, trader_type, payoff, money=None, location=None,
                  lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
-                redraw_values = False
+                redraw_values = False, group_name=None
             ):
         super().__init__(name, trader_type, payoff, money, location,
-                 lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values)
+                 lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name)
+        
+        self.agent_family = 'ZIDA'
         
         # Trappings for movement strategy
         self.reset_flag_frequency = None
@@ -467,8 +480,7 @@ class ZIDA(ZID):
         self.periods_traded_in = None
         self.reset_flag_min_agents = None
         self.reset_flag_min_trades = None
-
-        self.reset_flag_on_random = True
+        self.trades_this_week = None
 
         if strategy_params is not None:
             self.reset_flag_frequency = strategy_params['reset_flag_frequency']
@@ -700,6 +712,16 @@ class ZIDPR(ZIDA, ZIDP):
 
 class ZIDT(ZID):
     # TODO: Implement
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None
+        ):
+        super().__init__(name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name)
+        
+        self.agent_family = 'ZIDT'
+        raise ValueError('NOT IMPLEMENTED ZIDT')
+
     pass
 
 class ZIDTR(ZIDT):

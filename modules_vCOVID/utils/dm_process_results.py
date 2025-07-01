@@ -197,7 +197,7 @@ if __name__ == "__main__":
     #agent_maker.make_test_agents()
     agent_maker.make_agents()
     agents = agent_maker.get_agents()
-    agent_maker.print_agents(agents)
+    agent_maker.print_agents()
     agent_maker.make_locations()
 
     # set up market
