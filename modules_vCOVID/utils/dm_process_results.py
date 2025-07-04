@@ -58,15 +58,23 @@ class ProcessResults(object):
         self.actual_surplus = 0
         self.efficiency = 0
 
-        self.type_surplus = {}
+        self.group_surplus = {}
+        self.type_surplus = {} # TODO: refactor to name strategy_surplus
+
+        # Iterate over agents
         for trader in self.agent_list:
-            trader_strategy = trader.name.split("_")[-1]  # trader.name = trader_t_type
+            trader_strategy = trader.agent_class  # trader.name = trader_t_type
+            trader_group = trader.group_name
+            
+            # Iterate over contracts
             trader_surplus = 0
             unit = 0
             for contract in self.contracts:
                 round_number, price, buyer_name, seller_name, b_cu, b_val, s_cos, s_cu, b_loc, s_loc = contract
                 surplus = 0
                 t_typ = trader.type
+
+                # Calc buyer surplus
                 if t_typ == "BUYER" or t_typ == "B":
                     res = trader.get_values()
                     if trader.name == buyer_name:
@@ -74,10 +82,8 @@ class ProcessResults(object):
                         unit = unit + 1
                         trader_surplus = trader_surplus + surplus
                         self.buyer_surplus = self.buyer_surplus + surplus
-                       # TODO Figure out type surplus
-                        #self.type_surplus[self.current_week][trader_strategy] = \
-                            #self.type_surplus[self.current_week].get(trader_strategy, 0) + surplus
-                        #print(res, surplus, self.buyer_surplus)
+
+                # Calc seller surplus
                 elif t_typ == "SELLER" or t_typ == "S":
                     costs = trader.get_costs()
                     if trader.name == seller_name:
@@ -85,15 +91,20 @@ class ProcessResults(object):
                         unit = unit + 1
                         trader_surplus = trader_surplus + surplus
                         self.seller_surplus = self.seller_surplus + surplus
-                        # TODO Figure out type surplus
-                        #self.type_surplus[self.current_week][trader_strategy] = \
-                            #self.type_surplus[self.current_week].get(trader_strategy, 0) + surplus
-
+                
+                # Save agent_class surpluses
                 if trader_strategy in self.type_surplus:
                     self.type_surplus[trader_strategy]+=surplus
                 else:
                     self.type_surplus[trader_strategy] = surplus
+                
+                # Save agent_group surpluses
+                if trader_group in self.group_surplus:
+                    self.group_surplus[trader_group]+=surplus
+                else:
+                    self.group_surplus[trader_group] = surplus
  
+            # Calculate and save efficiencies
             self.actual_surplus = self.buyer_surplus + self.seller_surplus
             eq_units, eq_plow, eq_phigh, eq_max_surplus = self.market.get_equilibrium()
             self.efficiency = (self.actual_surplus / eq_max_surplus) * 100.0
@@ -169,17 +180,20 @@ class ProcessResults(object):
             #print(f"  {trader_strategy} has surplus {self.type_surplus[self.current_week][trader_strategy]}")
     
     def get_efficiency(self):
+        """Getter for efficiency. Must first calc."""
         return self.efficiency
 
-    def get_type_surplus(self):
+    def get_class_surplus(self):
+        """Getter for strategy surplus. Must first calc."""
         return self.type_surplus
+    
+    def get_group_surplus(self):
+        """Getter for group surplus. Must first calc."""
+        return self.group_surplus
 
 if __name__ == "__main__":
 
-    ZID = dm_agents.ZID
-    ZIDA = dm_agents.ZIDA
-
-    trader_class_count = ((ZID, 4), (ZID, 4))     # List of artificial traders length 2
+    trader_class_count = (("ZID", 8))     # List defining 8 ZID default traders
     debug = False
     num_traders = 10                  # traders (multiple of two)
     num_units = 8                     # Number of units per trader

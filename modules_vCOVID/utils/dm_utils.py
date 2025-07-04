@@ -292,6 +292,18 @@ def print_agents(agents, print_types=False):
         else:
             print(agent)
 
+def wide_class_surplus(df):
+    """Return the 'class_surplus' columns as wide-form DataFrame to easily analyze"""
+    
+    # check if this is a MonteCarlo DataFrame
+    is_mc = False
+    try:
+        df['trial']
+    except:
+        is_mc = True
+
+    
+
 if __name__ == "__main__":
 
     # Run Test Simulation to make sure things are working

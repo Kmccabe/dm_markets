@@ -18,12 +18,39 @@ import simulations.dm_sim_period as simp
 import utils.dm_process_results as pr
 import environment.env_make_agents as agent_mkr
 
-def make_sim(sim_name, num_weeks, num_periods,
-     num_rounds, num_traders, agent_groups, grid_size=None, group_names=None):
+import copy
+import pandas as pd
+
+def make_sim(sim_name, num_weeks, num_periods, num_rounds, 
+             num_traders, agent_groups, 
+             grid_size=None, group_names=None,
+             return_df=False, return_period_df=False, debug=False):
     
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
     """ 
+
+    if return_df:
+        # Store parameters
+        df_cols_param = ['sim_name', 
+                         'num_weeks', 'num_periods', 'num_rounds', 
+                         'num_traders', 'agent_groups',
+                         'grid_size', 'group_names']
+        # Store results
+        df_cols_results = ['week', 'contracts', 'grids', 'eff', 'class_surplus', 'group_surplus']
+        df_cols = df_cols_param + df_cols_results
+        df_data = []
+
+    if return_period_df:
+        # Add columns for period data
+        if return_df:
+            df_period_cols = df_cols + ['period'] + ['period_locs']
+            df_period_data = []
+        else:
+            raise ValueError("Cannot request period_df without passing return_df=True")
+    
+    if group_names is None:
+        group_names = [None]*len(agent_groups)
 
     # data table for simulation
     data = {}
@@ -31,7 +58,7 @@ def make_sim(sim_name, num_weeks, num_periods,
     # make agents
     debug = False
     agent_maker = agent_mkr.MakeAgents(debug)
-    ag_df = agent_maker.gen_custom_agents(num_traders, agent_groups, grid_size)
+    ag_df = agent_maker.gen_custom_agents(num_traders, agent_groups, grid_size, group_names)
     agent_maker.init_agents(ag_df)
     agents = agent_maker.get_agents()
   
@@ -44,16 +71,47 @@ def make_sim(sim_name, num_weeks, num_periods,
         data[week] = {}
         for agent in agents:
             agent.start(None)
-            # print(agent.get_name(), ":", agent.get_values())
+
+            if debug:
+                print(agent.get_name(), ":", agent.get_values())
+
         contracts = []
         sim_grids = []
         sim1 = simp.SimPeriod(sim_name, num_rounds, agents, 
                market, grid_size)
-        for _ in range(num_periods):
+        for period in range(num_periods):
             sim1.run_period()
             grid = sim1.get_grid()
             sim_grids.append(grid)
-            contracts.extend(sim1.get_contracts())
+            pr_contracts = sim1.get_contracts()
+            contracts.extend(pr_contracts)
+
+            # NOTE: can refactor this to be more memory and compute efficient - track ONLY period and week data
+            # Add in control data LATER
+            # Consider casting agent_groups to str or similar before adding to DF
+
+            # Save period-by-period data to dataframe
+            if return_period_df:
+                period_data = [sim_name, 
+                               num_weeks, num_periods, num_rounds,
+                               num_traders, agent_groups,
+                               grid_size, group_names,
+                               week,
+                               pr_contracts, grid, 
+                               None, None, None, # End week columns
+                               period, copy.deepcopy(grid)]
+                df_period_data.append(period_data)
+
+                # Save the initial locations of the agents
+                if week == 0 and period == 0:
+                    period_data = [sim_name, 
+                                   num_weeks, num_periods, num_rounds,
+                                   num_traders, agent_groups,
+                                   grid_size, group_names,
+                                   -1, [], copy.deepcopy(sim1.get_initial_grid()),
+                                   None, None, None,
+                                   -1, copy.deepcopy(sim1.get_initial_grid())]
+                    df_period_data.append(period_data)
         
         data[week]['contracts'] = contracts
         data[week]['grids'] = sim_grids
@@ -63,15 +121,37 @@ def make_sim(sim_name, num_weeks, num_periods,
         pr1.calc_efficiency()
         pr1.get_results()
         eff = pr1.get_efficiency()
-        type_eff = pr1.get_type_surplus()
+        class_surplus = pr1.get_class_surplus()
+        group_surplus = pr1.get_group_surplus()
         data[week]['eff'] = eff # single item put in list to facilitate looping through data 
-        data[week]['type_effs'] = type_eff
-    return data
+        data[week]['class_surplus'] = class_surplus
+        data[week]['group_surplus'] = group_surplus
+
+        # Save week-by-week data to dataframe
+        if return_df:
+            week_data = [sim_name,
+                         num_weeks, num_periods, num_rounds,
+                         num_traders, agent_groups,
+                         grid_size, group_names,
+                         week, contracts, sim_grids,
+                         eff, class_surplus, group_surplus]
+            df_data.append(week_data)
+    
+    if return_df:
+        df_out = pd.DataFrame(data=df_data, columns=df_cols)
+        if return_period_df:
+            period_df_out = pd.DataFrame(data=df_period_data, columns=df_period_cols)
+            return df_out, period_df_out
+        else:
+            return  df_out
+    else:
+        return data
 
 
 def make_monte_carlo(sim_name, 
                      num_trials, num_weeks, num_periods, num_rounds, 
-                     num_traders, agent_groups, grid_size=None):
+                     num_traders, agent_groups, grid_size=None, group_names=None, 
+                     return_df=False, return_period_df=False):
     """
     Runs one complete simulation and returns data in
         effs[treatment][trial]
@@ -79,20 +159,78 @@ def make_monte_carlo(sim_name,
     Can provide the 
     """ 
 
-    sim_data = {}
-    sim_data['params'] = {'sim_name': sim_name, 'num_trials': num_trials,
-                         'num_weeks': num_weeks,
-                         'num_periods': num_periods,
-                         'num_rounds': num_rounds,
-                         'num_traders': num_traders,
-                         'agent_groups': agent_groups, 'grid_size': grid_size}
+    if group_names is None:
+        group_names = [None]*len(agent_groups)
 
+    sim_data = {}
+    sim_data['params'] = {'sim_name': sim_name, 
+                          'num_trials': num_trials,
+                          'num_weeks': num_weeks, 'num_periods': num_periods, 
+                          'num_rounds': num_rounds,
+                          'num_traders': num_traders,
+                          'agent_groups': agent_groups, 'grid_size': grid_size,
+                          'group_names': group_names}
+
+    # Stubs for storing df results
+    if return_df:        
+        mc_df = None
+
+        if return_period_df:
+            mc_period_df = None
+
+    # run num_trials number of simulations with the provided configuration
     for trial in range(num_trials):
-        sim_data[trial] = make_sim(sim_name, 
-                                   num_weeks, num_periods, num_rounds, 
-                                   num_traders, agent_groups, grid_size)
+
+        # Return non-DF
+        if not return_df:
+            trial_data = make_sim(sim_name, 
+                                    num_weeks, num_periods, num_rounds, 
+                                    num_traders, agent_groups, grid_size, group_names)
+            sim_data[trial] = trial_data
+
         
-    return sim_data
+        # Return DF
+        elif return_df:
+
+            # Return period-level DF data
+            if return_period_df:
+                trial_df, trial_period_df = make_sim(sim_name,
+                                                         num_weeks, num_periods, num_rounds, 
+                                                         num_traders, agent_groups, 
+                                                         grid_size, group_names,
+                                                         return_df, return_period_df)
+                trial_period_df['trial'] = trial
+                
+                # Store trial's period DF
+                if mc_period_df is None:
+                    mc_period_df = trial_period_df
+                else:
+                    mc_period_df = pd.concat([mc_period_df, trial_period_df], ignore_index=True)
+
+            # Keep non-period data
+            elif not return_period_df:
+                trial_df = make_sim(sim_name,
+                                        num_weeks, num_periods, num_rounds, 
+                                        num_traders, agent_groups, 
+                                        grid_size, group_names,
+                                        return_df)
+            
+            trial_df['trial'] = trial
+
+            # Store Trial DF
+            if mc_df is None:
+                mc_df = trial_df
+            else:
+                mc_df = pd.concat([mc_df, trial_df], ignore_index=True)
+
+    # Return results with requested 
+    if return_df:
+        if return_period_df:
+            return mc_df, mc_period_df
+        elif not return_period_df:
+            return mc_df
+    else:
+        return sim_data
 
 # Analyze Efficiency Data
 def analyze_eff_data(num_trials, num_weeks, data_table):
@@ -122,9 +260,9 @@ def analyze_eff_data(num_trials, num_weeks, data_table):
             week_effs[k].append(eff)
             
     # calculate avg, min, max, and sem for each week
-    std_errors = [] 
+    std_errors = []
     eff_min = []
-    eff_max = []  
+    eff_max = []
     for k in range(num_weeks):
         eff_avg[k] /= num_trials
         std_error = sem(week_effs[k])
@@ -179,25 +317,8 @@ if __name__ == "__main__":
                                 lower_bound, upper_bound,
                                 trader_class_count)
     """
-    # show data_structure for data_table
-    print(trial, 'parms', data_table['parms'])
-    for trial in range(num_trials):
-        print(f"trial = {trial}")
-        trial_data = data_table[trial]
-        for week in range(num_weeks):
-            print(f"week = {week}")
-            week_data = trial_data[week]
-            print(trial, week, 'contracts', week_data['contracts'])
-            print()
-            print(trial, week, 'grids', week_data['grids'])
-            print()
-            print(trial, week, 'eff', week_data['eff'])
-            print()
-            print(trial, week, 'type_effs') 
-            for key in week_data['type_effs']:
-                print(key, week_data['type_effs'][key])
-            print()
-    """          
+
+    """
 
     eff_avg_1, std_error_1, eff_min_1, eff_max_1 = analyze_eff_data(num_trials, num_weeks, data_table)
     x = range(num_weeks)

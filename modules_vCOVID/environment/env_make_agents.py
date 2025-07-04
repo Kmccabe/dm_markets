@@ -59,7 +59,7 @@ class MakeAgents(object):
         
 
     def gen_default_agents(self, num_traders, trader_class_counts, num_units,
-                 grid_size, lower_bound, upper_bound, movement_error_rate=0, strategy_params=None):
+                 grid_size, lower_bound, upper_bound, movement_error_rate=0, strategy_params=None, group_names=None):
         """
         Generate the baseline agents used to test the effects of grid parameters and agent strategy in an otherwise homogenous environment.
 
@@ -106,7 +106,7 @@ class MakeAgents(object):
                 raise ValueError("Each agent class definition must contain an even number of agents")
             counted += ag_num
         if num_traders != counted:
-            raise ValueError("The number of traders must add up to the number in each type")
+            raise ValueError(f"The number of traders, {num_traders}, must add up to the number in each type, {trader_class_counts}")
 
 
         # Translate the traditional agent class definitions to the agent group definitions
@@ -143,11 +143,11 @@ class MakeAgents(object):
         if self.debug:
             print(f"gen_default_agents: Creating Default agents with definitions of: {group_defs}")
 
-        cust_def = self.gen_custom_agents(num_traders, group_defs, grid_size)
+        cust_def = self.gen_custom_agents(num_traders, group_defs, grid_size, group_names)
 
         return cust_def
 
-    def gen_custom_agents(self, num_traders, agent_groups, grid_size=None):
+    def gen_custom_agents(self, num_traders, agent_groups, grid_size=None, group_names=None):
         """
         Creates a custom dataframe for advanced agent creation. Requires detailed specification of agent types at the agent-group level.
         
@@ -168,20 +168,29 @@ class MakeAgents(object):
             pandas.DataFrame: a dataframe with defined per-agent initialization data. Named ag_df within the function.
         """
 
+        if group_names is None:
+            group_names = [None]*len(agent_groups)
+
         # Verify number of agents in groups add up to the number of traders
         counted = 0
         for ag_i in range(len(agent_groups)):
             ag_n = agent_groups[ag_i][0]
             counted += ag_n
+        
+        if counted != num_traders:
+            (f"The number of traders, {num_traders}, must add up to the number in each type, {agent_groups}")
 
         agent_defs = []
         ag_j = 0
         # Go over each agent group definition and create the agents
         for ag_i in range(len(agent_groups)):
             ag_group = agent_groups[ag_i]
+            ag_gn = group_names[ag_i] # Agent group name
+
             ag_n = ag_group[0] # Number of Agents
             ag_t = ag_group[1] # Agent Type (Buyer/Seller)
             ag_cl = ag_group[2] # Agent Class (strategy)
+
             # Handle the passing of dm_agent classes as class names instead
             if type(ag_cl) is not str:
                 ag_cl = dm_utils.get_agent_str(ag_cl)
@@ -213,7 +222,7 @@ class MakeAgents(object):
                 # Agent name (Type, index, class)
                 ag_nm = f"{ag_t}_{ag_j}_{ag_cl}"
                 
-                one_row = [ag_nm, ag_t, ag_cl, ag_sp, ag_lb, ag_ub, ag_un, ag_edw, ag_fx, ag_me, al]
+                one_row = [ag_nm, ag_t, ag_cl, ag_sp, ag_lb, ag_ub, ag_un, ag_edw, ag_fx, ag_me, al, ag_gn]
 
                 agent_defs.append(one_row)
 
@@ -222,7 +231,7 @@ class MakeAgents(object):
         if self.debug:
             print(agent_defs)
         
-        ag_df = pd.DataFrame(data = agent_defs, columns=['name', 'type', 'class', 'strategy_params', 'lower_bound', 'upper_bound', 'num_units', 'endowment', 'payoff_function', 'movement_error_rate', 'location'])
+        ag_df = pd.DataFrame(data = agent_defs, columns=['name', 'type', 'class', 'strategy_params', 'lower_bound', 'upper_bound', 'num_units', 'endowment', 'payoff_function', 'movement_error_rate', 'location', 'group_name'])
 
         return ag_df
 
@@ -295,7 +304,7 @@ class MakeAgents(object):
     def randomize_agent_locations(self, grid_size):
         """Initialize trader locations for make_agents."""
 
-        if debug:
+        if self.debug:
             print("env_make_agents: Called make_locations")
 
         for ag in self.agents:
@@ -318,29 +327,6 @@ class MakeAgents(object):
         """Returns a sorted list of values or costs drawn from a sequence of uniform distributions"
             buyer_flag = True if a buyer else a seller
             units = number of draws
-        """
-
-        """
-        # print("XXX")
-        ub = self.ub[agent_index]
-        lb = self.lb[agent_index]
-        interval = int((ub-lb)/4) # TODO figure out why dividing by 4 here
-        if buyer_flag:
-            values = []
-            upper = ub
-            lower = lb + interval
-            for unit in range(self.num_units):
-                value = np.random.randint(lower, upper+1)
-                values.append(value)
-            return sorted(values, reverse=True)  # Insures declining marginal value
-        else:
-            costs = []
-            upper = ub - interval
-            lower = lb
-            for unit in range(self.num_units):
-                cost = np.random.randint(lower, upper+1)
-                costs.append(cost)
-            return sorted(costs, reverse=False)  # Insures increasing marginal cost
         """
 
         raise ValueError("env_make_agents.gen_res_values Deprecated. This function is deprecated. Use the one in agent class.")
@@ -369,15 +355,16 @@ class MakeAgents(object):
             pf = r_df['payoff_function']
             me = r_df['movement_error_rate']
             loc = r_df['location']
+            gn = r_df['group_name']
 
-            self.make_one_agent(n, t, cl, sp, lb, ub, nu, en, pf, me, loc)
+            self.make_one_agent(n, t, cl, sp, lb, ub, nu, en, pf, me, loc, gn)
         
         if self.debug:
             print("Initiated agents in env_make_agents")
 
     def make_one_agent(self, name, trader_role, agent_class, strat_params,
                        lower_bound, upper_bound, num_units, endow, payoff_fx,
-                       mv_error, location):
+                       mv_error, location, group_name=None):
         """
         Create one agent based on the passed parameters and append it to self.agents.
         """
@@ -385,11 +372,12 @@ class MakeAgents(object):
         """(self, name, trader_type, payoff, money=None, location=None,
                  lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None, redraw_values = False):"""
         
+        
         ag_cl = dm_utils.get_agent_class(agent_class)
         ag_fx = self.get_payoff(payoff_fx)
         new_agent = ag_cl(name, trader_role, ag_fx, endow, location,
                         lower_bound, upper_bound, num_units,
-                        mv_error, strat_params, False)
+                        mv_error, strat_params, False, group_name)
         new_agent.gen_res_values()
         self.agents.append(new_agent)
 
@@ -398,57 +386,6 @@ class MakeAgents(object):
         build list self.agents of agent objects
         """
         
-        """if debug:
-            print("At make agents in make_env")
-            print(f"\tMaking off of {self.trader_class_counts}")
-
-        self.make_locations() # Put traders at random grid point
-        # replicate trade_object total_traders//2 times and put in traders list
-        # make a shuffled list of trader objects for trader roles
-        traders = []
-        for ri in trader_data:
-             trader
-        for agent_name_number in self.trader_class_counts:
-            t_name, t_num = agent_name_number
-            for k in range(t_num):
-                traders.append(t_name)
-        assert len(traders) == self.num_traders, f"num_traders {self.num_traders} != length of traders"
-        # randomize trader strategies one for each agent
-        np.random.shuffle(traders)
-
-        # Assign trader objects to agent type roles and assign values and costs
-        self.agents = []
-        t = 0 # Agent index (across types)
-        for i in range(len(self.agent_types)):
-            ag_typ = self.agent_types[i] # Type of agent this is
-            typ_ct = self.agent_type_counts[i] # Count of these types of agents
-            for j in range(typ_ct):
-                sname = f"{ag_typ}_{j+1}"
-                name = f"{sname}_{agent_kind}" # Name is Type + NumInType (1-indexed)
-                trader_role = ag_typ
-                payoff = self.agent_payoffs[t]
-                money = self.agent_endows[t]
-                agent_model = traders[t] # Get agent class
-                agent_kind = str(agent_model.__name__) # Get class name
-                
-                location = self.location_list[t]   # get initial location
-                # initialize agent with info constructed above
-                lb = self.lb[t]; ub = self.ub[t]
-
-                
-                                reset_flag_frequency=self.reset_flag_frequency, 
-                                reset_flag_min_agents=self.reset_flag_min_agents,
-                                reset_flag_on_random=self.reset_flag_on_random,
-                                reset_flag_window = self.reset_flag_window,
-                                reset_flag_min_trades = self.reset_flag_min_trades)
-                
-                # Make Value list or cost list - now inside the agent model
-                agent.gen_res_values() # Required for EQ calculation - note now equilibrium is only ex ante equivalent to the realized b/c res values redrawn
-
-                # add agent to self.agents list
-                self.agents.append(agent)  # List of agent objects
-                t += 1
-            """
         raise ValueError("env_make_agents.make_agents Deprecated")
 
     def get_agents(self):

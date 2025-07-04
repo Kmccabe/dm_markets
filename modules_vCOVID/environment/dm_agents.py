@@ -1,7 +1,6 @@
 import random as rnd
 import numpy as np
 from institutions.dm_message_model import Message
-#from dm_zida import ZIDA
 
 class Trader(object):
     """
@@ -12,13 +11,13 @@ class Trader(object):
     
     def __init__(self, name, trader_type, payoff, money=None, location=None,
                  lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None, redraw_values = False,
-                 group_name = None):
+                 group_name = None, debug=False):
         """ name = name of trader
             trader_type = BUYER or SELLER
             payoff = payoff function: utility or profit
             location = starting location of trader
         """
-        self.debug = False
+        self.debug = debug
         self.name = name          # unique identifier 
         self.type = trader_type   # BUYER or SELLER
         self.payoff = payoff  # utility or profit function
@@ -43,15 +42,24 @@ class Trader(object):
 
         self.movement_error_rate  = movement_error_rate
 
+        self.strategy_params = strategy_params
+
         # Determines if you want to re-generate random valuations for each agent at the start of each week
         self.redraw_values = redraw_values
 
+        self.agent_family = 'TRA'
+        self.agent_class = 'TRA'
+
+        self.set_group_name(group_name)
+
+    def set_group_name(self, group_name):
+        """Setter for agent group name."""
+        
         if group_name is None:
-            group_name = f't:{trader_type}_c:{self.__class__}_lb:{lower_bound}_ub:{upper_bound}_nu:{num_units}_mer:{movement_error_rate}_sp:{strategy_params}'
+            group_name = f't:{self.type}_c:{self.agent_class}_lb:{self.lower_bound}_ub:{self.upper_bound}_nu:{self.num_units}_mer:{self.movement_error_rate}_sp:{self.strategy_params}'
         self.group_name = group_name
 
-        self.agent_family = 'TRA'
-    
+
     def __repr__(self):
         s = f"{self.name:10} {self.type:6} @{str(self.location)}:"
         if self.type == "BUYER" or self.type == "B":
@@ -74,10 +82,8 @@ class Trader(object):
         return s
 
     def help(self):
-        print("strategy - ZID")
-        print("period move: randomly one step")
-        print("round offer: bid ~ [lower_bound, current_value]") 
-        print("             ask ~ [current_cost, upper_bound]") 
+        print(f"strategy: {self.agent_class}")
+        print(f"strategy parameters: {self.strategy_params}")
     
     #TODO: Check on this.  Is it needed.
     def get_simulation(self, simulation):
@@ -225,20 +231,19 @@ class Trader(object):
         else:
             self.contract_this_period = False
         
-        #print(period_span)
-        #print(self.periods_traded_in)
-        #print(self.contract_this_period)
-
 
 class ZID(Trader):
     """ 
         Zero Intelligence variant for decentralized market
         a budget constrained ZI 
     """
-    def __init__(self, name, trader_type, payoff, money=None, location=None, lower_bound=0, upper_bound=9999, num_units=8, movement_error_rate=0, strategy_params=None, redraw_values=False, group_name=None):
-        super().__init__(name, trader_type, payoff, money, location, lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name)
+    def __init__(self, name, trader_type, payoff, money=None, location=None, lower_bound=0, upper_bound=9999, num_units=8, movement_error_rate=0, strategy_params=None, redraw_values=False, group_name=None, debug=False):
+        super().__init__(name, trader_type, payoff, money, location, lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
         
         self.agent_family = 'ZID'
+        self.agent_class = 'ZID'
+
+        self.set_group_name(group_name)
     
     def gen_res_values(self):
         """Returns a sorted list of values or costs drawn from a sequence of uniform distributions"
@@ -326,6 +331,7 @@ class ZID(Trader):
         self.returned_msg(return_msg)
         return return_msg 
 
+
     def offer(self, pl):
         """
         Make a bid or ask 
@@ -351,6 +357,7 @@ class ZID(Trader):
             return_msg = Message("ASK", self.name, "BARGAIN", WTA)
             self.returned_msg(return_msg)
             return return_msg  
+
 
     def transact(self, pl):
         """
@@ -458,6 +465,7 @@ class ZID(Trader):
 
         return return_msg
 
+
 class ZIDA(ZID):
     """
         Zero Intelligence variant for decentralized market
@@ -467,12 +475,15 @@ class ZIDA(ZID):
 
     def __init__(self, name, trader_type, payoff, money=None, location=None,
                  lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
-                redraw_values = False, group_name=None
+                redraw_values = False, group_name=None, debug=False
             ):
         super().__init__(name, trader_type, payoff, money, location,
-                 lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name)
+                 lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
         
         self.agent_family = 'ZIDA'
+        self.agent_class = 'ZIDA'
+
+        self.set_group_name(group_name)
         
         # Trappings for movement strategy
         self.reset_flag_frequency = None
@@ -499,6 +510,7 @@ class ZIDA(ZID):
         elif rf == "WEEK":
             self.trades_this_week = 0
             self.reset_flag_min_trades = strategy_params['reset_flag_min_trades']
+
 
     def move_requested(self, pl, silence_log=False):
         """
@@ -565,6 +577,7 @@ class ZIDA(ZID):
         
         return super().start(pl)
     
+
     def contract(self, pl, debug_contract=False):
         """
         Override super to keep track of trades this week and periods traded in. Otherwise proceed as in super.
@@ -577,8 +590,22 @@ class ZIDA(ZID):
 
         return super().contract(pl, debug_contract)
 
+
 class ZIDP(ZID):
     """Overrides Bid and Ask Decisions"""
+
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        super().__init__(name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZID'
+        self.agent_class = 'ZIDP'
+
+        self.set_group_name(group_name)
+
 
     def find_opt(self, m_type, offers):
         """returns offer with min ask or max bid to action_requested
@@ -592,7 +619,8 @@ class ZIDP(ZID):
             if m_type == 'min' and y < y_found[1]:    
                 y_found = (x, y)
         return y_found
-    
+
+
     def transact(self, pl):
         """
         Make a buy or sell 
@@ -662,7 +690,8 @@ class ZIDP(ZID):
                 return_msg = Message("NULL", self.name, "BARGAIN", None)
                 self.returned_msg(return_msg)
                 return return_msg  
- 
+
+
 class ZIDPA(ZIDA, ZIDP):
     """
         Zero Intelligence variant for decentralized market
@@ -672,8 +701,19 @@ class ZIDPA(ZIDA, ZIDP):
     """
 
     # def move_requested(self, pl):
-    # Dropped - works with multiple inheritence
+    # Dropped - works with multiple inheritance
+    # TODO: test this
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        super().__init__(name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZIDA'
+        self.agent_class = 'ZIDPA'
 
+        self.set_group_name(group_name)
 
 class ZIDPR(ZIDA, ZIDP):
     """
@@ -682,6 +722,20 @@ class ZIDPR(ZIDA, ZIDP):
         <==> Bias to stay in current location
         BUT Moves Away if >2 at a point - COVID intervention
     """
+
+
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        super().__init__(name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZIDA'
+        self.agent_class = 'ZIDPR'
+
+        self.set_group_name(group_name)
+
 
     def move_requested(self, pl):
         """
@@ -711,20 +765,38 @@ class ZIDPR(ZIDA, ZIDP):
 
 
 class ZIDT(ZID):
+
+
     # TODO: Implement
     def __init__(self, name, trader_type, payoff, money=None, location=None,
                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
-            redraw_values = False, group_name=None
+            redraw_values = False, group_name=None, debug=False
         ):
         super().__init__(name, trader_type, payoff, money, location,
-                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name)
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
         
         self.agent_family = 'ZIDT'
+        self.agent_class = 'ZIDT'
+
+        self.set_group_name(group_name)
         raise ValueError('NOT IMPLEMENTED ZIDT')
 
-    pass
 
 class ZIDTR(ZIDT):
+
+
     # TODO: Implement
-    pass
-# TODO Make ZIT (ZI+) Traders with opportunity cost calculation
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        super().__init__(name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZIDT'
+        self.agent_class = 'ZIDTR'
+
+        self.set_group_name(group_name)
+        raise ValueError('NOT IMPLEMENTED ZIDT')
+    
+    # TODO Make ZIT (ZI+) Traders with opportunity cost calculation

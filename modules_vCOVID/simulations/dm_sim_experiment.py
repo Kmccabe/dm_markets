@@ -35,6 +35,7 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
     
     new_agents = []
     for k, agent in enumerate(agents):
+
         # change name
         if k in complying_inds: # These ones get Transformed
 
@@ -95,10 +96,7 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
             # For Window flag Rule
             new_agent.current_period = agent.current_period
             new_agent.periods_traded_in = agent.periods_traded_in # test x1
-            
-            
-        
-            
+
         else: # These ones do not change
             new_agent = copy.deepcopy(agent)
             
@@ -106,60 +104,28 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
         
     return new_agents
 
-def change_back_agents(agents):
-    
-    ZIDPA = dm_agents.ZIDPA
-    """Returns agents to type ZIDPA"""
-    new_agents = []
-    
-    for k, agent in enumerate(agents):
-        # change name
-        name = agent.name
-        s1 = name.split('_')
-        name = s1[0] + '_' + s1[1] + '_ZIDPA'
+def change_back_agents(agents, old_strategy="ZIDPA"):
+    """Returns agents to original agent type (default ZIDPA)"""
 
-        trader_type = agent.type
-        payoff = agent.payoff
-        money = agent.money
-        location = agent.location
-        lower_bound = agent.lower_bound
-        upper_bound = agent.upper_bound
-        cont_flag = agent.contract_this_period
-        move_error_rate = agent.movement_error_rate 
-        
-        # Determine the rule (of thumb, here) by which to reset the flag for satisfaction with location (i.e. move or not)
-        reset_flag_frequency = agent.reset_flag_frequency
-        reset_flag_min_agents = agent.reset_flag_min_agents
-        reset_flag_on_random = agent.reset_flag_on_random
-        reset_flag_window = agent.reset_flag_window
-        reset_flag_min_trades = agent.reset_flag_min_trades
-        # make a ZIDPA agent
-        new_agent = dm_agents.ZIDPA(name, trader_type, payoff, money, location, 
-                                   lower_bound, upper_bound, move_error_rate, reset_flag_frequency, reset_flag_min_agents,
-                                    reset_flag_on_random, reset_flag_window, reset_flag_min_trades)
-        
-        new_agent.set_contract_this_period(cont_flag)
+    return change_agents(agents, ratio=1, new_strategy=old_strategy)
 
-        # For Week Flag Rule
-        new_agent.trades_this_week = agent.trades_this_week
-        
-        # For Window flag Rule
-        new_agent.current_period = agent.current_period
-        new_agent.periods_traded_in = agent.periods_traded_in # test x1
-        
-        nag_typ = new_agent.get_type()
-        if nag_typ == "BUYER" or nag_typ == "B":
-            vals = agent.get_values()
-            new_agent.set_values(vals)
-        elif nag_typ == "SELLER" or nag_typ == "S":
-            cos = agent.get_costs()
-            new_agent.set_costs(cos)
-        
-        new_agents.append(new_agent)
-        
-    return new_agents
+def make_sim_experiment(experiment_inputs, ):
+    """
+        Runs n=length experiments using the list of inputs 
+        take a list of inputs
+    """
+    # TODO: Create the behavior currently in make_simulation() in something like this - make_sim_experiment()
+    # TODO: Pull in the behavior with dataframe to make_sim and then to this
 
-# TODO redo adding data to the dataframe using CONCAT instead of building a long string and then adding - speed increase probable
+    # TODO: Continue
+
+    # Check all components in list are correctly specified
+    for inp in experiment_inputs:
+        pass
+        
+
+
+# NOTE: can redo adding data to the dataframe using CONCAT instead of building a long string and then adding - speed increase probable
 def make_event_sim(sim_name, num_periods, num_weeks,
              event_begin, event_end, market, agents,
              num_rounds, grid_size,
@@ -237,7 +203,7 @@ def make_event_sim(sim_name, num_periods, num_weeks,
         pr1.get_results()
         eff = pr1.get_efficiency()
         type_eff = pr1.get_type_surplus()
-        data[week]['eff'] = eff # single item put in list to faciliatate looping through data 
+        data[week]['eff'] = eff # single item put in list to facilitate looping through data 
         data[week]['type_effs'] = type_eff
 
         if return_df:
