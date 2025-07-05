@@ -1,6 +1,7 @@
 import environment.dm_agents as dma
 import simulations.dm_sim as dm_sim
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def get_agent_class(class_name):
     """
@@ -292,17 +293,195 @@ def print_agents(agents, print_types=False):
         else:
             print(agent)
 
-def wide_class_surplus(df):
-    """Return the 'class_surplus' columns as wide-form DataFrame to easily analyze"""
-    
-    # check if this is a MonteCarlo DataFrame
-    is_mc = False
-    try:
-        df['trial']
-    except:
-        is_mc = True
+def long_class_surplus(week_df):
+    """Return the 'class_surplus' and id columns as long-form DataFrame to easily analyze"""
 
+    # TODO: refactor type_effs group_effs to class_surplus, group_surplus
+    # Transform MC DataFrame to have class_surplus and group_surplus pulled out as their own "wide-wise" entries
     
+    return long_x_surplus(week_df, x='class_surplus', j='agent_class')
+
+def long_group_surplus(week_df):
+    """Return the 'group_surplus' and id columns as long-form DataFrame to easily analyze"""
+    
+    return long_x_surplus(week_df, x='group_surplus', j='agent_group')
+
+
+def dict_to_list(dict_cn):
+    """Turn dictionary definitions into an organized list."""
+    dl = list(dict_cn)
+    sp_names = sorted(dl)
+    re_vals = []
+
+    for i in range(len(sp_names)):
+        sn = sp_names[i]
+        sv = dict_cn[sn]
+        re_vals.append(sn)
+        re_vals.append(sv)
+    
+    return re_vals
+
+
+def long_x_surplus(week_df, x='class_surplus', j='agent_class'):
+    """Return the x and id columns as long-form DataFrame to easily analyze"""
+    
+    id_cols = ['sim_name', 'week']
+
+    # check if this is a MonteCarlo DataFrame
+    try:
+        week_df['trial']
+        # Trials is part of id columns if monte carlo
+        id_cols = id_cols + ['trial']
+    except:
+        pass
+
+    # check if there are defined treatments
+    try:
+        week_df['treatment']
+        # treatment is part of id columns if defined
+        id_cols = id_cols + ['treatment']
+    except:
+        pass
+    
+    # Save data from surplus defs
+    pref = x[:2] + '_'
+    small_df = week_df[id_cols].copy()
+
+    small_df['ls'] = week_df[x].apply(dict_to_list)
+
+    # Organize surpluses into columns
+    num_groups = int(len(small_df['ls'].iloc[0])/2)
+    for i in range(num_groups):
+        g_name = small_df['ls'].apply(lambda x: x[0+2*i])
+        g_val = small_df['ls'].apply(lambda x: x[1+2*i])
+        q_col = pref + g_name.iloc[0]
+        small_df[q_col] = g_val
+
+    small_df = small_df.drop(columns="ls")
+
+    # Change columns from wide to long format
+    re_df = pd.wide_to_long(small_df, stubnames=pref, i=id_cols, j=j, 
+                            suffix='\w+').reset_index()
+    re_df = re_df.rename(columns={pref:x+'_val'})
+
+    return re_df
+
+
+def summary_surplus(week_df):
+    """Return a DataFrame of summary statistics at the week-level for efficiency, class_surplus, and group_surplus"""
+
+    # Class surpluses
+    id_cols = ['sim_name', 'agent_class', 'week']
+    ac_df = long_class_surplus(week_df)
+    ac_df = ac_df.drop(columns='trial')
+
+    # Calculate avg
+    avg_val = ac_df.groupby(by=id_cols).mean()
+    avg_val = avg_val.rename(columns={'class_surplus_val':'csv_avg'})
+
+    # Calculate std
+    std_val = ac_df.groupby(by=id_cols).std()
+    std_val = std_val.rename(columns={'class_surplus_val':'csv_std'})
+
+    # Calculate sem
+    sem_val = ac_df.groupby(by=id_cols).sem()
+    sem_val = sem_val.rename(columns={'class_surplus_val':'csv_sem'})
+
+    merged_ac = avg_val.merge(std_val, on=id_cols).reset_index()
+    merged_ac = merged_ac.merge(sem_val, on=id_cols).reset_index()
+
+    # Group surpluses
+    id_cols = ['sim_name', 'agent_group', 'week']
+    ag_df = long_group_surplus(week_df)
+    ag_df = ag_df.drop(columns='trial')
+
+    # Calculate avg
+    avg_val = ag_df.groupby(by=id_cols).mean()
+    avg_val = avg_val.rename(columns={'group_surplus_val':'gsv_avg'})
+
+    # Calculate std
+    std_val = ag_df.groupby(by=id_cols).std()
+    std_val = std_val.rename(columns={'group_surplus_val':'gsv_std'})
+
+    # Calculate sem
+    sem_val = ag_df.groupby(by=id_cols).sem()
+    sem_val = sem_val.rename(columns={'group_surplus_val':'gsv_sem'})
+
+    merged_ag = avg_val.merge(std_val, on=id_cols).reset_index()
+    merged_ag = merged_ag.merge(sem_val, on=id_cols).reset_index()
+
+    # Efficiencies
+    id_cols = ['sim_name', 'week']
+    e_df = week_df[['sim_name', 'week', 'eff']].copy()
+
+    avg_val = e_df.groupby(by=id_cols).mean()
+    avg_val = avg_val.rename(columns={'eff':'eff_avg'})
+    
+    std_val = e_df.groupby(by=id_cols).std()
+    std_val = std_val.rename(columns={'eff':'eff_std'})
+
+    # Calculate sem
+    sem_val = e_df.groupby(by=id_cols).sem()
+    sem_val = sem_val.rename(columns={'eff':'eff_sem'})
+
+    merged_eff = avg_val.merge(std_val, on=id_cols).reset_index()
+    merged_eff = merged_eff.merge(sem_val, on=id_cols).reset_index()
+
+    return merged_eff, merged_ac, merged_ag
+
+
+def graph_summary(sum_df, by=None):
+    """Graph surpluses or efficiencies from summary."""
+
+    # Configure for type of aggregation
+    if by is None:
+        y_av = 'eff_avg'
+        y_sm = 'eff_sem'
+        yn = 'Efficiency'
+        ymax = 120
+        by_groups = False
+        tl = f"Average efficiency + std_errors across trials"
+    else:
+        yn = 'Surplus'
+        if by == 'agent_class':
+            y_av = 'csv_avg'
+            y_sm = 'csv_sem'
+            
+        elif by == 'agent_group':
+            y_av = 'gsv_avg'
+            y_sm = 'gsv_sem'
+        else:
+            raise ValueError('by value passed unknown')
+        ymax = max(sum_df[y_av])*1.2
+        by_groups=True
+        groups = sorted(list(sum_df[by].unique()))
+        tl = f"Average surplus per {by} + std_errors across trials"
+    xn = 'Week'
+    xmax = max(sum_df['week'])+1
+    x = [k for k in range(xmax)]
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    if not by_groups:
+        ax.plot(x, sum_df[y_av], linestyle = 'solid', lw =3)
+        ax.errorbar(x, sum_df[y_av], yerr=sum_df[y_sm], color='black')
+
+    else:
+        for gr in groups:
+            cut_df = sum_df[sum_df[by]==gr]
+
+            ax.plot(x, cut_df[y_av], label = gr, linestyle = 'solid', lw =3)
+            ax.errorbar(x, cut_df[y_av], yerr=cut_df[y_sm], color = 'black')
+
+        ax.legend(fontsize='x-large')
+
+    ax.set_xlabel(xn, size = 'x-large') 
+    ax.set_xbound(0, xmax)
+    ax.set_ybound(0, ymax)
+    ax.grid(1)
+    ax.set_ylabel(yn, size = 'x-large') 
+    ax.set_title(tl, size = 'x-large')
+    plt.show()
 
 if __name__ == "__main__":
 

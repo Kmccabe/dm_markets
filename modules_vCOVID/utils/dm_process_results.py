@@ -94,20 +94,32 @@ class ProcessResults(object):
                 
                 # Save agent_class surpluses
                 if trader_strategy in self.type_surplus:
-                    self.type_surplus[trader_strategy]+=surplus
+                    self.type_surplus[trader_strategy] += surplus
                 else:
                     self.type_surplus[trader_strategy] = surplus
                 
                 # Save agent_group surpluses
                 if trader_group in self.group_surplus:
-                    self.group_surplus[trader_group]+=surplus
+                    self.group_surplus[trader_group] += surplus
                 else:
                     self.group_surplus[trader_group] = surplus
- 
+
+            
             # Calculate and save efficiencies
             self.actual_surplus = self.buyer_surplus + self.seller_surplus
             eq_units, eq_plow, eq_phigh, eq_max_surplus = self.market.get_equilibrium()
             self.efficiency = (self.actual_surplus / eq_max_surplus) * 100.0
+        
+        # If no contracts - default to setting zero surplus for all agent classes and groups
+        for trader in self.agent_list:
+            trader_strategy = trader.agent_class
+            trader_group = trader.group_name
+
+            if trader_strategy not in self.type_surplus:
+                self.type_surplus[trader_strategy] = 0
+            
+            if trader_group not in self.group_surplus:
+                self.group_surplus[trader_group] = 0
 
     
     def get_results(self):
