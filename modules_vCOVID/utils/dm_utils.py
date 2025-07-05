@@ -50,13 +50,13 @@ def agent_strategy_helper(agent_class_name=None):
     elif agent_class_name in ["ZID", "ZIDP"]:
         print(f"{agent_class_name} takes no strategy parameters. Pass {None} in instead.")
     elif agent_class_name in ["ZIDA", "ZIDPA"]:
-        print(f"{agent_class_name} takes \"reset_flag_frequency\", representing the rule on which to resume movement, as a parameter. Additional parameters may be required, as specified below.")
-        print("\"reset_flag_frequency\" can take the values of [\"NONE\", \"START\", \"WEEK\", \"MIN_AGENTS\", \"WINDOW\"]")
-        print("NONE: Never resume movement after trading. No additional parameters")
-        print("START: Resume movement at the start of each week (every time agent.start is called). No additional parameters.")
-        print("WEEK: Resume movement is did not trade at least \"reset_flag_min_trades\" in the past week (time between agent.start is called).")
-        print("MIN_AGENTS: Resume movement is there are less than \"reset_flag_min_agents\" agents at the same location as this agent.")
-        print("WINDOW: Resume movement is did not trade at least \"reset_flag_min_trades\" in the last \"reset_flag_window\" periods.")
+        print(f"{agent_class_name} takes \"reset_flag_frequency\", representing the rule on which to resume movement, as a parameter. Additional parameters may be required, as specified below.\n")
+        print("\"reset_flag_frequency\" can take the values of [\"NONE\", \"START\", \"WEEK\", \"MIN_AGENTS\", \"WINDOW\"]\n")
+        print("NONE: Never resume movement after trading. No additional parameters\n")
+        print("START: Resume movement at the start of each week (every time agent.start is called). No additional parameters.\n")
+        print("WEEK: Resume movement is did not trade at least \"reset_flag_min_trades\" in the past week (time between agent.start is called).\n")
+        print("MIN_AGENTS: Resume movement is there are less than \"reset_flag_min_agents\" agents at the same location as this agent.\n")
+        print("WINDOW: Resume movement is did not trade at least \"reset_flag_min_trades\" in the last \"reset_flag_window\" periods.\n")
     elif agent_class_name == "ZIDPR":
         print(f"{agent_class_name} takes the same parameters as ZIDA, along with \"max_agents_allowed\", representing the maximum agents allowed in one location by the distancing rule.")
     elif agent_class_name == "ZIDT":
