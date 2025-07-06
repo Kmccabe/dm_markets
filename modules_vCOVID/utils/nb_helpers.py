@@ -305,28 +305,30 @@ def movie_plotted(collated_plotted, movie_name=None, graph_folder=None, title_va
     clip.write_videofile(movie_name)
 
 def plot_boxplot_data(boxplot_data, title=None, y_lab=None, x_lab=None, x_ticks=None, x_tick_labs=None, rbars=None, savename=None, fig_text=None,
-                      xlim=None, ylim=None, figsize=None, colors=None, labels=None, legend=False):
+                      xlim=None, ylim=None, figsize=None, colors=None, labels=None, legend=False, n=1):
     
-    # If list, check length
-    if type(boxplot_data) is not list:
+    # If n=1, wrap
+    if n==1:
         boxplot_data = [boxplot_data]
-    
-    n = len(boxplot_data)
     
     if figsize is None:
         figsize = (8,8)
 
-    if colors is None and n!=1:
+    if colors is None:
         cmap = plt.get_cmap("rainbow")
-        colors = [cmap(i / (n - 1)) for i in range(n)]
-    elif n!=1 and len(boxplot_data) != len(colors):
+        colors = [cmap(i / (n)) for i in range(n)] # n-1
+    elif type(colors) is not list and n==1:
+        colors = [colors]
+    elif len(boxplot_data) != len(colors):
         raise ValueError(f"List of colors ({len(colors)}) and data ({len(boxplot_data)}) are not of the same length.")
     
-    if labels is None and n!=1:
+    if labels is None:
         base_str = "Series "
         labels = [base_str+str(x) for x in range(n)]
-    elif n!=1 and len(labels) != len(boxplot_data):
-        raise ValueError(f"List of labels ({len(colors)}) and data ({len(boxplot_data)}) are not of the same length.")
+    elif type(labels) is not list and n==1:
+        labels = [labels]
+    elif len(labels) != len(boxplot_data):
+        raise ValueError(f"List of labels ({len(labels)}) and data ({len(boxplot_data)}) are not of the same length.")
 
     fig, ax1 = plt.subplots(figsize=(figsize[0], figsize[1]))
     fig.canvas.manager.set_window_title('Boxplot')
@@ -335,7 +337,10 @@ def plot_boxplot_data(boxplot_data, title=None, y_lab=None, x_lab=None, x_ticks=
     # With one data series, plot in black+red
     if n == 1:
         bp = ax1.boxplot(boxplot_data[0], notch=True, sym='+', vert=1, whis=1.5)
-        plt.setp(bp['boxes'], color='black')
+        if labels is None:
+            plt.setp(bp['boxes'], color='black')
+        else:
+            plt.setp(bp['boxes'], color='black', label=labels)
         plt.setp(bp['whiskers'], color='black')
         plt.setp(bp['fliers'], color='red', marker='+')
     else:

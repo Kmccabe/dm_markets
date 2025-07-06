@@ -269,7 +269,9 @@ def make_monte_carlo(sim_name=None,
 
     # Return results with requested 
     if return_df:
+        mc_df['num_trials'] = num_trials
         if return_period_df:
+            mc_period_df['num_trials'] = num_trials
             return mc_df, mc_period_df
         elif not return_period_df:
             return mc_df

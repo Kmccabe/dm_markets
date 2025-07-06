@@ -27,7 +27,14 @@ def conduct_stat_test(measure_a, measure_b, test_method, hypothesis_sidedness="o
         test_val = f_res.statistic
         p_val = f_res.pvalue
     elif test_method == "ks":
-        ks_res = scipy.stats.ks_2samp(measure_a, measure_b, alternative=f"{hypothesis_sidedness}-sided")
+
+        # Coerce to input style it wants
+        if hypothesis_sidedness == "one":
+            hs = "greater"
+        elif hypothesis_sidedness == "two":
+            hs = "two-sided"
+
+        ks_res = scipy.stats.ks_2samp(measure_a, measure_b, alternative=hs)
         test_val = ks_res.statistic
         p_val = ks_res.pvalue
     elif test_method == "page":
@@ -49,7 +56,12 @@ def aggregate_obs(df, aggregation_method, metric, observation_frequency, measure
         df_ret = df[df[measure_frequency] == max_trials]
     return df_ret
 
-def calc_diff(df_a, df_b, metric, measure_method="mean", test_method="ks", compare_method="across", observation_frequency="week", measure_frequency="week", aggregation_method="mean", weeks="all", tr_periods=None, hypothesis_sidedness="two", metric_max=None, multi_adjust = 'bernoulli'):
+def calc_diff(df_a, df_b, metric, 
+              measure_method="mean", test_method="ks", compare_method="across",
+              observation_frequency="week", measure_frequency="week", aggregation_method="mean", 
+              weeks="all", tr_periods="all", 
+              hypothesis_sidedness="two", metric_max=None, 
+              multi_adjust = 'bernoulli'):
     """Calculate differences between two dataframes, comparing the desired metric.
     df_a, df_b  - simulation dataframes to difference; df_a should have a higher (>=) expected measure of the metric. I.e. if testing one-sided hypotheses, pass df_a as the x > u. (simply by convention)
     metric - Metric to compare across simulations, Ex: "eff" (efficiency)
@@ -62,12 +74,18 @@ def calc_diff(df_a, df_b, metric, measure_method="mean", test_method="ks", compa
     compare_method (str) - Compare options: "across", "within" - if comparison is an "across" (one measure per trial) or a "within" (measures = number of frequency appearances)
     
     observation_frequency - "week" or "period" - at what aggregation (default by mean) observation level to conduct "within" option tests. Must have added true period column to use "period" frequency.
+
     measure_frequency - the frequency with which the metric is observed in the dataframe. Ignored if equivalent to the "frequency"
+
     aggregation_method - "mean" or "median" - how to aggregate period-level observation up to "week" level if frequency is "week" and "obsevation_frequency" is at the "period" level.
+
     weeks = "all" or tuple (start, end) - specify over which weeks to calculate the comparison. If not specified, defaults to "all" weeks.
+
     tr_periods (tuple) or "all": (start, end) - specify over which true periods (cross-week indexed) to caculate the metric. Must specify if asking for a frequency of "period". "all" means all periods.
     # TODO implement subsets for weeks and tr_periods
+
     hypothesis_sidedness (str) - "one", "two", or "order" - one sided, two sided, or ordered (Jonkheere Terpstra)
+
     metric_max (float) - the maximum that the observation can be at any point - used for AUC calculation
     """
 
