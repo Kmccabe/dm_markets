@@ -370,8 +370,18 @@ def long_x_surplus(week_df, x='class_surplus', j='agent_class'):
 def summary_surplus(week_df):
     """Return a DataFrame of summary statistics at the week-level for efficiency, class_surplus, and group_surplus"""
 
+    # Check if there are treatments within the DF
+    try:
+        week_df['treatment']
+        has_trt = True
+    except:
+        has_trt = False
+
+
     # Class surpluses
     id_cols = ['sim_name', 'agent_class', 'week']
+    if has_trt:
+        id_cols.append('treatment')
     ac_df = long_class_surplus(week_df)
     ac_df = ac_df.drop(columns='trial')
 
@@ -392,6 +402,8 @@ def summary_surplus(week_df):
 
     # Group surpluses
     id_cols = ['sim_name', 'agent_group', 'week']
+    if has_trt:
+        id_cols.append('treatment')
     ag_df = long_group_surplus(week_df)
     ag_df = ag_df.drop(columns='trial')
 
@@ -412,7 +424,10 @@ def summary_surplus(week_df):
 
     # Efficiencies
     id_cols = ['sim_name', 'week']
-    e_df = week_df[['sim_name', 'week', 'eff']].copy()
+    if has_trt:
+        id_cols.append('treatment')
+    cp_cols = id_cols + ['eff']
+    e_df = week_df[cp_cols].copy()
 
     avg_val = e_df.groupby(by=id_cols).mean()
     avg_val = avg_val.rename(columns={'eff':'eff_avg'})
@@ -430,8 +445,15 @@ def summary_surplus(week_df):
     return merged_eff, merged_ac, merged_ag
 
 
-def graph_summary(sum_df, by=None):
+def graph_summary(sum_df, by=None, title=None):
     """Graph surpluses or efficiencies from summary."""
+
+    if title is not None:
+        tl = title
+    else:
+        tl = "Comparison of Efficiencies over Weeks between Simulations"
+
+    sim_name = sum_df['sim_name'].iloc[0]
 
     # Configure for type of aggregation
     if by is None:
@@ -440,7 +462,8 @@ def graph_summary(sum_df, by=None):
         yn = 'Efficiency'
         ymax = 120
         by_groups = False
-        tl = f"Average efficiency + std_errors across trials"
+        if not tl:
+            tl = f"Average efficiency + std_errors across trials for {sim_name}"
     else:
         yn = 'Surplus'
         if by == 'agent_class':
@@ -455,10 +478,11 @@ def graph_summary(sum_df, by=None):
         ymax = max(sum_df[y_av])*1.2
         by_groups=True
         groups = sorted(list(sum_df[by].unique()))
-        tl = f"Average surplus per {by} + std_errors across trials"
+        if not tl:
+            tl = f"Average surplus per {by} + std_errors across trials for {sim_name}"
     xn = 'Week'
     xmax = max(sum_df['week'])+1
-    x = [k for k in range(xmax)]
+    x = list(range(xmax))
 
     fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -482,6 +506,97 @@ def graph_summary(sum_df, by=None):
     ax.set_ylabel(yn, size = 'x-large') 
     ax.set_title(tl, size = 'x-large')
     plt.show()
+
+
+def plot_comp_efficiencies(sum_dfs, title=None, labels=None):
+    """Plot a comparison of efficiencies across the passed list of summary dataframes or across the treatments within the passed summary dataframe.
+    
+    Note: the treatments are always processed in an alphabetically ascending way.
+    """
+
+    # Allow custom title
+    if title is not None:
+        tl = title
+        
+
+    # Allow custom labels
+    if labels is not None:
+        labs = labels
+
+    # Check if passed a list or df with treatments
+    if type(sum_dfs) is not list:
+        try:
+            sum_dfs['treatment']
+        except:
+            raise ValueError("If not passing a list of sum_df, must have treatment specified within the sum_df")
+        
+        treats = sorted(list(sum_dfs['treatment'].unique()))
+
+        if title is None:
+            tl = "Comparison of Efficiencies Across Treatments"
+        
+        cross_df = sum_dfs
+
+    # If passed a list of df, check you have only one treatment per df or no treatments
+    else:
+        if title is None:
+            tl = "Comparison of Efficiencies Across Simulations"
+
+        cross_df = None
+        treats = []
+        for i in range(len(sum_dfs)):
+            i_df = sum_dfs[i].copy()
+            sn = i_df['sim_name'].iloc[0]
+
+            if sn in treats:
+                raise ValueError("If using list-of-sum_df mode, sim_names must differ")
+
+            treats.append(sn)
+            try:
+                i_df['treatment']
+                if len(i_df['treatment'].unique())>1:
+                    raise ValueError("Cannot pass sum_dfs with >1 treatment if using list-of-sum_df mode.")
+
+            except KeyError:
+                pass
+            
+            # Normalize so both modes use the same type of infrastructure
+            i_df['treatment'] = sn
+            if cross_df is None:
+                cross_df = i_df
+            else:
+                cross_df = pd.concat([cross_df, i_df])
+    
+    if labels is None:
+        labs = treats
+    
+    y_av = 'eff_avg'
+    y_sm = 'eff_sem'
+    yn = 'Efficiency'
+    ymax = 120
+
+    xmax = max(cross_df['week'])+1
+    x = list(range(xmax))
+    xn = 'Week'
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    for i in range(len(treats)):
+        cut_df = cross_df[cross_df['treatment']==treats[i]]
+
+        ax.plot(x, cut_df[y_av], label = labs[i], linestyle = 'solid', lw =3)
+        ax.errorbar(x, cut_df[y_av], yerr=cut_df[y_sm], color = 'black')
+
+    ax.legend(fontsize='x-large')
+
+    ax.set_xlabel(xn, size = 'x-large') 
+    ax.set_xbound(0, xmax)
+    ax.set_ybound(0, ymax)
+    ax.grid(1)
+    ax.set_ylabel(yn, size = 'x-large') 
+    ax.set_title(tl, size = 'x-large')
+    plt.show()
+
 
 if __name__ == "__main__":
 

@@ -148,16 +148,60 @@ def make_sim(sim_name, num_weeks, num_periods, num_rounds,
         return data
 
 
-def make_monte_carlo(sim_name, 
-                     num_trials, num_weeks, num_periods, num_rounds, 
-                     num_traders, agent_groups, grid_size=None, group_names=None, 
-                     return_df=False, return_period_df=False):
+def make_monte_carlo(sim_name=None, 
+                     num_trials=None, num_weeks=None, num_periods=None, num_rounds=None, 
+                     num_traders=None, agent_groups=None, grid_size=None, group_names=None, 
+                     return_df=False, return_period_df=False,
+                     passed_as_dict=False,
+                     params_dict=None):
     """
-    Runs one complete simulation and returns data in
-        effs[treatment][trial]
+    Runs one complete simulation and returns weekly data in
+        effs[treatment][trial] or in a DataFrame. Can return period-level data in a DataFrame as well.
 
-    Can provide the 
+    Can provide the parameters as a dictionary instead, but must pass passed_as_dict = True and params_dict = dictionary of parameters.
     """ 
+
+    # Check vals
+    passed_none = [sim_name is None,
+                       num_trials is None,
+                       num_weeks is None,
+                       num_periods is None,
+                       num_rounds is None,
+                       num_traders is None,
+                       agent_groups is None,
+                       grid_size is None] # group_names remains optional
+
+    # If not passed_as_dict, need each val passed in
+    if not passed_as_dict and any(passed_none):
+        raise ValueError("If not passing values as a dictionary, you must pass all of sim_name, num_trials, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size.")
+    
+    # If passed_as_dict, check dict was passed and contains all required items
+    if passed_as_dict:
+        if params_dict is None:
+            raise ValueError("Must pass a dictionary of parameters to params_dict if passing passed_as_dict=True")
+        try:
+            params_dict['sim_name']
+            params_dict['num_trials']
+            params_dict['num_weeks']
+            params_dict['num_periods']
+            params_dict['num_rounds']
+            params_dict['num_traders']
+            params_dict['agent_groups']
+            params_dict['grid_size']
+            params_dict['group_names']
+        except KeyError:
+            raise ValueError("params_dict must contain all of sim_name, num_trials, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size.")
+        
+        # If passing all checks - unwrap params_dict
+        sim_name = params_dict['sim_name']
+        num_trials = params_dict['num_trials']
+        num_weeks = params_dict['num_weeks']
+        num_periods = params_dict['num_periods']
+        num_rounds = params_dict['num_rounds']
+        num_traders = params_dict['num_traders']
+        agent_groups = params_dict['agent_groups']
+        grid_size = params_dict['grid_size']
+        group_names = params_dict['group_names']
 
     if group_names is None:
         group_names = [None]*len(agent_groups)

@@ -4,10 +4,10 @@ import environment.dm_agents as dm_agents
 import numpy as np
 import pandas as pd
 import copy
-import simulations.dm_sim as simulate
-import environment.env_make_agents as make_env
+import simulations.dm_sim as dm_sim
+import environment.env_make_agents as env_make_agents
 
-import utils.dm_process_results as results
+import utils.dm_process_results as dm_process_results
 import utils.dm_utils as dm_utils
 
 def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
@@ -109,21 +109,51 @@ def change_back_agents(agents, old_strategy="ZIDPA"):
 
     return change_agents(agents, ratio=1, new_strategy=old_strategy)
 
-def make_sim_experiment(experiment_inputs, ):
+def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_period_df=False):
     """
-        Runs n=length experiments using the list of inputs 
-        take a list of inputs
+        Runs a Monte Carlo for each treatment in treatment_names or key of treatment_dict, using sim_vars as the baseline inputs and treatment_dict[treatment] as the updates to inputs.
+
+        Only returns as a DataFrame. Can get period-level data with return_period_df=True.
     """
     # TODO: Create the behavior currently in make_simulation() in something like this - make_sim_experiment()
     # TODO: Pull in the behavior with dataframe to make_sim and then to this
 
-    # TODO: Continue
+    # Pull dict keys as the treatment names if not passed
+    if treatment_names is None:
+        treatment_names = list(treatment_names)
+    
+    ret_df = None
+    ret_per_df = None
 
-    # Check all components in list are correctly specified
-    for inp in experiment_inputs:
-        pass
+    for trt in treatment_names:
+        trt_vars = treatment_dict[trt]
+
+        # Make a deep copy of sim_vars in case user mis-specified treatment_dict
+        cp_vars = copy.deepcopy(sim_vars)
+        cp_vars.update(trt_vars)
+
+        if return_period_df:
+            trt_df, trt_pr_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=True, passed_as_dict=True, params_dict=cp_vars)
+            trt_pr_df['treatment'] = trt
+
+            if ret_per_df is None:
+                ret_per_df = trt_pr_df
+            else:
+                ret_per_df = pd.concat([ret_per_df, trt_pr_df], ignore_index=True)
         
+        else:
+            trt_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=False, passed_as_dict=True, params_dict=cp_vars)
+        trt_df['treatment'] = trt
 
+        if ret_df is None:
+            ret_df = trt_df
+        else:
+            ret_df = pd.concat([ret_df, trt_df], ignore_index=True)
+    
+    if return_period_df:
+        return ret_df, ret_per_df
+    else:
+        return ret_df
 
 # NOTE: can redo adding data to the dataframe using CONCAT instead of building a long string and then adding - speed increase probable
 def make_event_sim(sim_name, num_periods, num_weeks,
@@ -175,7 +205,7 @@ def make_event_sim(sim_name, num_periods, num_weeks,
             agent.start(None)
         contracts = []
         sim_grids = []
-        sim1 = simulate.SimPeriod(sim_name, num_rounds, agents, 
+        sim1 = dm_sim.SimPeriod(sim_name, num_rounds, agents, 
                market, grid_size)
         
         for period in range(num_periods):
@@ -198,7 +228,7 @@ def make_event_sim(sim_name, num_periods, num_weeks,
         data[week]['grids'] = sim_grids
         
         # process results
-        pr1 = results.ProcessResults(market, sim_name, agents, contracts)
+        pr1 = dm_process_results.ProcessResults(market, sim_name, agents, contracts)
         pr1.calc_efficiency()
         pr1.get_results()
         eff = pr1.get_efficiency()
@@ -269,7 +299,7 @@ def make_event_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
     # Run n trials of this setup
     for trial in range(num_trials):
 
-        agent_maker = make_env.MakeAgents(num_traders, trader_class_count, num_units, 
+        agent_maker = env_make_agents.MakeAgents(num_traders, trader_class_count, num_units, 
                                             grid_size, lower_bound, upper_bound, False, movement_error_rate, reset_flag_frequency=reset_flag_frequency, 
                                             reset_flag_min_agents=reset_flag_min_agents, reset_flag_on_random=reset_flag_on_random, reset_flag_window=reset_flag_window, 
                                           reset_flag_min_trades=reset_flag_min_trades, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None)
