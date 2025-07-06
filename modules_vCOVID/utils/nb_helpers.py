@@ -305,11 +305,13 @@ def movie_plotted(collated_plotted, movie_name=None, graph_folder=None, title_va
     clip.write_videofile(movie_name)
 
 def plot_boxplot_data(boxplot_data, title=None, y_lab=None, x_lab=None, x_ticks=None, x_tick_labs=None, rbars=None, savename=None, fig_text=None,
-                      xlim=None, ylim=None, figsize=None, colors=None, labels=None, legend=False, n=1):
+                      xlim=None, ylim=None, figsize=None, colors=None, labels=None, legend=False):
     
     # If list, check length
-    if n == 1:       
+    if type(boxplot_data) is not list:
         boxplot_data = [boxplot_data]
+    
+    n = len(boxplot_data)
     
     if figsize is None:
         figsize = (8,8)

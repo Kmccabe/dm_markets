@@ -586,6 +586,7 @@ def plot_comp_efficiencies(sum_dfs, title=None, labels=None):
 
         ax.plot(x, cut_df[y_av], label = labs[i], linestyle = 'solid', lw =3)
         ax.errorbar(x, cut_df[y_av], yerr=cut_df[y_sm], color = 'black')
+        # TODO: refactor to non-black - need to get a list of colors BEFORE
 
     ax.legend(fontsize='x-large')
 

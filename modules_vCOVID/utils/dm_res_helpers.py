@@ -76,7 +76,12 @@ def add_agent_density(df_sim, by_period=False, return_df=False):
         
 def calc_area_under_curve(simulation_df, metric="eff", metric_max=100):
     """Calculates the area under the curve = sum of efficiencies/sum(max efficiencies) for a particular run or set of runs - returns 1 number or df of trials: areas"""
-    num_trials = simulation_df['num_trials'].valuess[0]
+
+    # Check if this is a Monte Carlo
+    try:
+        num_trials = simulation_df['num_trials'].values[0]
+    except KeyError:
+        num_trials = 1
 
     if num_trials == 1:
         return simulation_df[metric].sum()/(simulation_df['num_weeks']*metric_max)
@@ -113,8 +118,9 @@ def add_period_volume(per_df, add_weekly=True):
 
 def add_period_efficiency(week_df, per_df):
     """Add weekly efficiency metric to period dataframe"""
-    week_cols = ['trial', 'week', 'week_eff', 'week_type_effs']
-    week_rename = {'eff':'week_eff', 'type_effs':'week_type_effs'}
+    #week_cols = ['trial', 'week', 'week_eff', 'week_type_effs']
+    week_cols = ['trial', 'week', 'week_eff', 'week_class_surplus', 'week_group_surplus']
+    week_rename = {'eff':'week_eff', 'class_surplus':'week_class_surplus', 'group_surplus':'week_group_surplus'}
     w_df = week_df.rename(columns=week_rename)
     p_df = per_df.merge(w_df[week_cols], on=['trial','week'])
     
@@ -143,7 +149,16 @@ def add_period_price(per_df, add_weekly=False):
 def add_week_prices(per_df, return_sep_df=False):
     """Add prices at the weekly level - requires prices at the period level to have been added already."""
     n_df = per_df.copy()
-    n_trials = n_df.num_trials.iloc[0]
+
+    # Coerce to MC DF shape
+    try:
+        n_trials = n_df['num_trials'].iloc[0]
+    except KeyError:
+        n_trials = 1
+        n_df['num_trials'] = 1
+        n_df['trial'] = 0
+
+
     n_weeks = n_df.num_weeks.iloc[0]
     n_periods = n_df.num_periods.iloc[0]
     ret_df = None
@@ -291,15 +306,28 @@ def add_location_prices(per_df):
 def add_week_location_prices(per_df, return_sep_df=False):
     """Add weekly price location data; must have already done add_location_prices"""
     n_df = per_df.copy()
-    n_trials = n_df.num_trials.iloc[0]
+
+    # Check if this is a MC DF - if not add a 'num_trials' column = 1 and 'trial' = 0 so we can use the same infrastructure
+    try:
+        n_trials = n_df['num_trials'].iloc[0]
+    except KeyError:
+        n_trials = 1
+        n_df['num_trials'] = 1
+        n_df['trial'] = 0
+    
+    # Iterate over weeks, periods, trials
     n_weeks = n_df.num_weeks.iloc[0]
     n_periods = n_df.num_periods.iloc[0]
     ret_df = None
     for t in range(n_trials):
+
+        # Cut by trial
         t_df = n_df[n_df['trial']==t]
+
         for w in range(n_weeks):
             w_df = t_df[t_df['week']==w]
             
+            # Calc prices at each location
             week_loc_prices = dict()
             for p in range(n_periods):
                 p_df = w_df[w_df['period']==p]
@@ -312,6 +340,8 @@ def add_week_location_prices(per_df, return_sep_df=False):
                         week_loc_prices[loc].extend(prs)
                     else:
                         week_loc_prices[loc] = list(prs)
+            
+            # Store for entire week
             week_ls = []
             for l_i in week_loc_prices:
                 week_ls.append((l_i, tuple(week_loc_prices[l_i])))
@@ -394,30 +424,49 @@ def match_density(period_locs, true_match=False, agent_types=('B','S'), by_locs=
                 max_rem_val += rem_c_val
         max_val = max_tr_match + max_rem_val
 
+    # Iterate over occupied locations
     for lc in period_locs:
         ags = period_locs[lc]
         n_ags = len(ags)
-        if n_ags <= 1 and true_match: # If only one agent at point, cannot have a true match
+
+        # If only one agent at point, cannot have a true match
+        if n_ags <= 1 and true_match: 
             continue
+
         else:
-            if len(agent_types) == 1: # If only one agent type, they can all match against each other
+            # If only one agent type, they can all match against each other
+            if len(agent_types) == 1: 
                 tr_match = n_ags//max_match # Full matches
                 obs_d = tr_match
+
+                # No remainder if all truly match
                 if true_match:
                     pass
-                elif tr_match != 0: # If there is at least one match, calc remainder values
+
+                # If there is at least one match, calc remainder values
+                elif tr_match != 0: 
                     rem = n_ags%max_match
                     rem_arr = np.arange(1, rem+1)
                     part_val = 1/max_match
                     rem_val = np.sum(np.power(part_val, rem_arr)) # Value of partial matches
                     obs_d += rem_val * deflator_term
-            else: # If many agent types, need to match cross-group
+            
+            # If many agent types, need to match cross-group
+            # Assumes all groups match together s.t. 1 = 1 of each type
+            else:
                 # Count agents per types
                 type_obs = dict()
+
+                # Make a dictionary of 0 for each type 
                 for typ in agent_types:
                     type_obs[typ] = 0
+
+                # Iterate over agent names and grab their typ
                 for ag in ags:
-                    ag_typ = ag[0] # Agent type is indicated by the first character of their name
+
+                    # Agent type is indicated by the part of their name preceding the first _
+                    # Ex. BUYER is BUYER_0_ZID
+                    ag_typ = ag.split('_')[0]
                     type_obs[ag_typ] += 1
                 
                 # Count matches
@@ -490,6 +539,9 @@ def add_match_density(per_df, agent_types=('B','S'), by_locs=False, max_match=No
         
         if agent_counts is None:
             agent_type_counts = per_df.agent_type_counts.iloc[0]
+        else:
+            agent_type_counts = agent_counts
+
 
         n_df['match_density'] = n_df.period_locs.apply(match_density, args=[False, agent_types, False, max_match, deflator_term, by_counts, agent_type_counts])
         n_df['tr_match_density'] = n_df.period_locs.apply(match_density, args=[True, agent_types, False, max_match, deflator_term, by_counts, agent_type_counts])
@@ -500,8 +552,48 @@ def add_match_density(per_df, agent_types=('B','S'), by_locs=False, max_match=No
 
     return n_df
 
+def add_type_counts(o_df):
+    """Add details of agent types in simulation and counts of those types. Used to calculate match density."""
+    n_df = o_df.copy()
+    
+    # Get the span of types from agent groups
+    ag_groups = n_df.agent_groups.iloc[0]
+    ag_type_dict = {}
+    for i in range(len(ag_groups)):
+        agr = ag_groups[i]
+        ag_n = agr[0]
+        ag_tp = agr[1]
+        
+        # Add counts for agent types
+        if ag_tp in ag_type_dict:
+            ag_type_dict[ag_tp] += ag_n
+        else:
+            ag_type_dict[ag_tp] = ag_n
+    
+    ag_types = sorted(list(ag_type_dict))
+    ag_typ_counts = []
+    for at in ag_types:
+        ag_typ_counts.append(ag_type_dict[at])
+
+    n_df['agent_types'] = pd.Series([ag_types] * len(n_df))
+    # Must cast to Series when setting into dataframe like this - it wants to set a column, not values within b/c ag_types is iterable
+    n_df['agent_type_counts'] = pd.Series([ag_typ_counts] * len(n_df))
+
+    return n_df
+
 def add_all_metrics(week_df, period_df):
     n_df = period_df.copy()
+
+    # Coerce week_df, period_df to MC DFs
+    try:
+        week_df['num_trials']
+    except:
+        week_df['num_trials'] = 1
+        period_df['trial'] = 0
+
+        week_df['num_trials'] = 1
+        period_df['trial'] = 0
+
     n_df = trim_initial_locations(n_df) # Remove the "initial locations" i.e. time period week=-1, period=-1
     n_df = add_period_efficiency(week_df, n_df) # Add weekly efficiency to period dataframe
     n_df = add_true_period(n_df) # Add true-period (cross-period index)
@@ -515,8 +607,14 @@ def add_all_metrics(week_df, period_df):
     n_df = add_week_prices(n_df, return_sep_df=False) # Add prices by week
     n_df = add_week_location_prices(n_df, return_sep_df=False) # Add prices by week by location
 
-    n_df = add_match_density(n_df, by_locs=True, by_counts=True) # Add match-counts 
-    n_df = add_match_density(n_df, by_locs=True, by_counts=False) # Add match density
+    # Add counts of agent types
+    n_df = add_type_counts(n_df)
+
+    ag_tps = n_df['agent_types'].iloc[0]
+    ag_tpc = n_df['agent_type_counts'].iloc[0]
+    n_df = add_match_density(n_df, agent_types=ag_tps, agent_counts=ag_tpc, 
+                              by_locs=True, by_counts=True) # Add match-counts 
+    n_df = add_match_density(n_df, agent_types=ag_tps, agent_counts=ag_tpc, by_locs=True, by_counts=False) # Add match density
 
     return n_df
 
