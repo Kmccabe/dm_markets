@@ -467,3 +467,30 @@ def plot_boxplot_data(boxplot_data,
     plt.clf()
 
 
+def avg_df_obs(df_data, x_var, y_var, form="mean", percentiles=None):
+    """
+    Return the central tendency of the y_var observations, grouped on the x_var.
+        form = mean or median
+        percentiles (list) = None or list of percentiles to return
+    """
+
+    grouped = df_data[[x_var, y_var]].groupby(x_var)
+
+    # TODO implement mean
+    if form == "mean":
+        df_out = grouped.mean()
+    # Todo implement median
+    elif form == "median":
+        df_out = grouped.median()
+        
+    # Todo implement percentile
+    if percentiles is not None:
+        for perc in percentiles:
+            colname = y_var + "_q_" + str(perc)
+            perc_frame = grouped.quantile(q=perc)
+            perc_frame = perc_frame.rename(columns={y_var: colname})
+            print(df_out.head())
+            print(perc_frame.head())
+            df_out = df_out.join(perc_frame)
+    
+    return df_out.reset_index()
