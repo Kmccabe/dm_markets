@@ -115,8 +115,6 @@ def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_perio
 
         Only returns as a DataFrame. Can get period-level data with return_period_df=True.
     """
-    # TODO: Create the behavior currently in make_simulation() in something like this - make_sim_experiment()
-    # TODO: Pull in the behavior with dataframe to make_sim and then to this
 
     # Pull dict keys as the treatment names if not passed
     if treatment_names is None:

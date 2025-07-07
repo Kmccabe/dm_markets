@@ -199,7 +199,7 @@ def make_monte_carlo(sim_name=None,
         num_periods = params_dict['num_periods']
         num_rounds = params_dict['num_rounds']
         num_traders = params_dict['num_traders']
-        agent_groups = params_dict['agent_groups']
+        agent_groups = copy.deepcopy(params_dict['agent_groups'])
         grid_size = params_dict['grid_size']
         group_names = params_dict['group_names']
 

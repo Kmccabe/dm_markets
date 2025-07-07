@@ -3,16 +3,25 @@ import scipy
 import utils.dm_res_helpers as res2
 
 def conduct_stat_test(measure_a, measure_b, test_method, hypothesis_sidedness="one", measure_list=None):
+
+    # Coerce hypothesis sidedness to input style stats module wants
+    if hypothesis_sidedness == "one":
+        hc = "less"
+    else:
+        hc = f"{hypothesis_sidedness}-sided"
+
+    # Handle passing of measures as list
     if measure_a is None and measure_b is None:
         measure_a = measure_list[0]; measure_b = measure_list[1]
+
     ci = None
     if test_method == "t":
-        t_res = scipy.stats.ttest_ind(measure_a, measure_b, alternative=f"{hypothesis_sidedness}-sided")
+        t_res = scipy.stats.ttest_ind(measure_a, measure_b, alternative=hc)
         test_val = t_res.statistic
         p_val = t_res.pvalue
         ci = t_res.confidence_interval()
     elif test_method == "mwu":
-        mwu_res = scipy.stats.mannwhitneyu(measure_a, measure_b, alternative=f"{hypothesis_sidedness}-sided")
+        mwu_res = scipy.stats.mannwhitneyu(measure_a, measure_b, alternative=hc)
         test_val = mwu_res.statistic
         p_val = mwu_res.pvalue
     elif test_method == "kruskal":
@@ -27,14 +36,7 @@ def conduct_stat_test(measure_a, measure_b, test_method, hypothesis_sidedness="o
         test_val = f_res.statistic
         p_val = f_res.pvalue
     elif test_method == "ks":
-
-        # Coerce to input style it wants
-        if hypothesis_sidedness == "one":
-            hs = "greater"
-        elif hypothesis_sidedness == "two":
-            hs = "two-sided"
-
-        ks_res = scipy.stats.ks_2samp(measure_a, measure_b, alternative=hs)
+        ks_res = scipy.stats.ks_2samp(measure_a, measure_b, alternative=hc)
         test_val = ks_res.statistic
         p_val = ks_res.pvalue
     elif test_method == "page":
@@ -82,7 +84,6 @@ def calc_diff(df_a, df_b, metric,
     weeks = "all" or tuple (start, end) - specify over which weeks to calculate the comparison. If not specified, defaults to "all" weeks.
 
     tr_periods (tuple) or "all": (start, end) - specify over which true periods (cross-week indexed) to caculate the metric. Must specify if asking for a frequency of "period". "all" means all periods.
-    # TODO implement subsets for weeks and tr_periods
 
     hypothesis_sidedness (str) - "one", "two", or "order" - one sided, two sided, or ordered (Jonkheere Terpstra)
 
@@ -92,7 +93,7 @@ def calc_diff(df_a, df_b, metric,
     if measure_method == "auc" and metric_max is None:
         raise ValueError("Need to pass a metric max for AUC calculation.")
 
-    if test_method == "page":
+    if test_method == "page" or test_method == "jht":
         if type(df_a) is not list or df_b is not None:
             raise ValueError("For df_a pass a list of dataframes, with expected largest on the left, down to df_n (ordered expectations). Pass df_b as none.")
         df_s = df_a
@@ -135,7 +136,7 @@ def calc_diff(df_a, df_b, metric,
             df_s[df_i] = this_df
     
     if hypothesis_sidedness == "one" and test_method in ["kruskal", "f"]:
-        raise ValueError("Cannot use one-sided hypothesis test with this test type.")
+        raise ValueError(f"Cannot use one-sided hypothesis test with {test_method} test type.")
 
     if weeks != "all":
         for df_i in range(len(df_s)):
@@ -148,7 +149,7 @@ def calc_diff(df_a, df_b, metric,
             this_df = df_s[df_i]
             this_df = this_df[(this_df['tr_period'] >= tr_periods[0]) & (this_df['tr_period'] <= tr_periods[1])]
             df_s[df_i] = this_df
-    
+
     if weeks == "all" and tr_periods == "all":
         # Drop -1, -1 observations - if want these (e.g. for location metrics) specify a range
         for df_i in range(len(df_s)):
