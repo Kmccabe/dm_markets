@@ -304,8 +304,52 @@ def movie_plotted(collated_plotted, movie_name=None, graph_folder=None, title_va
     clip = moviepy.video.io.ImageSequenceClip.ImageSequenceClip(img_names, fps=fps)
     clip.write_videofile(movie_name)
 
-def plot_boxplot_data(boxplot_data, title=None, y_lab=None, x_lab=None, x_ticks=None, x_tick_labs=None, rbars=None, savename=None, fig_text=None,
-                      xlim=None, ylim=None, figsize=None, colors=None, labels=None, legend=False, n=1):
+def plot_boxplot_data(boxplot_data, 
+                      title=None, y_lab=None, x_lab=None, 
+                      x_ticks=None, x_tick_labs=None, 
+                      rbars=None, 
+                      savename=None, 
+                      fig_text=None,
+                      xlim=None, ylim=None, 
+                      figsize=None, colors=None, 
+                      labels=None, legend=False, 
+                      n=1):
+    """
+    Plot data which has been processed by format data for boxplot.
+    
+    Args:
+        boxplot_data (list): a list of boxplot-formatted data. If passed n=1 (default), assumes this is for a single plot and will wrap in another list.
+        
+        title (str, optional): custom plot title.
+
+        y_lab (str, optional): custom y axis label.
+
+        x_lab (str, optional): custom x axis label.
+
+        x_ticks (list, optional): custom x tick values (where to place tics on x axis).
+
+        x_tick_labs (list, optional): custom x tick labels.
+
+        rbars (list or tuple; or tuple, optional): tuples define start and end of "recession" (event). If provided - prints recession bars like on FED graphs.
+
+        savename (str, optional): file name to save image to. If provided saves to this file instead of showing the image.
+
+        fig_text (str, optional): Custom text to print on the image.
+
+        xlim (tuple, optional): Min and max of the x for the plot
+        
+        ylim (tuple, optional): Min and max of y for the plot.
+        
+        figsize (tuple, optional): Size of the plot
+        
+        colors (list or str, optional): colors to use for your plots
+        
+        labels (list or str, optional): Labels to use for your plot
+        
+        legend (bool, optional, default False): show legend or not.
+
+        n (int, optional, default 1): how many plots are defined by the passed boxplot data. If 1, assumes it needs to wrap the data in a list. Required if you want to plot more than one item - otherwise breaks.
+    """
     
     # If n=1, wrap
     if n==1:
@@ -387,22 +431,39 @@ def plot_boxplot_data(boxplot_data, title=None, y_lab=None, x_lab=None, x_ticks=
     if x_ticks is not None and x_tick_labs is None:
         ax1.set_xticklabels(x_ticks, fontsize=12)
 
+    # Plot recession/event bars
     if rbars is not None:
-        plt.axvspan(rbars[0], rbars[1], color="grey", alpha=0.3)
+        
+        # Try to see if this is list of rbar defs or just one
+        # Wrap if just one
+        try:
+            rbars[0][0]
+        except:
+            rbars = [rbars]
 
+        for rb in rbars:
+            plt.axvspan(rb[0], rb[1], color="grey", alpha=0.3)
+
+    # Set min and max x if defined
     if xlim is not None:
         plt.xlim(xlim[0], xlim[1])
 
+    # Set min and max y if defined
     if ylim is not None:
         plt.ylim(ylim[0], ylim[1]) 
 
+    # Add figure text if defined
     if fig_text is not None:
         plt.figtext(1, 0.2, fig_text)
 
+    # If provided savename, save to file
     if savename is not None:
         plt.savefig(savename)
+    # Else print to console
     else:
         plt.show()
+
+    # Clear the painters
     plt.clf()
 
 
