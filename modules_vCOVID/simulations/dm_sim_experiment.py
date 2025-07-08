@@ -10,7 +10,7 @@ import environment.env_make_agents as env_make_agents
 import utils.dm_process_results as dm_process_results
 import utils.dm_utils as dm_utils
 
-def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
+def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=None, new_mer=None):
     
     """
     make a copy of agents at current location and change a proportion of agents (default 1.0) to a new strategy to (default ZIDPR) or to a new strategy_parameters (default None - keep original)
@@ -26,7 +26,7 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
     non_int_part = complying_num%1
     add_num = 0
     if non_int_part != 0:
-        # Randomly draw against remainder (keeps percetanges work across trials)
+        # Randomly draw against remainder (keeps percentages work across trials)
         if rn.random() < non_int_part:
             add_num += 1
             
@@ -49,8 +49,19 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
             lower_bound = agent.lower_bound
             upper_bound = agent.upper_bound
             num_units = agent.num_units
-            move_error_rate = agent.movement_error_rate 
-            strategy_params = agent.strategy_params
+
+            # Allow changing of movement_error_rate
+            if new_mer is None:
+                move_error_rate = agent.movement_error_rate
+            else:
+                move_error_rate = new_mer
+
+            # Allow changing to new strategy parameters
+            if new_strategy_params is None:
+                strategy_params = agent.strategy_params
+            else:
+                strategy_params = new_strategy_params
+
             redraw_values = agent.redraw_values
             group_name = agent.group_name
 
@@ -104,10 +115,14 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR"):
         
     return new_agents
 
-def change_back_agents(agents, old_strategy="ZIDPA"):
-    """Returns agents to original agent type (default ZIDPA)"""
+def change_back_agents(agents, old_strategy="ZIDPA", new_strategy_params=None, new_mer=None):
+    """
+    Returns agents to original agent type (default ZIDPA, no changed to strategy params or movement error rate).
+    
+    Always applies change to the entirety of the agent population.
+    """
 
-    return change_agents(agents, ratio=1, new_strategy=old_strategy)
+    return change_agents(agents, ratio=1, new_strategy=old_strategy, new_strategy_params=None, new_mer=None)
 
 def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_period_df=False):
     """
@@ -154,17 +169,57 @@ def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_perio
         return ret_df
 
 # NOTE: can redo adding data to the dataframe using CONCAT instead of building a long string and then adding - speed increase probable
-def make_event_sim(sim_name, num_periods, num_weeks,
-             event_begin, event_end, market, agents,
-             num_rounds, grid_size,
-             num_traders, num_units,
-             lower_bound, upper_bound,
-             trader_class_count, movement_error_rate=0, compliance_rate=1, return_df=False, return_period_df=False, reset_flag_frequency=None, reset_flag_min_agents=None,
-             reset_flag_on_random=False, reset_flag_window=None, reset_flag_min_trades=1,
-             agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None):
-    """Runs one complete simulation and returns data in
-        effs[treatment][trial].  Causes epidemic event from event_begin to event_end
-        return_df = True -> return as dataframe
+def make_event_sim(sim_name, 
+                   num_weeks, num_periods, num_rounds,
+                   num_traders, agent_groups, grid_size,
+                   event_begin, event_end, compliance_rate=1,
+                   new_agent_class = "ZIDPR", new_strategy_params = None, new_mer = None,
+                   group_names = None,
+                   return_df=False, return_period_df=False):
+    """
+    Runs one complete event simulation, defined the same as dm_sim.make_simulation but with a transformation event between event_begin and even_end (i.e. agents change class/strategy).
+
+    Args:
+        sim_name (str) - name of the simulation.
+
+        num_weeks (int) - Number of weeks to simulate.
+        
+        num_periods (int) - Number of periods within one week.
+        
+        num_rounds (int) - Number of bargaining rounds within one period.
+
+        num_traders (int) - Number of traders across all agent_groups.
+        
+        agent_groups (list of list) - A list of lists of parameters which define Agents. See env_make_agent.
+        
+        grid_size (int) - Length of one side of the square grid.
+
+        event_begin (int) - Week in which event begins (beings at start of week, before 1st period).
+        
+        event_end (int) - Week in which event ends (ends at start of week, before 1st period).
+        
+        compliance_rate (float, optional, default 1) - the ratio of agents that transform during the event period.
+
+        new_agent_class (str, optional, default "ZIDPR") - name of the new agent class that agents change into.
+        
+        new_strategy_params (dict, optional) - new strategy parameters of changed agents
+        
+        new_mer = None (float 0<x<1, optional) - new movement error rate of changed agents
+
+        group_names = None (list, optional) - custom names of the agent groups.
+
+        return_df=False (bool, optional, default False) - return data as DF.
+        
+        return_period_df (bool, optional, default False) - return period-level data DF.
+    
+    Returns
+        data (dict) a dictionary mapping trials to efficiencies. (If return_df = False.)
+        df_out (DataFrame): a DataFrame capturing all parameters and week-level observations. (If return_df = True.)
+        period_df_out (DataFrame): a DataFrame capturing all parameters and period-level observations. (If return_df = True and return_period_df = True.)
+
+
+        TODO: Implement multi-event as an option - could pass it as additional keyword arg. w/ None, None for beg/end.
+        This will allow us to run the "increase movement error" intervention - equivalent to decreasing movement cost - to hasten post-intervention recovery.
     """ 
 
     # Added for backwards compatibility

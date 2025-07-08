@@ -21,9 +21,10 @@ import environment.env_make_agents as agent_mkr
 import copy
 import pandas as pd
 
-def make_sim(sim_name, num_weeks, num_periods, num_rounds, 
-             num_traders, agent_groups, 
-             grid_size=None, group_names=None,
+def make_sim(sim_name, 
+             num_weeks, num_periods, num_rounds, 
+             num_traders, agent_groups, group_names=None,
+             grid_size=None,
              return_df=False, return_period_df=False, debug=False):
     
     """Runs one complete simulation and returns data in
@@ -150,7 +151,8 @@ def make_sim(sim_name, num_weeks, num_periods, num_rounds,
 
 def make_monte_carlo(sim_name=None, 
                      num_trials=None, num_weeks=None, num_periods=None, num_rounds=None, 
-                     num_traders=None, agent_groups=None, grid_size=None, group_names=None, 
+                     num_traders=None, agent_groups=None, group_names=None,
+                     grid_size=None,
                      return_df=False, return_period_df=False,
                      passed_as_dict=False,
                      params_dict=None):
@@ -229,7 +231,7 @@ def make_monte_carlo(sim_name=None,
         if not return_df:
             trial_data = make_sim(sim_name, 
                                     num_weeks, num_periods, num_rounds, 
-                                    num_traders, agent_groups, grid_size, group_names)
+                                    num_traders, agent_groups, group_names, grid_size)
             sim_data[trial] = trial_data
 
         
@@ -241,7 +243,8 @@ def make_monte_carlo(sim_name=None,
                 trial_df, trial_period_df = make_sim(sim_name,
                                                          num_weeks, num_periods, num_rounds, 
                                                          num_traders, agent_groups, 
-                                                         grid_size, group_names,
+                                                         group_names,
+                                                         grid_size, 
                                                          return_df, return_period_df)
                 trial_period_df['trial'] = trial
                 
@@ -255,8 +258,8 @@ def make_monte_carlo(sim_name=None,
             elif not return_period_df:
                 trial_df = make_sim(sim_name,
                                         num_weeks, num_periods, num_rounds, 
-                                        num_traders, agent_groups, 
-                                        grid_size, group_names,
+                                        num_traders, agent_groups, group_names,
+                                        grid_size,
                                         return_df)
             
             trial_df['trial'] = trial
