@@ -115,14 +115,15 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=Non
         
     return new_agents
 
-def change_back_agents(agents, old_strategy="ZIDPA", new_strategy_params=None, new_mer=None):
+def change_back_agents(agents, old_strategy="ZIDPA", old_strategy_params=None, old_mer=None):
     """
     Returns agents to original agent type (default ZIDPA, no changed to strategy params or movement error rate).
     
     Always applies change to the entirety of the agent population.
     """
 
-    return change_agents(agents, ratio=1, new_strategy=old_strategy, new_strategy_params=None, new_mer=None)
+    return change_agents(agents, ratio=1, new_strategy=old_strategy, 
+                         new_strategy_params=old_strategy_params, new_mer=old_mer)
 
 def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_period_df=False):
     """
@@ -220,40 +221,78 @@ def make_event_sim(sim_name,
 
         TODO: Implement multi-event as an option - could pass it as additional keyword arg. w/ None, None for beg/end.
         This will allow us to run the "increase movement error" intervention - equivalent to decreasing movement cost - to hasten post-intervention recovery.
+
+        TODO: Refactor this and make_sim to not double-up on saving data when using as-df
     """ 
 
-    # Added for backwards compatibility
-    if agent_types is None:
-        agent_types = ('B','S')
-        agent_type_counts = (num_traders//2, num_traders//2)
-        agent_endows = (500, 0)
-        agent_payoffs = ('utility', 'profit')
+    if group_names is None:
+        group_names = [None]*len(agent_groups)
 
     if return_df:
         # Store parameters
-        df_cols_param = ['sim_name', 'num_traders', 'num_units', 'num_weeks', 'num_periods', 'num_rounds', 'grid_size', 'lower_bound', 'upper_bound', 'trader_class_count', 'movement_error_rate', 'compliance_rate', 
-                         'event_begin', 'event_end', 'agent_types', 'agent_type_counts', 'agent_endows', 'agent_payoffs']
+        df_cols_param = ['sim_name', 
+                         'num_weeks', 'num_periods', 'num_rounds', 
+                         'num_traders', 'agent_groups',
+                         'grid_size', 'group_names',
+                         'event_begin', 'event_end',
+                         'compliance_rate', 'new_agent_class',
+                         'new_strategy_params',
+                         'new_mer'
+                         ]
+        week_param_ls = [sim_name, 
+                         num_weeks, num_periods, num_rounds,
+                         num_traders, agent_groups,
+                         grid_size, group_names,
+                         event_begin, event_end,
+                         compliance_rate, new_agent_class,
+                         new_strategy_params,
+                         new_mer]
         # Store results
-        df_cols_results = ['week', 'contracts', 'grids', 'eff', 'type_effs']
+        df_cols_results = ['week', 'contracts', 'grids', 'eff', 'class_surplus', 'group_surplus']
         df_cols = df_cols_param + df_cols_results
         df_data = []
 
     if return_period_df:
+        # Add columns for period data
         if return_df:
             df_period_cols = df_cols + ['period'] + ['period_locs']
             df_period_data = []
         else:
-            raise ValueError("Need to pass return_df=True with return_period_df=True")
-    
+            raise ValueError("Cannot request period_df without passing return_df=True")
+
+    # Save data for change back agents
+    # TODO will be avoided with the below fixes
+    old_strategy = agent_groups[0][2]
+    old_params = agent_groups[0][3]
+    old_mer = agent_groups[0][9]
+
+    # make agents
+    debug = False
+    agent_maker = env_make_agents.MakeAgents(debug)
+    ag_df = agent_maker.gen_custom_agents(num_traders, agent_groups, grid_size, group_names)
+    agent_maker.init_agents(ag_df)
+    agents = agent_maker.get_agents()
+  
+    # set up market
+    agent_maker.make_market(sim_name)
+    market = agent_maker.get_market()
+
     data = {}
+
+    # Run weeks in sim
     for week in range(num_weeks):
-        
+
+        # NOTE: Below only works for single-class world - all turn back to the same one class, strat param, mer
+        # TODO: Implement a different version of change_agents and change_back_agents which preserves original values to roll them back later
         if week == event_begin:
-            agents = change_agents(agents, compliance_rate)
+            agents = change_agents(agents, compliance_rate, new_agent_class, new_strategy_params, new_mer)
         if week == event_end:
-            agents = change_back_agents(agents)
-            
+            agents = change_back_agents(agents, old_strategy=old_strategy, 
+                                        old_strategy_params=old_params, old_mer=old_mer)
+        
         data[week] = {}
+
+        # Reset agents' units
         for agent in agents:
             agent.start(None)
         contracts = []
@@ -261,20 +300,23 @@ def make_event_sim(sim_name,
         sim1 = dm_sim.SimPeriod(sim_name, num_rounds, agents, 
                market, grid_size)
         
+        # Run periods in week
         for period in range(num_periods):
             sim1.run_period()
             grid = sim1.get_grid()
             sim_grids.append(grid)
             contracts.extend(sim1.get_contracts())
 
+            # Save period data for DF
             if return_period_df:
-                if week == 0 and period == 0: # If you are at the first point in the simulation - save the initial grid at the week=-1, period=-1
-                    period_data = [sim_name, num_traders, num_units, num_weeks, num_periods, num_rounds, grid_size, lower_bound, upper_bound, trader_class_count, movement_error_rate, compliance_rate, event_begin, event_end, agent_types, agent_type_counts, agent_endows, agent_payoffs, -1, 
-                             (), copy.deepcopy(sim1.get_initial_grid()), None, None, -1, copy.deepcopy(sim1.get_initial_grid())]
+
+                # If you are at the first point in the simulation - save the initial grid at the week=-1, period=-1
+                if week == 0 and period == 0: 
+                    period_data = week_param_ls + [-1, (), copy.deepcopy(sim1.get_initial_grid()), 
+                                                   None, None, None, -1,
+                              copy.deepcopy(sim1.get_initial_grid())]
                     df_period_data.append(period_data)
 
-                period_data = [sim_name, num_traders, num_units, num_weeks, num_periods, num_rounds, grid_size, lower_bound, upper_bound, trader_class_count, movement_error_rate, compliance_rate, event_begin, event_end, agent_types, agent_type_counts, agent_endows, agent_payoffs, week, 
-                         sim1.get_contracts(), grid, None, None, period, copy.deepcopy(grid)]
                 df_period_data.append(period_data)
         
         data[week]['contracts'] = contracts
@@ -285,26 +327,35 @@ def make_event_sim(sim_name,
         pr1.calc_efficiency()
         pr1.get_results()
         eff = pr1.get_efficiency()
-        type_eff = pr1.get_type_surplus()
+        class_surplus = pr1.get_class_surplus()
+        group_surplus = pr1.get_group_surplus()
+        
         data[week]['eff'] = eff # single item put in list to facilitate looping through data 
-        data[week]['type_effs'] = type_eff
+        data[week]['class_surplus'] = class_surplus
+        data[week]['class_surplus'] = group_surplus
 
+        # Save week data for DF
         if return_df:
-            week_data = [sim_name, num_traders, num_units, num_weeks, num_periods, num_rounds, grid_size, lower_bound, upper_bound, trader_class_count, movement_error_rate, compliance_rate, event_begin, event_end, agent_types, agent_type_counts, agent_endows, agent_payoffs, week, 
-                         contracts, sim_grids, eff, type_eff]
+            week_data = week_param_ls + [week, contracts, sim_grids, 
+                                         eff, class_surplus, group_surplus]
             df_data.append(week_data)
 
+    # Return df
     if return_df:
         df_out = pd.DataFrame(data=df_data, columns=df_cols)
+
+        # Return period Df
         if return_period_df:
             period_df_out = pd.DataFrame(data=df_period_data, columns=df_period_cols)
             return df_out, period_df_out
         else:
             return df_out
+        
+    # Return as dictionary
     else:
         return data
 
-
+# TODO: Continue here Anchor - refactor to use the new definition of make_even_sim(*) above
 def make_event_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
                     event_begin, event_end,
                     num_rounds, grid_size,
@@ -352,17 +403,7 @@ def make_event_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
     # Run n trials of this setup
     for trial in range(num_trials):
 
-        agent_maker = env_make_agents.MakeAgents(num_traders, trader_class_count, num_units, 
-                                            grid_size, lower_bound, upper_bound, False, movement_error_rate, reset_flag_frequency=reset_flag_frequency, 
-                                            reset_flag_min_agents=reset_flag_min_agents, reset_flag_on_random=reset_flag_on_random, reset_flag_window=reset_flag_window, 
-                                          reset_flag_min_trades=reset_flag_min_trades, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None)
-        agent_maker.make_agents()
-        agent_maker.set_locations(grid_size)
-        agents = agent_maker.get_agents()
-
-        # set up market
-        agent_maker.make_market(sim_name)
-        market = agent_maker.get_market()
+        # Chopped from here the make market and make agents
 
         if not return_period_df: # If only want the week-by-week results
             trial_data = make_event_sim(sim_name, num_periods, num_weeks, 

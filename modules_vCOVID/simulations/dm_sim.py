@@ -16,7 +16,7 @@ import environment.dm_agents
 # import dm_utils as dm
 import simulations.dm_sim_period as simp
 import utils.dm_process_results as pr
-import environment.env_make_agents as agent_mkr
+import environment.env_make_agents as env_make_agents
 
 import copy
 import pandas as pd
@@ -37,6 +37,10 @@ def make_sim(sim_name,
                          'num_weeks', 'num_periods', 'num_rounds', 
                          'num_traders', 'agent_groups',
                          'grid_size', 'group_names']
+        week_param_ls = [sim_name, 
+                         num_weeks, num_periods, num_rounds,
+                         num_traders, agent_groups,
+                         grid_size, group_names]
         # Store results
         df_cols_results = ['week', 'contracts', 'grids', 'eff', 'class_surplus', 'group_surplus']
         df_cols = df_cols_param + df_cols_results
@@ -58,7 +62,7 @@ def make_sim(sim_name,
 
     # make agents
     debug = False
-    agent_maker = agent_mkr.MakeAgents(debug)
+    agent_maker = env_make_agents.MakeAgents(debug)
     ag_df = agent_maker.gen_custom_agents(num_traders, agent_groups, grid_size, group_names)
     agent_maker.init_agents(ag_df)
     agents = agent_maker.get_agents()
@@ -67,9 +71,11 @@ def make_sim(sim_name,
     agent_maker.make_market(sim_name)
     market = agent_maker.get_market()
 
-    # run sim
+    # run weeks in sim
     for week in range(num_weeks):
         data[week] = {}
+
+        # Reset agents' units
         for agent in agents:
             agent.start(None)
 
@@ -80,6 +86,8 @@ def make_sim(sim_name,
         sim_grids = []
         sim1 = simp.SimPeriod(sim_name, num_rounds, agents, 
                market, grid_size)
+        
+        # Run periods in week
         for period in range(num_periods):
             sim1.run_period()
             grid = sim1.get_grid()
@@ -93,11 +101,7 @@ def make_sim(sim_name,
 
             # Save period-by-period data to dataframe
             if return_period_df:
-                period_data = [sim_name, 
-                               num_weeks, num_periods, num_rounds,
-                               num_traders, agent_groups,
-                               grid_size, group_names,
-                               week,
+                period_data = week_param_ls + [week,
                                pr_contracts, grid, 
                                None, None, None, # End week columns
                                period, copy.deepcopy(grid)]
@@ -105,11 +109,7 @@ def make_sim(sim_name,
 
                 # Save the initial locations of the agents
                 if week == 0 and period == 0:
-                    period_data = [sim_name, 
-                                   num_weeks, num_periods, num_rounds,
-                                   num_traders, agent_groups,
-                                   grid_size, group_names,
-                                   -1, [], copy.deepcopy(sim1.get_initial_grid()),
+                    period_data = week_param_ls + [-1, [], copy.deepcopy(sim1.get_initial_grid()),
                                    None, None, None,
                                    -1, copy.deepcopy(sim1.get_initial_grid())]
                     df_period_data.append(period_data)
@@ -124,17 +124,14 @@ def make_sim(sim_name,
         eff = pr1.get_efficiency()
         class_surplus = pr1.get_class_surplus()
         group_surplus = pr1.get_group_surplus()
+
         data[week]['eff'] = eff # single item put in list to facilitate looping through data 
         data[week]['class_surplus'] = class_surplus
         data[week]['group_surplus'] = group_surplus
 
         # Save week-by-week data to dataframe
         if return_df:
-            week_data = [sim_name,
-                         num_weeks, num_periods, num_rounds,
-                         num_traders, agent_groups,
-                         grid_size, group_names,
-                         week, contracts, sim_grids,
+            week_data = week_param_ls + [week, contracts, sim_grids,
                          eff, class_surplus, group_surplus]
             df_data.append(week_data)
     
