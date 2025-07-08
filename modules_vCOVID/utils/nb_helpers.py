@@ -57,8 +57,17 @@ def avg_df_obs(df_data, x_var, y_var, form="mean", percentiles=None):
     
     return df_out.reset_index()
 
-def compare_graph(dfs, x_var="week", y_var="eff", form="line", form_type="mean", line_labs=None, title=None, x_ticks=None, x_tick_labs=None, x_name=None, y_name=None):
-    """If not line_labs list provided, uses the names of the simulations in the dataframes. Pass the line lab as the treatments you want, and name the simulations accoring to these label names as well."""
+def compare_graph(dfs, 
+                  x_var="week", y_var="eff", 
+                  form="line", form_type="mean", 
+                  line_labs=None, title=None, 
+                  x_ticks=None, x_tick_labs=None, 
+                  x_name=None, y_name=None):
+    """If not line_labs list provided, uses the names of the simulations in the dataframes. Pass the line lab as the treatments you want, and name the simulations according to these label names as well.
+
+    TODO: Doc this
+
+    """
 
     if line_labs is None:
         line_labs = []
