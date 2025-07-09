@@ -38,7 +38,11 @@ class Travel(object):
         self.debug = debug 
     
     def run(self):
+        """
+        Run one period of movement for the agents on the grid. Agents are called in a random order to request their movement decisions.
 
+        TODO: Verify this functioning - should in theory call in a random order - appears to call from top left corner (?) - verify
+        """
         for point in self.grid:
             agent_order =[]
             for agent in self.grid[point]:

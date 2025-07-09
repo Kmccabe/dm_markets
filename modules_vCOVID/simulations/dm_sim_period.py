@@ -80,7 +80,7 @@ class SimPeriod(object):
         b_inst = dm_bargain.Bargain(self.num_rounds)
         self.contracts = []
         self.prices = []
-        
+
         # Save initial grid locations of agents
         if self.initial_grid is None:
             self.initial_grid = self.travel.get_grid()

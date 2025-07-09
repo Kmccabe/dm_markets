@@ -745,7 +745,8 @@ class ZIDPR(ZIDA, ZIDP):
 
         # Move away if too crowded (>2 traders)
         if self.num_at_loc > 2:
-            #print('NUMBER AT g', self.num_at_loc)
+            
+            # Randomly choose a new move
             found_move = False
             direction_list = [-1, 0, +1]
             while found_move == False:
@@ -755,7 +756,7 @@ class ZIDPR(ZIDA, ZIDP):
                 
                 # Forbidden to stay in place
                 if movement_idea != (0, 0):
-                    found_move == True
+                    found_move = True
     
             return_msg = Message("MOVE", self.name, "Travel", movement_idea)
 

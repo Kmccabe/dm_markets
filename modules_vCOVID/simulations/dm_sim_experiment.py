@@ -1,10 +1,8 @@
-import sys
-sys.path.insert(0, '..') # add modules folder (parent folder) into this notebook's path
-import environment.dm_agents as dm_agents
 import numpy as np
 import pandas as pd
 import copy
 import simulations.dm_sim as dm_sim
+import simulations.dm_sim_period as dm_sim_period
 import environment.env_make_agents as env_make_agents
 
 import utils.dm_process_results as dm_process_results
@@ -17,28 +15,26 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=Non
     """
 
     new_class = dm_utils.get_agent_class(new_strategy)
-    
 
     # Pick a random set of agents to mutate (randomly at passed proportion - policy compliance rate)
-    rn = np.random.default_rng()
+    rng = np.random.default_rng()
     agent_indecies = list(range(len(agents)))
     complying_num = len(agents)*ratio
     non_int_part = complying_num%1
     add_num = 0
     if non_int_part != 0:
         # Randomly draw against remainder (keeps percentages work across trials)
-        if rn.random() < non_int_part:
+        if rng.random() < non_int_part:
             add_num += 1
             
     complying_num = int(complying_num) + add_num
-    complying_inds = rn.choice(agent_indecies, size=complying_num)
+    complying_inds = rng.choice(agent_indecies, size=complying_num, replace=False)
     
     new_agents = []
     for k, agent in enumerate(agents):
-
+        
         # change name
         if k in complying_inds: # These ones get Transformed
-
             name = agent.name
             s1 = name.split('_')
             name = s1[0] + '_' + s1[1] + f'_{new_strategy}'
@@ -112,7 +108,7 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=Non
             new_agent = copy.deepcopy(agent)
             
         new_agents.append(new_agent)
-        
+    
     return new_agents
 
 def change_back_agents(agents, old_strategy="ZIDPA", old_strategy_params=None, old_mer=None):
@@ -169,14 +165,15 @@ def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_perio
     else:
         return ret_df
 
-# NOTE: can redo adding data to the dataframe using CONCAT instead of building a long string and then adding - speed increase probable
+
 def make_event_sim(sim_name, 
                    num_weeks, num_periods, num_rounds,
                    num_traders, agent_groups, grid_size,
                    event_begin, event_end, compliance_rate=1,
                    new_agent_class = "ZIDPR", new_strategy_params = None, new_mer = None,
                    group_names = None,
-                   return_df=False, return_period_df=False):
+                   return_df=False, return_period_df=False,
+                   debug=False):
     """
     Runs one complete event simulation, defined the same as dm_sim.make_simulation but with a transformation event between event_begin and even_end (i.e. agents change class/strategy).
 
@@ -267,7 +264,6 @@ def make_event_sim(sim_name,
     old_mer = agent_groups[0][9]
 
     # make agents
-    debug = False
     agent_maker = env_make_agents.MakeAgents(debug)
     ag_df = agent_maker.gen_custom_agents(num_traders, agent_groups, grid_size, group_names)
     agent_maker.init_agents(ag_df)
@@ -286,6 +282,8 @@ def make_event_sim(sim_name,
         # TODO: Implement a different version of change_agents and change_back_agents which preserves original values to roll them back later
         if week == event_begin:
             agents = change_agents(agents, compliance_rate, new_agent_class, new_strategy_params, new_mer)
+            for ag in agents:
+                ag
         if week == event_end:
             agents = change_back_agents(agents, old_strategy=old_strategy, 
                                         old_strategy_params=old_params, old_mer=old_mer)
@@ -297,12 +295,13 @@ def make_event_sim(sim_name,
             agent.start(None)
         contracts = []
         sim_grids = []
-        sim1 = dm_sim.SimPeriod(sim_name, num_rounds, agents, 
+        sim1 = dm_sim_period.SimPeriod(sim_name, num_rounds, agents, 
                market, grid_size)
         
         # Run periods in week
         for period in range(num_periods):
             sim1.run_period()
+
             grid = sim1.get_grid()
             sim_grids.append(grid)
             contracts.extend(sim1.get_contracts())
@@ -329,7 +328,7 @@ def make_event_sim(sim_name,
         eff = pr1.get_efficiency()
         class_surplus = pr1.get_class_surplus()
         group_surplus = pr1.get_group_surplus()
-        
+
         data[week]['eff'] = eff # single item put in list to facilitate looping through data 
         data[week]['class_surplus'] = class_surplus
         data[week]['class_surplus'] = group_surplus
@@ -462,8 +461,6 @@ def make_event_monte_carlo(sim_name=None,
     # Run n trials of this setup
     for trial in range(num_trials):
 
-        # Chopped from here the make market and make agents
-
         # Return non-DF
         if not return_df:
             trial_data = make_event_sim(sim_name, 
@@ -524,4 +521,3 @@ def make_event_monte_carlo(sim_name=None,
             return mc_df
     else:
         return sim_data
-

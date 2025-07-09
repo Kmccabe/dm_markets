@@ -1,20 +1,7 @@
-# import random as rnd
-# import operator
-# import os
-import matplotlib.pyplot as plt                 # import matplotlib
-# import numpy as np                              # import numpy
-# import time
-# import copy
-# import json
+import matplotlib.pyplot as plt
 from scipy.stats import sem
 
-# This works only if notebook is in same folder
-# import dm_bargain
-# import dm_travel
-import environment.dm_agents
-#import dm_env as env
-# import dm_utils as dm
-import simulations.dm_sim_period as simp
+import simulations.dm_sim_period as dm_sim_period
 import utils.dm_process_results as pr
 import environment.env_make_agents as env_make_agents
 
@@ -84,7 +71,7 @@ def make_sim(sim_name,
 
         contracts = []
         sim_grids = []
-        sim1 = simp.SimPeriod(sim_name, num_rounds, agents, 
+        sim1 = dm_sim_period.SimPeriod(sim_name, num_rounds, agents, 
                market, grid_size)
         
         # Run periods in week

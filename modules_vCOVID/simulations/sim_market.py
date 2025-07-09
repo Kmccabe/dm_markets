@@ -4,7 +4,7 @@ Simulation file for testing the environment.
 
 import dm_agents
 import env_make_agents as mkt
-import dm_sim_period as simp
+import dm_sim_period as dm_sim_period
 import dm_process_results as pr
 
 #
@@ -49,7 +49,7 @@ period = 1
 num_rounds = 60
 debug = False
 plot_on = True
-sim = simp.SimPeriod(sim_name, week, period, num_rounds, agents, 
+sim = dm_sim_period.SimPeriod(sim_name, week, period, num_rounds, agents, 
                     market, grid_size, debug, plot_on)
 
 # run simulation and process results
@@ -64,7 +64,7 @@ pr0.display_results()
 num_periods = 100
 sim_name = "multi_period_test"
 contracts = []
-sim1 = simp.SimPeriod(sim_name, week, period, num_rounds, agents, 
+sim1 = dm_sim_period.SimPeriod(sim_name, week, period, num_rounds, agents, 
                 market, grid_size, debug, plot_on)
 for period in range(num_periods):
     sim1.run_period()
