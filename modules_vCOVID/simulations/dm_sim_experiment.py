@@ -355,102 +355,173 @@ def make_event_sim(sim_name,
     else:
         return data
 
-# TODO: Continue here Anchor - refactor to use the new definition of make_even_sim(*) above
-def make_event_monte_carlo(sim_name, num_trials, num_periods, num_weeks,
-                    event_begin, event_end,
-                    num_rounds, grid_size,
-                    num_traders, num_units,
-                    lower_bound, upper_bound,
-                    trader_class_count, movement_error_rate=0, compliance_rate=1, return_df=False, return_period_df=False, reset_flag_frequency=None, reset_flag_min_agents=None,
-                    reset_flag_on_random=False, reset_flag_window=None, reset_flag_min_trades=1, agent_types=None, agent_type_counts=None, agent_endows=None, agent_payoffs=None):
-    """Runs one complete simulation and returns data in
-        effs[treatment][trial]
-        compliance_rate = ratio of agents complying with social distancing, e[0, 1]
-        movement_error_rate = ratio of FULLY random moves, not employing strategy of movement, e[0, 1]
-        return_df = True -> return as dataframe
-    """ 
 
-    # Added for backwards compatibility
-    if agent_types is None:
-        agent_types = ('B','S')
-        agent_type_counts = (num_traders//2, num_traders//2)
-        agent_endows = (500, 0)
-        agent_payoffs = ('utility', 'profit')
+def make_event_monte_carlo(sim_name=None, 
+                           num_trials=None, num_weeks=None, num_periods=None, num_rounds=None,
+                           num_traders=None, agent_groups=None, grid_size=None,
+                           event_begin=None, event_end=None, compliance_rate=1,
+                           new_agent_class = "ZIDPR", new_strategy_params = None, new_mer = None,
+                           group_names = None,
+                           return_df=False, return_period_df=False,
+                           passed_as_dict=False, params_dict=None):
+    """
+    Runs a monte carlo of the event simulation.
+
+    See make_event_sim for details on inputs.
+
+    Additional args:
+        num_trials (int): number of independent trials.
+
+        passed_as_dict (bool, optional, default False): If passing parameters as a dictionary.
+
+        params_dict (dict, optional): Required if passed_as_dict is true. Contains parameters to feed the simulation.
+
+    Returns:
+        dict of [trial][eff] efficiency outputs for each trial
+
+        dataframe of weekly results (if return_df)
+
+        dataframe of period results (if return_period_df)
+    """ 
+                    
+    # Check vals are not None if not passing as dict
+    passed_none = [sim_name is None,
+                    num_trials is None,
+                    num_weeks is None,
+                    num_periods is None,
+                    num_rounds is None,
+                    num_traders is None,
+                    agent_groups is None,
+                    grid_size is None,
+                    event_begin is None,
+                    event_end is None]
+
+    # If not passed_as_dict, need each val passed in
+    if not passed_as_dict and any(passed_none):
+        raise ValueError("If not passing values as a dictionary, you must pass all of sim_name, num_trials, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size.")
+    
+    # If passed_as_dict, check dict was passed and contains all required items
+    if passed_as_dict:
+        if params_dict is None:
+            raise ValueError("Must pass a dictionary of parameters to params_dict if passing passed_as_dict=True")
+        
+        # Mandatory inputs
+        try:
+            sim_name = params_dict['sim_name']
+            num_trials = params_dict['num_trials']
+            num_weeks = params_dict['num_weeks']
+            num_periods = params_dict['num_periods']
+            num_rounds = params_dict['num_rounds']
+            num_traders = params_dict['num_traders']
+            agent_groups = copy.deepcopy(params_dict['agent_groups'])
+            grid_size = params_dict['grid_size']
+            event_begin = params_dict['event_begin']
+            event_end = params_dict['event_end']
+        except KeyError:
+            raise ValueError("params_dict must contain all of sim_name, num_trials, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size.")
+        
+        # Optional Inputs
+        try:
+            new_agent_class = params_dict['new_agent_class']
+        except KeyError:
+            pass
+        try:
+            new_strategy_params = params_dict['new_strategy_params']
+        except KeyError:
+            pass
+        try:
+            new_mer = params_dict['new_mer']
+        except KeyError:
+            pass
+        try:
+            group_names = params_dict['group_names']
+        except KeyError:
+            pass
 
     sim_data = {}
-    sim_data['parms'] = {'sim_name': sim_name, 'num_traders': num_traders, 'num_units': num_units,
-                         'num_weeks': num_weeks, 'num_periods': num_periods, 'num_rounds': num_rounds,
-                         'grid_size': grid_size, 'lower_bound':lower_bound, 'upper_bound': upper_bound,
-                         'trader_class_count': trader_class_count, 'movement_error_rate': movement_error_rate, 'compliance_rate': compliance_rate,
-                         'agent_types': agent_types, 'agent_type_counts':agent_type_counts, 'agent_endows':agent_endows, 'agent_payoffs':agent_payoffs}
+    sim_data['params'] = {'sim_name': sim_name, 
+                          'num_weeks': num_weeks, 'num_periods': num_periods, 'num_rounds': num_rounds,
+                          'num_traders': num_traders, 'agent_groups': agent_groups,
+                          'grid_size': grid_size,
+                          'event_begin':event_begin, 'event_end': event_end,
+                          'compliance_rate': compliance_rate,
+                          'new_agent_class': new_agent_class,
+                          'new_strategy_params': new_strategy_params,
+                          'new_mer': new_mer,
+                          'group_names': group_names
+                          }
 
-    if return_df:
-        # Store parameters
-        df_cols_param = ['sim_name', 'num_traders', 'num_units', 'num_weeks', 'num_periods', 'num_rounds', 'grid_size', 'lower_bound', 'upper_bound', 'trader_class_count', 'movement_error_rate', 'compliance_rate',
-                        'event_begin', 'event_end', 'agent_types', 'agent_type_counts', 'agent_endows', 'agent_payoffs']
-        # Store outputs
-        df_cols_results = ['week', 'contracts', 'grids', 'eff', 'type_effs']
-        df_cols_trial = ['trial']
-        df_cols = df_cols_param + df_cols_results + df_cols_trial
-        df_out = pd.DataFrame(columns=df_cols)
+    # Stubs for storing df results
+    if return_df:        
+        mc_df = None
 
-    if return_period_df:
-        if return_df:
-            period_out_df = pd.DataFrame(columns=df_out.columns)
-        else:
-            raise ValueError("Need to be in return_df=True mode to get period details")
+        if return_period_df:
+            mc_period_df = None
+        
         
     # Run n trials of this setup
     for trial in range(num_trials):
 
         # Chopped from here the make market and make agents
 
-        if not return_period_df: # If only want the week-by-week results
-            trial_data = make_event_sim(sim_name, num_periods, num_weeks, 
-                                        event_begin, event_end, market, agents,
-                                        num_rounds, grid_size,
-                                        num_traders, num_units,
-                                        lower_bound, upper_bound,
-                                        trader_class_count, movement_error_rate, compliance_rate, return_df, reset_flag_frequency=reset_flag_frequency, 
-                                            reset_flag_min_agents=reset_flag_min_agents, reset_flag_on_random=reset_flag_on_random, reset_flag_window=reset_flag_window, 
-                                        reset_flag_min_trades=reset_flag_min_trades, 
-                                        agent_types=agent_types, agent_type_counts=agent_type_counts, agent_endows=agent_endows, agent_payoffs=agent_endows)
-        else: # If want the period-by-period results
-            trial_data, trial_period_data = make_event_sim(sim_name, num_periods, num_weeks, 
-                            event_begin, event_end, market, agents,
-                            num_rounds, grid_size,
-                            num_traders, num_units,
-                            lower_bound, upper_bound,
-                            trader_class_count, movement_error_rate, compliance_rate, return_df, return_period_df, reset_flag_frequency=reset_flag_frequency, 
-                                            reset_flag_min_agents=reset_flag_min_agents, reset_flag_on_random=reset_flag_on_random, reset_flag_window=reset_flag_window, 
-                                                           reset_flag_min_trades=reset_flag_min_trades,
-                                                           agent_types=agent_types, agent_type_counts=agent_type_counts, agent_endows=agent_endows, agent_payoffs=agent_endows)
+        # Return non-DF
+        if not return_df:
+            trial_data = make_event_sim(sim_name, 
+                   num_weeks, num_periods, num_rounds,
+                   num_traders, agent_groups, grid_size,
+                   event_begin, event_end, compliance_rate=compliance_rate,
+                   new_agent_class = new_agent_class, new_strategy_params = new_strategy_params, new_mer = new_mer,
+                   group_names = group_names,
+                   return_df=False, return_period_df=False)
             
-        sim_data[trial] = trial_data
-
-        if return_df:
-            trial_data['trial'] = trial
-            if len(df_out) == 0:
-                df_out = trial_data
-            else:
-                df_out = pd.concat([df_out, trial_data], ignore_index=True)
+            sim_data[trial] = trial_data
+        
+        # Return DF
+        elif return_df:
+            # Return period-level DF data
+            if return_period_df:
+                trial_df, trial_period_df = make_event_sim(sim_name, 
+                   num_weeks, num_periods, num_rounds,
+                   num_traders, agent_groups, grid_size,
+                   event_begin, event_end, compliance_rate=compliance_rate,
+                   new_agent_class = new_agent_class, new_strategy_params = new_strategy_params, new_mer = new_mer,
+                   group_names = group_names,
+                   return_df=True, return_period_df=True)
                 
-        if return_period_df:
-            trial_period_data['trial'] = trial
-            if len(period_out_df) == 0:
-                period_out_df = trial_period_data
+                trial_period_df['trial'] = trial
+                
+                # Store trial's period DF
+                if mc_period_df is None:
+                    mc_period_df = trial_period_df
+                else:
+                    mc_period_df = pd.concat([mc_period_df, trial_period_df], ignore_index=True)
+
+            # Keep non-period data
+            elif not return_period_df:
+                trial_df = make_event_sim(sim_name, 
+                   num_weeks, num_periods, num_rounds,
+                   num_traders, agent_groups, grid_size,
+                   event_begin, event_end, compliance_rate=compliance_rate,
+                   new_agent_class = new_agent_class, new_strategy_params = new_strategy_params, new_mer = new_mer,
+                   group_names = group_names,
+                   return_df=True, return_period_df=False)
+            
+            trial_df['trial'] = trial
+
+            # Store Trial DF
+            if mc_df is None:
+                mc_df = trial_df
             else:
-                period_out_df = pd.concat([period_out_df, trial_period_data], ignore_index=True)
-    
+                mc_df = pd.concat([mc_df, trial_df], ignore_index=True)
+
+    # Return results with requested 
     if return_df:
-        df_out = df_out.reset_index(drop=True)
-        df_out['num_trials'] = num_trials
+        mc_df['num_trials'] = num_trials
         if return_period_df:
-            period_out_df = period_out_df.reset_index(drop=True)
-            period_out_df['num_trials'] = num_trials
-            return df_out, period_out_df
-        else:
-            return df_out
+            mc_period_df['num_trials'] = num_trials
+            return mc_df, mc_period_df
+        elif not return_period_df:
+            return mc_df
     else:
         return sim_data
 

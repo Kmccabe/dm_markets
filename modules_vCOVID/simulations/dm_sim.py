@@ -160,7 +160,7 @@ def make_monte_carlo(sim_name=None,
     Can provide the parameters as a dictionary instead, but must pass passed_as_dict = True and params_dict = dictionary of parameters.
     """ 
 
-    # Check vals
+    # Check vals are not None if not passing as dict
     passed_none = [sim_name is None,
                        num_trials is None,
                        num_weeks is None,
@@ -178,29 +178,25 @@ def make_monte_carlo(sim_name=None,
     if passed_as_dict:
         if params_dict is None:
             raise ValueError("Must pass a dictionary of parameters to params_dict if passing passed_as_dict=True")
+        
+        # Mandatory inputs
         try:
-            params_dict['sim_name']
-            params_dict['num_trials']
-            params_dict['num_weeks']
-            params_dict['num_periods']
-            params_dict['num_rounds']
-            params_dict['num_traders']
-            params_dict['agent_groups']
-            params_dict['grid_size']
-            params_dict['group_names']
+            sim_name = params_dict['sim_name']
+            num_trials = params_dict['num_trials']
+            num_weeks = params_dict['num_weeks']
+            num_periods = params_dict['num_periods']
+            num_rounds = params_dict['num_rounds']
+            num_traders = params_dict['num_traders']
+            agent_groups = copy.deepcopy(params_dict['agent_groups'])
+            grid_size = params_dict['grid_size']
         except KeyError:
             raise ValueError("params_dict must contain all of sim_name, num_trials, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size.")
-        
-        # If passing all checks - unwrap params_dict
-        sim_name = params_dict['sim_name']
-        num_trials = params_dict['num_trials']
-        num_weeks = params_dict['num_weeks']
-        num_periods = params_dict['num_periods']
-        num_rounds = params_dict['num_rounds']
-        num_traders = params_dict['num_traders']
-        agent_groups = copy.deepcopy(params_dict['agent_groups'])
-        grid_size = params_dict['grid_size']
-        group_names = params_dict['group_names']
+
+        # Optional inputs
+        try:
+            group_names = params_dict['group_names']
+        except KeyError:
+            pass
 
     if group_names is None:
         group_names = [None]*len(agent_groups)
