@@ -439,6 +439,7 @@ def make_event_monte_carlo(sim_name=None,
 
     sim_data = {}
     sim_data['params'] = {'sim_name': sim_name, 
+                          'num_trials': num_trials,
                           'num_weeks': num_weeks, 'num_periods': num_periods, 'num_rounds': num_rounds,
                           'num_traders': num_traders, 'agent_groups': agent_groups,
                           'grid_size': grid_size,

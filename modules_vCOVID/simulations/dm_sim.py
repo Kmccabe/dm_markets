@@ -271,15 +271,30 @@ def analyze_eff_data(num_trials, num_weeks, data_table):
     for week in range(num_weeks):
         eff_avg.append(0)
         week_effs.append([])
+
+    is_df = False
+    if type(data_table) is pd.DataFrame:
+        is_df = True
     
     # parse efficiencies
     data = []
     for trial in range(num_trials):
         effs = []
-        trial_data = data_table[trial]
+
+        if is_df:
+            trial_data = data_table[data_table['trial']==trial]
+        else:
+            trial_data = data_table[trial]
+        
         for week in range(num_weeks):
-            week_data = trial_data[week]
-            effs.append(week_data['eff'])
+
+            if is_df:
+                week_data = trial_data[trial_data["week"]==week]
+                effs.append(week_data['eff'].values[0])
+            else:
+                week_data = trial_data[week]
+                effs.append(week_data['eff'])
+
         data.append(effs)   
 
     # process efficiencies

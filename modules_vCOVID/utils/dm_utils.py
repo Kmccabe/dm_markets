@@ -187,14 +187,21 @@ def draw_efficiency(sim_data, labels=None, title=None):
     if type(sim_data) is not list:
         sim_data = [sim_data]
     
+    is_df = False
+    if type(sim_data[0]) is pd.DataFrame:
+        is_df = True
+    
     # Unify types, extract labels
     if labels is not None and type(labels) is not list:
         labels = [labels]
     elif labels is None:
         labels = []
         for sd in sim_data:
-            labels.append(sd['params']['sim_name'])
-    
+            if is_df:
+                labels.append(sd['sim_name'].iloc[0])
+            else:
+                labels.append(sd['params']['sim_name'])
+        
     if title is None:
         title = "Efficiencies over Weeks"
     
@@ -204,8 +211,12 @@ def draw_efficiency(sim_data, labels=None, title=None):
     eff_stds = []
     
     for sd in sim_data:
-        nw = sd['params']['num_weeks']
-        nt = sd['params']['num_trials']
+        if is_df:
+            nw = sd['num_weeks'].iloc[0]
+            nt = sd['num_trials'].iloc[0]
+        else:
+            nw = sd['params']['num_weeks']
+            nt = sd['params']['num_trials']
         nws.append(nw)
         eff_avg, std_error, eff_min, eff_max = dm_sim.analyze_eff_data(nt, nw, sd)
         eff_avgs.append(eff_avg)
@@ -219,6 +230,10 @@ def draw_efficiency(sim_data, labels=None, title=None):
         x = range(1, nws[i]+1)
         e_avg = eff_avgs[i]
         e_std = eff_stds[i]
+        print("E AVG")
+        print(e_avg)
+        print("E STD")
+        print(e_std)
         lab = labels[i]
 
         ax.plot(x, e_avg, label = lab, lw =3)
