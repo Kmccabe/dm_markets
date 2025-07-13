@@ -230,10 +230,6 @@ def draw_efficiency(sim_data, labels=None, title=None):
         x = range(1, nws[i]+1)
         e_avg = eff_avgs[i]
         e_std = eff_stds[i]
-        print("E AVG")
-        print(e_avg)
-        print("E STD")
-        print(e_std)
         lab = labels[i]
 
         ax.plot(x, e_avg, label = lab, lw =3)
@@ -460,8 +456,15 @@ def summary_surplus(week_df):
     return merged_eff, merged_ac, merged_ag
 
 
-def graph_summary(sum_df, by=None, title=None):
-    """Graph surpluses or efficiencies from summary."""
+def graph_summary(sum_df, by=None, title=None, event_bars=None):
+    """
+    Graph surpluses or efficiencies from summary.
+    
+    by = one of: None (Efficiency), 'agent_class' (by Trader class), 'agent_group' (ex ante homogenous agents)
+
+    title - custom title
+    event_bars - tuple or list of tuples of (event_start, event_end) to graph "recession bars"
+    """
 
     if title is not None:
         tl = title
@@ -501,6 +504,18 @@ def graph_summary(sum_df, by=None, title=None):
 
     fig, ax = plt.subplots(figsize=(10, 8))
 
+    # Draw recession bars
+    if event_bars is not None:
+        # Wrap for consistency
+        if (type(event_bars[0]) is not list) and (type(event_bars[0]) is not tuple):
+            event_bars = [event_bars]
+        
+        for i in range(len(event_bars)):
+            x_1 = event_bars[i][0]
+            x_2 = event_bars[i][1]
+
+            ax.axvspan(x_1, x_2, color='gray', alpha=0.5)
+
     if not by_groups:
         ax.plot(x, sum_df[y_av], linestyle = 'solid', lw =3)
         ax.errorbar(x, sum_df[y_av], yerr=sum_df[y_sm], color='black')
@@ -513,7 +528,7 @@ def graph_summary(sum_df, by=None, title=None):
             ax.errorbar(x, cut_df[y_av], yerr=cut_df[y_sm], color = 'black')
 
         ax.legend(fontsize='x-large')
-
+            
     ax.set_xlabel(xn, size = 'x-large') 
     ax.set_xbound(0, xmax)
     ax.set_ybound(0, ymax)
@@ -523,8 +538,12 @@ def graph_summary(sum_df, by=None, title=None):
     plt.show()
 
 
-def plot_comp_efficiencies(sum_dfs, title=None, labels=None):
-    """Plot a comparison of efficiencies across the passed list of summary dataframes or across the treatments within the passed summary dataframe.
+def plot_comp_efficiencies(sum_dfs, title=None, labels=None, shadow=False, event_bars=None):
+    """Plot a comparison of efficiencies across the passed list of summary dataframes or across the treatments within the passed summary dataframe. See dm_utils.summary_surplus. Allows for multiple treatments in sum_dfs.
+
+    title - custom title.
+    labels - custom labels.
+    shadow - instead of black error lines on top of our lines, graph color-coordinated, semi-transparent ones underneath the lines
     
     Note: the treatments are always processed in an alphabetically ascending way.
     """
@@ -596,11 +615,27 @@ def plot_comp_efficiencies(sum_dfs, title=None, labels=None):
 
     fig, ax = plt.subplots(figsize=(10, 8))
 
+    # Draw recession bars
+    if event_bars is not None:
+        # Wrap for consistency
+        if (type(event_bars[0]) is not list) and (type(event_bars[0]) is not tuple):
+            event_bars = [event_bars]
+        
+        for i in range(len(event_bars)):
+            x_1 = event_bars[i][0]
+            x_2 = event_bars[i][1]
+
+            ax.axvspan(x_1, x_2, color='gray', alpha=0.5)
+
     for i in range(len(treats)):
         cut_df = cross_df[cross_df['treatment']==treats[i]]
 
-        ax.plot(x, cut_df[y_av], label = labs[i], linestyle = 'solid', lw =3)
-        ax.errorbar(x, cut_df[y_av], yerr=cut_df[y_sm], color = 'black')
+        lline, = ax.plot(x, cut_df[y_av], label = labs[i], linestyle = 'solid', lw =3)
+        if not shadow:
+            ax.errorbar(x, cut_df[y_av], yerr=cut_df[y_sm], color = 'black')
+        elif shadow:
+            ax.errorbar(x, cut_df[y_av], yerr=cut_df[y_sm], color = lline.get_color(), alpha=0.5)
+        
         # TODO: refactor to non-black - need to get a list of colors BEFORE
 
     ax.legend(fontsize='x-large')

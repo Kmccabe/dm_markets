@@ -121,50 +121,6 @@ def change_back_agents(agents, old_strategy="ZIDPA", old_strategy_params=None, o
     return change_agents(agents, ratio=1, new_strategy=old_strategy, 
                          new_strategy_params=old_strategy_params, new_mer=old_mer)
 
-def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_period_df=False):
-    """
-        Runs a Monte Carlo for each treatment in treatment_names or key of treatment_dict, using sim_vars as the baseline inputs and treatment_dict[treatment] as the updates to inputs.
-
-        Only returns as a DataFrame. Can get period-level data with return_period_df=True.
-    """
-
-    # Pull dict keys as the treatment names if not passed
-    if treatment_names is None:
-        treatment_names = list(treatment_names)
-    
-    ret_df = None
-    ret_per_df = None
-
-    for trt in treatment_names:
-        trt_vars = treatment_dict[trt]
-
-        # Make a deep copy of sim_vars in case user mis-specified treatment_dict
-        cp_vars = copy.deepcopy(sim_vars)
-        cp_vars.update(trt_vars)
-
-        if return_period_df:
-            trt_df, trt_pr_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=True, passed_as_dict=True, params_dict=cp_vars)
-            trt_pr_df['treatment'] = trt
-
-            if ret_per_df is None:
-                ret_per_df = trt_pr_df
-            else:
-                ret_per_df = pd.concat([ret_per_df, trt_pr_df], ignore_index=True)
-        
-        else:
-            trt_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=False, passed_as_dict=True, params_dict=cp_vars)
-        trt_df['treatment'] = trt
-
-        if ret_df is None:
-            ret_df = trt_df
-        else:
-            ret_df = pd.concat([ret_df, trt_df], ignore_index=True)
-    
-    if return_period_df:
-        return ret_df, ret_per_df
-    else:
-        return ret_df
-
 
 def make_event_sim(sim_name, 
                    num_weeks, num_periods, num_rounds,
@@ -412,7 +368,7 @@ def make_event_monte_carlo(sim_name=None,
             num_periods = params_dict['num_periods']
             num_rounds = params_dict['num_rounds']
             num_traders = params_dict['num_traders']
-            agent_groups = copy.deepcopy(params_dict['agent_groups'])
+            agent_groups = params_dict['agent_groups'] # deepcopy?
             grid_size = params_dict['grid_size']
             event_begin = params_dict['event_begin']
             event_end = params_dict['event_end']
@@ -522,3 +478,141 @@ def make_event_monte_carlo(sim_name=None,
             return mc_df
     else:
         return sim_data
+
+    
+def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_period_df=False, includes_event=False):
+    """
+        Runs a Monte Carlo for each treatment in treatment_names or key of treatment_dict, using sim_vars as the baseline inputs and treatment_dict[treatment] as the updates to inputs.
+
+        Only returns as a DataFrame. Can get period-level data with return_period_df=True.
+
+        Can specify this is an event experiment by passing includes_event = True.
+    """
+
+    # Pull dict keys as the treatment names if not passed
+    if treatment_names is None:
+        treatment_names = list(treatment_dict)
+    
+    # Check if trt_vars contains an agent-level variables. If so, return using make_agent_experiment instead
+    agent_vars = ['agent_num', 'agent_type', 'agent_class', 'strategy_params', 
+                  'lower_bound', 'upper_bound', 'num_units', 'endowment', 
+                  'payoff', 'move_error_rate', 'starting_location']
+    for tr in treatment_dict[treatment_names[0]]:
+        if tr in agent_vars:
+            return make_agent_experiment(sim_vars, treatment_dict, treatment_names, return_period_df, includes_event)
+    
+    ret_df = None
+    ret_per_df = None
+
+    for trt in treatment_names:
+        trt_vars = treatment_dict[trt]
+
+        # Make a deep copy of sim_vars in case user mis-specified treatment_dict
+        cp_vars = copy.deepcopy(sim_vars)
+        cp_vars.update(trt_vars)
+
+        # Want period details
+        if return_period_df:
+            # Not an event experiment
+            if not includes_event:
+                trt_df, trt_pr_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=True, 
+                                                            passed_as_dict=True, params_dict=cp_vars)
+            # Yes includes an event
+            elif includes_event:
+                trt_df, trt_pr_df = make_event_monte_carlo(return_df=True, return_period_df=True, 
+                                                                  passed_as_dict=True, params_dict=cp_vars)
+
+            trt_pr_df['treatment'] = trt
+
+            if ret_per_df is None:
+                ret_per_df = trt_pr_df
+            else:
+                ret_per_df = pd.concat([ret_per_df, trt_pr_df], ignore_index=True)
+        
+        # Only want week-level data
+        elif not return_period_df:
+            # Not and event experiment
+            if not includes_event:
+                trt_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=False, 
+                                                 passed_as_dict=True, params_dict=cp_vars)
+            # Yes an event experiment
+            elif includes_event:
+                trt_df = make_event_monte_carlo(return_df=True, return_period_df=False, 
+                                        passed_as_dict=True, params_dict=cp_vars)
+        
+        trt_df['treatment'] = trt
+
+        if ret_df is None:
+            ret_df = trt_df
+        else:
+            ret_df = pd.concat([ret_df, trt_df], ignore_index=True)
+    
+    if return_period_df:
+        return ret_df, ret_per_df
+    else:
+        return ret_df
+    
+
+def make_event_experiment(sim_vars, 
+                          treatment_dict, treatment_names=None, 
+                          return_period_df=False):
+    """Wrapper for make_experiment which always indicates you are running an event experiment."""
+
+    # Call the unwrapped method with includes_event=True
+    return make_experiment(sim_vars, 
+                           treatment_dict, treatment_names=treatment_names, 
+                           return_period_df=return_period_df, includes_event=True)
+
+
+def make_agent_experiment(sim_vars, 
+                          treatment_dict, treatment_names=None, 
+                          return_period_df=False, includes_event=False):
+        """Wrapper implemented to make creating agent experiments more easily.
+        """
+
+        # Pull dict keys as the treatment names if not passed
+        if treatment_names is None:
+            treatment_names = sorted(list(treatment_dict))
+
+        # Pull out the first group as the base class to mutate (assuming there are no other changes - so still relatively simple experiments)
+        # Fully custom agent groups can be passed directly in treatment_dict otherwise
+        base_agent_groups = sim_vars['agent_groups']
+        num_groups = len(base_agent_groups)
+
+        # Define potential agent inputs
+        agent_vars = ['agent_num', 'agent_type', 'agent_class', 'strategy_params', 
+                  'lower_bound', 'upper_bound', 'num_units', 'endowment', 
+                  'payoff', 'move_error_rate', 'starting_location']
+        n_vars = len(agent_vars)
+
+        # Iterate over treatments
+        ag_trt = {}
+        for tn in treatment_names:
+            tvars = treatment_dict[tn]
+
+            # Copy group to mutate
+            tr_ag_groups = copy.deepcopy(base_agent_groups)
+
+            # Pull out agent-varying data from the treatment_dict, replacing in group where specified
+            for i in range(n_vars):
+                vn = agent_vars[i]
+                if vn in tvars:
+                    new_val = tvars[vn]
+                    
+                    # Iterate over tr groups to mutate
+                    for j in range(num_groups):
+                        tr_ag_groups[j][i] = copy.deepcopy(new_val)
+            ag_trt[tn] = copy.deepcopy(tr_ag_groups) # Probs dont need a second deepcopy here
+
+        # Stripping out agent-var keys from treatment_dict
+        for tr in treatment_names:
+            tr_sub = treatment_dict[tr]
+            for av in agent_vars:
+                if av in tr_sub: del tr_sub[av]
+            
+        # Add in the new agent-group definitions as treatment vars
+        for tr in treatment_names:
+            treatment_dict[tr]['agent_groups'] = ag_trt[tr]
+
+        # Now run the experiment
+        return make_experiment(sim_vars, treatment_dict, treatment_names, return_period_df, includes_event)

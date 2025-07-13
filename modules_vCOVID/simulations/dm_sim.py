@@ -174,7 +174,7 @@ def make_monte_carlo(sim_name=None,
             num_periods = params_dict['num_periods']
             num_rounds = params_dict['num_rounds']
             num_traders = params_dict['num_traders']
-            agent_groups = copy.deepcopy(params_dict['agent_groups'])
+            agent_groups = params_dict['agent_groups'] # Deepcopy?
             grid_size = params_dict['grid_size']
         except KeyError:
             raise ValueError("params_dict must contain all of sim_name, num_trials, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size.")
