@@ -8,13 +8,49 @@ import environment.env_make_agents as env_make_agents
 import utils.dm_process_results as dm_process_results
 import utils.dm_utils as dm_utils
 
-def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=None, new_mer=None):
+def change_agents(agents, ratio=1, 
+                  new_agent_class="ZIDPR", new_strategy_params=None, new_movement_error_rate=None, 
+                  store_originals=False, stored_vals=None):
     
     """
-    make a copy of agents at current location and change a proportion of agents (default 1.0) to a new strategy to (default ZIDPR) or to a new strategy_parameters (default None - keep original)
+    make a copy of agents at current location and change a proportion of agents 
+    
+    Args
+    
+    necessary
+        - agents - list of agent objects to transform
+    
+    proportion to change
+        - ratio (default 1.0)
+
+    Args defining what to change to:
+        - new_agent_class - a new strategy to (default ZIDPR)
+        - new_strategy_params (default None - keep original)
+        - new_movement_error_rate (default None - keep original) - new movement rate
+    
+    Store pre-change parameters of agents
+        - store_originals (default False)
+
+    Pre-stored parameters
+        - stored_vals (default None) - a list of parameters to apply at the agent-level instead of using the combination of (ratio, new_agent_class, new_strategy_params, new_movement_error_rate). Must be of the same length as agents.
+
+    returns
+        - new_agents - list of transformed agents (necessary because creating new objects)
+        - original_vals - list of dictionaries defining agent components pre-transformation (optional)
     """
 
-    new_class = dm_utils.get_agent_class(new_strategy)
+    # Check if stored values provided are of the right length
+    if stored_vals is not None:
+        if len(stored_vals) != len(agents):
+            raise ValueError("Stored vals and agents must be of the same length.")
+    # If did not pass stored_vals, make the passed vals into stored vals
+    elif stored_vals is None:
+        stored_vals = [[new_agent_class, new_strategy_params, new_movement_error_rate]]*len(agents)
+
+
+    # If need to store originals, make a list for this
+    if store_originals:
+        original_vals = []
 
     # Pick a random set of agents to mutate (randomly at passed proportion - policy compliance rate)
     rng = np.random.default_rng()
@@ -33,11 +69,26 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=Non
     new_agents = []
     for k, agent in enumerate(agents):
         
+        # Store this agent's original values
+        if store_originals:
+            ag_cl = agent.agent_class
+            ag_sp = agent.strategy_params
+            ag_mer = agent.movement_error_rate
+            original_vals.append([ag_cl, copy.deepcopy(ag_sp), ag_mer])
+
         # change name
         if k in complying_inds: # These ones get Transformed
+
+            # Pull out stored new values
+            new_agcl = stored_vals[k][0]
+            new_sp = stored_vals[k][1]
+            new_mer = stored_vals[k][2]
+
+            new_class = dm_utils.get_agent_class(new_agcl)
+
             name = agent.name
             s1 = name.split('_')
-            name = s1[0] + '_' + s1[1] + f'_{new_strategy}'
+            name = s1[0] + '_' + s1[1] + f'_{new_agcl}'
             trader_type = agent.type
             payoff = agent.payoff
             money = agent.money
@@ -46,17 +97,17 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=Non
             upper_bound = agent.upper_bound
             num_units = agent.num_units
 
+            # Allow changing to new strategy parameters
+            if new_sp is None:
+                strategy_params = agent.strategy_params
+            else:
+                strategy_params = new_sp
+
             # Allow changing of movement_error_rate
             if new_mer is None:
                 move_error_rate = agent.movement_error_rate
             else:
                 move_error_rate = new_mer
-
-            # Allow changing to new strategy parameters
-            if new_strategy_params is None:
-                strategy_params = agent.strategy_params
-            else:
-                strategy_params = new_strategy_params
 
             redraw_values = agent.redraw_values
             group_name = agent.group_name
@@ -109,24 +160,28 @@ def change_agents(agents, ratio=1, new_strategy="ZIDPR", new_strategy_params=Non
             
         new_agents.append(new_agent)
     
-    return new_agents
+    if store_originals:
+        return new_agents, original_vals
+    else:
+        return new_agents
 
-def change_back_agents(agents, old_strategy="ZIDPA", old_strategy_params=None, old_mer=None):
+def change_back_agents(agents, old_strategy="ZIDPA", old_strategy_params=None, old_movement_error_rate=None, stored_vals=None):
     """
     Returns agents to original agent type (default ZIDPA, no changed to strategy params or movement error rate).
     
     Always applies change to the entirety of the agent population.
     """
 
-    return change_agents(agents, ratio=1, new_strategy=old_strategy, 
-                         new_strategy_params=old_strategy_params, new_mer=old_mer)
+    return change_agents(agents, ratio=1, new_agent_class=old_strategy, 
+                         new_strategy_params=old_strategy_params, new_movement_error_rate=old_movement_error_rate,
+                         stored_vals=stored_vals)
 
 
 def make_event_sim(sim_name, 
                    num_weeks, num_periods, num_rounds,
                    num_traders, agent_groups, grid_size,
                    event_begin, event_end, compliance_rate=1,
-                   new_agent_class = "ZIDPR", new_strategy_params = None, new_mer = None,
+                   new_agent_class = "ZIDPR", new_strategy_params = None, new_movement_error_rate = None,
                    group_names = None,
                    return_df=False, return_period_df=False,
                    debug=False):
@@ -158,7 +213,7 @@ def make_event_sim(sim_name,
         
         new_strategy_params (dict, optional) - new strategy parameters of changed agents
         
-        new_mer = None (float 0<x<1, optional) - new movement error rate of changed agents
+        new_movement_error_rate = None (float 0<x<1, optional) - new movement error rate of changed agents
 
         group_names = None (list, optional) - custom names of the agent groups.
 
@@ -190,7 +245,7 @@ def make_event_sim(sim_name,
                          'event_begin', 'event_end',
                          'compliance_rate', 'new_agent_class',
                          'new_strategy_params',
-                         'new_mer'
+                         'new_movement_error_rate'
                          ]
         week_param_ls = [sim_name, 
                          num_weeks, num_periods, num_rounds,
@@ -199,7 +254,7 @@ def make_event_sim(sim_name,
                          event_begin, event_end,
                          compliance_rate, new_agent_class,
                          new_strategy_params,
-                         new_mer]
+                         new_movement_error_rate]
         # Store results
         df_cols_results = ['week', 'contracts', 'grids', 'eff', 'class_surplus', 'group_surplus']
         df_cols = df_cols_param + df_cols_results
@@ -237,12 +292,11 @@ def make_event_sim(sim_name,
         # NOTE: Below only works for single-class world - all turn back to the same one class, strat param, mer
         # TODO: Implement a different version of change_agents and change_back_agents which preserves original values to roll them back later
         if week == event_begin:
-            agents = change_agents(agents, compliance_rate, new_agent_class, new_strategy_params, new_mer)
-            for ag in agents:
-                ag
+            agents, old_values = change_agents(agents, compliance_rate, 
+                                               new_agent_class, new_strategy_params, new_movement_error_rate,
+                                               store_originals=True)
         if week == event_end:
-            agents = change_back_agents(agents, old_strategy=old_strategy, 
-                                        old_strategy_params=old_params, old_mer=old_mer)
+            agents = change_back_agents(agents, stored_vals=old_values)
         
         data[week] = {}
 
@@ -315,7 +369,7 @@ def make_event_monte_carlo(sim_name=None,
                            num_trials=None, num_weeks=None, num_periods=None, num_rounds=None,
                            num_traders=None, agent_groups=None, grid_size=None,
                            event_begin=None, event_end=None, compliance_rate=1,
-                           new_agent_class = "ZIDPR", new_strategy_params = None, new_mer = None,
+                           new_agent_class = "ZIDPR", new_strategy_params = None, new_movement_error_rate = None,
                            group_names = None,
                            return_df=False, return_period_df=False,
                            passed_as_dict=False, params_dict=None):
@@ -385,7 +439,7 @@ def make_event_monte_carlo(sim_name=None,
         except KeyError:
             pass
         try:
-            new_mer = params_dict['new_mer']
+            new_movement_error_rate = params_dict['new_movement_error_rate']
         except KeyError:
             pass
         try:
@@ -403,7 +457,7 @@ def make_event_monte_carlo(sim_name=None,
                           'compliance_rate': compliance_rate,
                           'new_agent_class': new_agent_class,
                           'new_strategy_params': new_strategy_params,
-                          'new_mer': new_mer,
+                          'new_movement_error_rate': new_movement_error_rate,
                           'group_names': group_names
                           }
 
@@ -424,7 +478,8 @@ def make_event_monte_carlo(sim_name=None,
                    num_weeks, num_periods, num_rounds,
                    num_traders, agent_groups, grid_size,
                    event_begin, event_end, compliance_rate=compliance_rate,
-                   new_agent_class = new_agent_class, new_strategy_params = new_strategy_params, new_mer = new_mer,
+                   new_agent_class = new_agent_class, 
+                   new_strategy_params = new_strategy_params, new_movement_error_rate = new_movement_error_rate,
                    group_names = group_names,
                    return_df=False, return_period_df=False)
             
@@ -438,7 +493,8 @@ def make_event_monte_carlo(sim_name=None,
                    num_weeks, num_periods, num_rounds,
                    num_traders, agent_groups, grid_size,
                    event_begin, event_end, compliance_rate=compliance_rate,
-                   new_agent_class = new_agent_class, new_strategy_params = new_strategy_params, new_mer = new_mer,
+                   new_agent_class = new_agent_class, 
+                   new_strategy_params = new_strategy_params, new_movement_error_rate = new_movement_error_rate,
                    group_names = group_names,
                    return_df=True, return_period_df=True)
                 
@@ -456,7 +512,8 @@ def make_event_monte_carlo(sim_name=None,
                    num_weeks, num_periods, num_rounds,
                    num_traders, agent_groups, grid_size,
                    event_begin, event_end, compliance_rate=compliance_rate,
-                   new_agent_class = new_agent_class, new_strategy_params = new_strategy_params, new_mer = new_mer,
+                   new_agent_class = new_agent_class, 
+                   new_strategy_params = new_strategy_params, new_movement_error_rate = new_movement_error_rate,
                    group_names = group_names,
                    return_df=True, return_period_df=False)
             
