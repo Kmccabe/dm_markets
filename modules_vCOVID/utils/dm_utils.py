@@ -538,13 +538,15 @@ def graph_summary(sum_df, by=None, title=None, event_bars=None):
     plt.show()
 
 
-def plot_comp_efficiencies(sum_dfs, title=None, labels=None, shadow=False, event_bars=None):
+def plot_comp_efficiencies(sum_dfs, title=None, labels=None, shadow=False, event_bars=None, adj_bar=-0.5):
     """Plot a comparison of efficiencies across the passed list of summary dataframes or across the treatments within the passed summary dataframe. See dm_utils.summary_surplus. Allows for multiple treatments in sum_dfs.
 
     title - custom title.
     labels - custom labels.
     shadow - instead of black error lines on top of our lines, graph color-coordinated, semi-transparent ones underneath the lines
-    
+    event_bars - tuple of (start, end) or list of such tuple. Grays "recession bars" for event.
+    adj_bar - float, default -0.5 - how much (in weeks) to move the event bars for visual clarity
+
     Note: the treatments are always processed in an alphabetically ascending way.
     """
 
@@ -607,7 +609,7 @@ def plot_comp_efficiencies(sum_dfs, title=None, labels=None, shadow=False, event
     y_av = 'eff_avg'
     y_sm = 'eff_sem'
     yn = 'Efficiency'
-    ymax = 120
+    ymax = 100
 
     xmax = max(cross_df['week'])+1
     x = list(range(xmax))
@@ -625,7 +627,7 @@ def plot_comp_efficiencies(sum_dfs, title=None, labels=None, shadow=False, event
             x_1 = event_bars[i][0]
             x_2 = event_bars[i][1]
 
-            ax.axvspan(x_1, x_2, color='gray', alpha=0.5)
+            ax.axvspan(x_1+adj_bar, x_2+adj_bar, color='gray', alpha=0.5)
 
     for i in range(len(treats)):
         cut_df = cross_df[cross_df['treatment']==treats[i]]

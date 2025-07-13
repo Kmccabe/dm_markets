@@ -12,11 +12,16 @@ def make_sim(sim_name,
              num_weeks, num_periods, num_rounds, 
              num_traders, agent_groups, group_names=None,
              grid_size=None,
-             return_df=False, return_period_df=False, debug=False):
+             return_df=False, return_period_df=False, debug=False,
+             print_params=False):
     
     """Runs one complete simulation and returns data in
         effs[treatment][trial]
-    """ 
+    """
+
+    # Print out sim parameters if requested
+    if print_params:
+        print(f"Running simulation with params: f{[sim_name, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size, group_names]}")
 
     if return_df:
         # Store parameters
@@ -139,7 +144,8 @@ def make_monte_carlo(sim_name=None,
                      grid_size=None,
                      return_df=False, return_period_df=False,
                      passed_as_dict=False,
-                     params_dict=None):
+                     params_dict=None,
+                     print_params=False):
     """
     Runs one complete simulation and returns weekly data in
         effs[treatment][trial] or in a DataFrame. Can return period-level data in a DataFrame as well.
@@ -196,6 +202,11 @@ def make_monte_carlo(sim_name=None,
                           'num_traders': num_traders,
                           'agent_groups': agent_groups, 'grid_size': grid_size,
                           'group_names': group_names}
+    
+    # Print parameters if requested
+    if print_params:
+        print("Running a MonteCarlo with parameters:")
+        print(sim_data['params'])
 
     # Stubs for storing df results
     if return_df:        
@@ -211,7 +222,8 @@ def make_monte_carlo(sim_name=None,
         if not return_df:
             trial_data = make_sim(sim_name, 
                                     num_weeks, num_periods, num_rounds, 
-                                    num_traders, agent_groups, group_names, grid_size)
+                                    num_traders, agent_groups, group_names, grid_size,
+                                    print_params=False)
             sim_data[trial] = trial_data
 
         
@@ -225,7 +237,8 @@ def make_monte_carlo(sim_name=None,
                                                          num_traders, agent_groups, 
                                                          group_names,
                                                          grid_size, 
-                                                         return_df, return_period_df)
+                                                         return_df=True, return_period_df=True,
+                                                         print_params=False)
                 trial_period_df['trial'] = trial
                 
                 # Store trial's period DF
@@ -240,7 +253,8 @@ def make_monte_carlo(sim_name=None,
                                         num_weeks, num_periods, num_rounds, 
                                         num_traders, agent_groups, group_names,
                                         grid_size,
-                                        return_df)
+                                        return_df=True,
+                                        print_params=False)
             
             trial_df['trial'] = trial
 
@@ -359,10 +373,8 @@ if __name__ == "__main__":
                                 num_rounds, grid_size,
                                 num_traders, num_units,
                                 lower_bound, upper_bound,
-                                trader_class_count)
-    """
-
-    """
+                                trader_class_count,
+                                print_params=True)
 
     eff_avg_1, std_error_1, eff_min_1, eff_max_1 = analyze_eff_data(num_trials, num_weeks, data_table)
     x = range(num_weeks)

@@ -188,7 +188,8 @@ def make_event_sim(sim_name,
                    new_agent_class = "ZIDPR", new_strategy_params = None, new_movement_error_rate = None,
                    group_names = None,
                    return_df=False, return_period_df=False,
-                   debug=False):
+                   debug=False,
+                   print_params=False):
     """
     Runs one complete event simulation, defined the same as dm_sim.make_simulation but with a transformation event between event_begin and even_end (i.e. agents change class/strategy).
 
@@ -236,6 +237,18 @@ def make_event_sim(sim_name,
 
         TODO: Refactor this and make_sim to not double-up on saving data when using as-df
     """ 
+
+    # Print out the params if requested
+    if print_params:
+        params = [sim_name, 
+                    num_weeks, num_periods, num_rounds,
+                    num_traders, agent_groups,
+                    grid_size, group_names,
+                    event_begin, event_end,
+                    compliance_rate, new_agent_class,
+                    new_strategy_params,
+                    new_movement_error_rate]
+        print(f"Running event simulation with params: {params}")
 
     if group_names is None:
         group_names = [None]*len(agent_groups)
@@ -370,7 +383,8 @@ def make_event_monte_carlo(sim_name=None,
                            new_agent_class = "ZIDPR", new_strategy_params = None, new_movement_error_rate = None,
                            group_names = None,
                            return_df=False, return_period_df=False,
-                           passed_as_dict=False, params_dict=None):
+                           passed_as_dict=False, params_dict=None,
+                           print_params=False):
     """
     Runs a monte carlo of the event simulation.
 
@@ -459,6 +473,10 @@ def make_event_monte_carlo(sim_name=None,
                           'group_names': group_names
                           }
 
+    # Print out the parameters if requested
+    if print_params:
+        print(f"Running even monte carlo with params {sim_data['params']}")
+
     # Stubs for storing df results
     if return_df:        
         mc_df = None
@@ -479,7 +497,8 @@ def make_event_monte_carlo(sim_name=None,
                    new_agent_class = new_agent_class, 
                    new_strategy_params = new_strategy_params, new_movement_error_rate = new_movement_error_rate,
                    group_names = group_names,
-                   return_df=False, return_period_df=False)
+                   return_df=False, return_period_df=False,
+                   print_params=False)
             
             sim_data[trial] = trial_data
         
@@ -494,7 +513,8 @@ def make_event_monte_carlo(sim_name=None,
                    new_agent_class = new_agent_class, 
                    new_strategy_params = new_strategy_params, new_movement_error_rate = new_movement_error_rate,
                    group_names = group_names,
-                   return_df=True, return_period_df=True)
+                   return_df=True, return_period_df=True,
+                   print_params=False)
                 
                 trial_period_df['trial'] = trial
                 
@@ -513,7 +533,8 @@ def make_event_monte_carlo(sim_name=None,
                    new_agent_class = new_agent_class, 
                    new_strategy_params = new_strategy_params, new_movement_error_rate = new_movement_error_rate,
                    group_names = group_names,
-                   return_df=True, return_period_df=False)
+                   return_df=True, return_period_df=False,
+                   print_params=False)
             
             trial_df['trial'] = trial
 
@@ -535,7 +556,10 @@ def make_event_monte_carlo(sim_name=None,
         return sim_data
 
     
-def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_period_df=False, includes_event=False):
+def make_experiment(sim_vars, treatment_dict, treatment_names=None, 
+                    return_period_df=False, 
+                    includes_event=False, 
+                    print_params=False):
     """
         Runs a Monte Carlo for each treatment in treatment_names or key of treatment_dict, using sim_vars as the baseline inputs and treatment_dict[treatment] as the updates to inputs.
 
@@ -554,8 +578,12 @@ def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_perio
                   'payoff', 'move_error_rate', 'starting_location']
     for tr in treatment_dict[treatment_names[0]]:
         if tr in agent_vars:
-            return make_agent_experiment(sim_vars, treatment_dict, treatment_names, return_period_df, includes_event)
+            return make_agent_experiment(sim_vars, treatment_dict, treatment_names, 
+                                         return_period_df, includes_event, print_params=print_params)
     
+    if print_params:
+        print(f"Running experiment with sim_vars: {sim_vars}, treatment_vars: {treatment_dict}, for treatments: {treatment_names}.")
+
     ret_df = None
     ret_per_df = None
 
@@ -571,11 +599,13 @@ def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_perio
             # Not an event experiment
             if not includes_event:
                 trt_df, trt_pr_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=True, 
-                                                            passed_as_dict=True, params_dict=cp_vars)
+                                                            passed_as_dict=True, params_dict=cp_vars,
+                                                            print_params=False)
             # Yes includes an event
             elif includes_event:
                 trt_df, trt_pr_df = make_event_monte_carlo(return_df=True, return_period_df=True, 
-                                                                  passed_as_dict=True, params_dict=cp_vars)
+                                                                  passed_as_dict=True, params_dict=cp_vars,
+                                                                  print_params=False)
 
             trt_pr_df['treatment'] = trt
 
@@ -589,11 +619,13 @@ def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_perio
             # Not and event experiment
             if not includes_event:
                 trt_df = dm_sim.make_monte_carlo(return_df=True, return_period_df=False, 
-                                                 passed_as_dict=True, params_dict=cp_vars)
+                                                 passed_as_dict=True, params_dict=cp_vars,
+                                                 print_params=False)
             # Yes an event experiment
             elif includes_event:
                 trt_df = make_event_monte_carlo(return_df=True, return_period_df=False, 
-                                        passed_as_dict=True, params_dict=cp_vars)
+                                        passed_as_dict=True, params_dict=cp_vars,
+                                        print_params=False)
         
         trt_df['treatment'] = trt
 
@@ -610,19 +642,21 @@ def make_experiment(sim_vars, treatment_dict, treatment_names=None, return_perio
 
 def make_event_experiment(sim_vars, 
                           treatment_dict, treatment_names=None, 
-                          return_period_df=False):
+                          return_period_df=False,
+                          print_params=False):
     """Wrapper for make_experiment which always indicates you are running an event experiment."""
 
     # Call the unwrapped method with includes_event=True
     return make_experiment(sim_vars, 
                            treatment_dict, treatment_names=treatment_names, 
-                           return_period_df=return_period_df, includes_event=True)
+                           return_period_df=return_period_df, includes_event=True, print_params=print_params)
 
 
 def make_agent_experiment(sim_vars, 
                           treatment_dict, treatment_names=None, 
-                          return_period_df=False, includes_event=False):
-        """Wrapper implemented to make creating agent experiments more easily.
+                          return_period_df=False, includes_event=False, print_params=False):
+        """
+        Wrapper implemented to make creating agent experiments more easily.
         """
 
         # Pull dict keys as the treatment names if not passed
@@ -670,4 +704,4 @@ def make_agent_experiment(sim_vars,
             treatment_dict[tr]['agent_groups'] = ag_trt[tr]
 
         # Now run the experiment
-        return make_experiment(sim_vars, treatment_dict, treatment_names, return_period_df, includes_event)
+        return make_experiment(sim_vars, treatment_dict, treatment_names, return_period_df, includes_event, print_params)
