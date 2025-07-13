@@ -76,19 +76,25 @@ def change_agents(agents, ratio=1,
             ag_mer = agent.movement_error_rate
             original_vals.append([ag_cl, copy.deepcopy(ag_sp), ag_mer])
 
-        # change name
-        if k in complying_inds: # These ones get Transformed
+        # Transform randomly selected portion of agents
+        if k in complying_inds: 
 
             # Pull out stored new values
             new_agcl = stored_vals[k][0]
             new_sp = stored_vals[k][1]
             new_mer = stored_vals[k][2]
 
-            new_class = dm_utils.get_agent_class(new_agcl)
+            if new_agcl is not None:
+                new_class = dm_utils.get_agent_class(new_agcl)
+            else:
+                new_class = agent.agent_class
 
+            # Create new name for agent
             name = agent.name
             s1 = name.split('_')
             name = s1[0] + '_' + s1[1] + f'_{new_agcl}'
+
+            # Save basic data for new agent
             trader_type = agent.type
             payoff = agent.payoff
             money = agent.money
@@ -96,6 +102,8 @@ def change_agents(agents, ratio=1,
             lower_bound = agent.lower_bound
             upper_bound = agent.upper_bound
             num_units = agent.num_units
+            redraw_values = agent.redraw_values
+            group_name = agent.group_name
 
             # Allow changing to new strategy parameters
             if new_sp is None:
@@ -108,9 +116,6 @@ def change_agents(agents, ratio=1,
                 move_error_rate = agent.movement_error_rate
             else:
                 move_error_rate = new_mer
-
-            redraw_values = agent.redraw_values
-            group_name = agent.group_name
 
             # make a new_class agent
             new_agent = new_class(name, trader_type, payoff, money, location, 
@@ -146,7 +151,6 @@ def change_agents(agents, ratio=1,
             elif agent_family == 'ZIDT':
                 # TODO: implement
                 raise ValueError('NOT IMPLEMENTED ZIDT')
-                pass
 
             # For Week Flag Rule
             new_agent.trades_this_week = agent.trades_this_week
@@ -268,12 +272,6 @@ def make_event_sim(sim_name,
         else:
             raise ValueError("Cannot request period_df without passing return_df=True")
 
-    # Save data for change back agents
-    # TODO will be avoided with the below fixes
-    old_strategy = agent_groups[0][2]
-    old_params = agent_groups[0][3]
-    old_mer = agent_groups[0][9]
-
     # make agents
     agent_maker = env_make_agents.MakeAgents(debug)
     ag_df = agent_maker.gen_custom_agents(num_traders, agent_groups, grid_size, group_names)
@@ -289,12 +287,12 @@ def make_event_sim(sim_name,
     # Run weeks in sim
     for week in range(num_weeks):
 
-        # NOTE: Below only works for single-class world - all turn back to the same one class, strat param, mer
-        # TODO: Implement a different version of change_agents and change_back_agents which preserves original values to roll them back later
+        # Change agents into the new agent_class or give new strategy parameters or new movement error rate, storing original values
         if week == event_begin:
             agents, old_values = change_agents(agents, compliance_rate, 
                                                new_agent_class, new_strategy_params, new_movement_error_rate,
                                                store_originals=True)
+        # Change back agents to original values
         if week == event_end:
             agents = change_back_agents(agents, stored_vals=old_values)
         
