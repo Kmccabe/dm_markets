@@ -245,7 +245,8 @@ def draw_efficiency(sim_data, labels=None, title=None):
     ax.legend(fontsize='x-large')
     plt.show()
 
-def gen_agent_groups(num_agents, agent_type, agent_class, strategy_params, lower_bound, upper_bound, num_units, endowment, payoff_function=None, move_error_rate=0, starting_location=None, return_names=False):
+def gen_agent_groups(num_agents, agent_type, agent_class, strategy_params, lower_bound, upper_bound, num_units, endowment,
+                      payoff_function=None, move_error_rate=0, starting_location=None, return_names=False):
     """
     Generate agent groups based on the passed parameters. Optionally returns generated names for these groups.
 
@@ -650,6 +651,38 @@ def plot_comp_efficiencies(sum_dfs, title=None, labels=None, shadow=False, event
     ax.set_title(tl, size = 'x-large')
     plt.show()
 
+
+def agents_from_dict(ag_var_dict, return_names=False):
+    """Return agent groups from a dictionary."""
+
+    num_agents = ag_var_dict['num_agents']
+    agent_type = ag_var_dict['agent_type']
+    agent_class = ag_var_dict['agent_class']
+    strategy_params = ag_var_dict['strategy_params']
+    lower_bound = ag_var_dict['lower_bound']
+    upper_bound = ag_var_dict['upper_bound']
+    num_units = ag_var_dict['num_units']
+    endowment = ag_var_dict['endowment']
+
+    try:
+        payoff_function = ag_var_dict['payoff_function']
+    except KeyError:
+        payoff_function = None
+
+    try:
+        move_error_rate = ag_var_dict['move_error_rate']
+    except KeyError:
+        move_error_rate = 0
+    
+    try:
+        starting_location = ag_var_dict['starting_location']
+    except KeyError:
+        starting_location = None
+
+    return gen_agent_groups(num_agents, 
+                            agent_type, agent_class, strategy_params, 
+                            lower_bound, upper_bound, num_units, endowment, payoff_function, 
+                            move_error_rate, starting_location, return_names)
 
 if __name__ == "__main__":
 

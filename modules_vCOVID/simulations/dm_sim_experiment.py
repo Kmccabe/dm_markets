@@ -10,7 +10,8 @@ import utils.dm_utils as dm_utils
 
 def change_agents(agents, ratio=1, 
                   new_agent_class="ZIDPR", new_strategy_params=None, new_movement_error_rate=None, 
-                  store_originals=False, stored_vals=None):
+                  store_originals=False, stored_vals=None,
+                  print_agents=False):
     
     """
     make a copy of agents at current location and change a proportion of agents 
@@ -47,6 +48,12 @@ def change_agents(agents, ratio=1,
     elif stored_vals is None:
         stored_vals = [[new_agent_class, new_strategy_params, new_movement_error_rate]]*len(agents)
 
+    # If needed, print agents
+    if print_agents:
+        if stored_vals is not None:
+            print(f"Moving to: {stored_vals}")
+        else:
+            print(f"Moving to: {new_agent_class}, {new_strategy_params}, {new_movement_error_rate}")
 
     # If need to store originals, make a list for this
     if store_originals:
@@ -107,9 +114,13 @@ def change_agents(agents, ratio=1,
 
             # Allow changing to new strategy parameters
             if new_sp is None:
+                print("!")
                 strategy_params = agent.strategy_params
             else:
+                print("?")
                 strategy_params = new_sp
+
+            print(strategy_params)
 
             # Allow changing of movement_error_rate
             if new_mer is None:
@@ -169,16 +180,23 @@ def change_agents(agents, ratio=1,
     else:
         return new_agents
 
-def change_back_agents(agents, old_strategy="ZIDPA", old_strategy_params=None, old_movement_error_rate=None, stored_vals=None):
+def change_back_agents(agents, 
+                       old_strategy="ZIDPA", old_strategy_params=None, old_movement_error_rate=None, 
+                       stored_vals=None, 
+                       print_agents=False):
     """
     Returns agents to original agent type (default ZIDPA, no changed to strategy params or movement error rate).
     
     Always applies change to the entirety of the agent population.
     """
 
-    return change_agents(agents, ratio=1, new_agent_class=old_strategy, 
-                         new_strategy_params=old_strategy_params, new_movement_error_rate=old_movement_error_rate,
-                         stored_vals=stored_vals)
+
+    return change_agents(agents, ratio=1, 
+                         new_agent_class=old_strategy, 
+                         new_strategy_params=old_strategy_params, 
+                         new_movement_error_rate=old_movement_error_rate,
+                         stored_vals=stored_vals,
+                         print_agents=print_agents)
 
 
 def make_event_sim(sim_name, 
@@ -676,8 +694,8 @@ def make_agent_experiment(sim_vars,
 
         # Iterate over treatments
         ag_trt = {}
-        for tn in treatment_names:
-            tvars = treatment_dict[tn]
+        for tr in treatment_names:
+            tvars = treatment_dict[tr]
 
             # Copy group to mutate
             tr_ag_groups = copy.deepcopy(base_agent_groups)
@@ -691,7 +709,7 @@ def make_agent_experiment(sim_vars,
                     # Iterate over tr groups to mutate
                     for j in range(num_groups):
                         tr_ag_groups[j][i] = copy.deepcopy(new_val)
-            ag_trt[tn] = copy.deepcopy(tr_ag_groups) # Probs dont need a second deepcopy here
+            ag_trt[tr] = copy.deepcopy(tr_ag_groups) # Probs dont need a second deepcopy here
 
         # Stripping out agent-var keys from treatment_dict
         for tr in treatment_names:
