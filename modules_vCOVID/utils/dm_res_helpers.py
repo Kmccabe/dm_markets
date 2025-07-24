@@ -51,7 +51,7 @@ def add_agent_density(df_sim, by_period=False, return_df=False):
         period_n = np.zeros(len(df_sim)*week_len)
         period_h = np.zeros(len(df_sim)*week_len)
         for i in range(len(week_grids)):
-            week_grid = week_grids[i]
+            week_grid = week_grids.iloc[i]
             for j in range(len(week_grid)):
                 period_occupied = week_grid[j].values()
                 period_grid = list(period_occupied)
@@ -135,9 +135,10 @@ def get_contract_prices(contracts_list):
         prices[i] = contracts_list[i][1] # contract list shape: [(_, price, _, ...)]
     return prices
 
-def add_period_price(per_df, add_weekly=False):
+def add_period_price(per_df):
     """Return overall average contract prices, across the entire grid"""
     n_df = per_df.copy()
+    
     n_df['prices'] = n_df['contracts'].apply(get_contract_prices)
     
     with warnings.catch_warnings():

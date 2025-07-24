@@ -1,6 +1,6 @@
 import pandas as pd
 import scipy
-import utils.dm_res_helpers as res2
+import utils.dm_res_helpers as dm_res_helpers
 
 def conduct_stat_test(measure_a, measure_b, test_method, hypothesis_sidedness="one", measure_list=None):
 
@@ -178,7 +178,7 @@ def calc_diff(df_a, df_b, metric,
                 measure_list.append(this_df[this_df[obs_freq]==final_period][['trial', metric]].copy()[metric])
             
             elif measure_method == "auc": # Area under curve (= mean deviation from max)
-                measure_list.append(res2.calc_area_under_curve(this_df, metric, metric_max=metric_max)[metric])
+                measure_list.append(dm_res_helpers.calc_area_under_curve(this_df, metric, metric_max=metric_max)[metric])
 
         test_stat, p_val, ci = conduct_stat_test(measure_a=None, measure_b=None, test_method=test_method, hypothesis_sidedness=hypothesis_sidedness, measure_list=measure_list)
 

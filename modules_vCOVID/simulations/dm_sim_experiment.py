@@ -114,13 +114,9 @@ def change_agents(agents, ratio=1,
 
             # Allow changing to new strategy parameters
             if new_sp is None:
-                print("!")
                 strategy_params = agent.strategy_params
             else:
-                print("?")
                 strategy_params = new_sp
-
-            print(strategy_params)
 
             # Allow changing of movement_error_rate
             if new_mer is None:

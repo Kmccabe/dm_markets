@@ -143,9 +143,9 @@ class MakeAgents(object):
         if self.debug:
             print(f"gen_default_agents: Creating Default agents with definitions of: {group_defs}")
 
-        cust_def = self.gen_custom_agents(num_traders, group_defs, grid_size, group_names)
+        custom_ag = self.gen_custom_agents(num_traders, group_defs, grid_size, group_names)
 
-        return cust_def
+        return custom_ag
 
     def gen_custom_agents(self, num_traders, agent_groups, grid_size=None, group_names=None):
         """
