@@ -28,7 +28,7 @@ def format_df_for_boxplot(data_df, x_var, y_var, x_range=None):
 
     # Traverse the dataframe
     for x in x_range:
-        x_match = data_df[data_df[x_var]==x]
+        x_match = data_df[data_df[x_var]==x].drop_duplicates(subset=[x_var, 'trial']) # Drop duplicates within the same trial
         y_vals = list(x_match[y_var].values)
         this_row = y_vals
         matrix_out.append(this_row)
@@ -326,7 +326,7 @@ def plot_boxplot_data(boxplot_data,
                       xlim=None, ylim=None, 
                       figsize=None, colors=None, 
                       labels=None, legend=False, 
-                      n=1):
+                      n=1, median_line=False):
     """
     Plot data which has been processed by format data for boxplot.
     
@@ -400,6 +400,10 @@ def plot_boxplot_data(boxplot_data,
             plt.setp(bp['boxes'], color='black', label=labels)
         plt.setp(bp['whiskers'], color='black')
         plt.setp(bp['fliers'], color='red', marker='+')
+
+        # If need to add median line plot
+        if median_line:
+            ax1.plot()
     else:
         for i in range(n):
             bp = ax1.boxplot(boxplot_data[i], notch=True, sym='+', orientation='vertical', whis=1.5)
