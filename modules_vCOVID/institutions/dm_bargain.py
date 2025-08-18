@@ -5,8 +5,8 @@ class Bargain(object):
     """Governs bargaining between agents in self.agents"""
     def __init__(self, rounds):
         self.agents = []   # list of agent objects who will bargain
-        self.offer_history = []    # list of offer tupples
-        self.contracts = []   # list of contract tupples
+        self.offer_history = []    # list of offer tuples
+        self.contracts = []   # list of contract tuples
         self.order_book = {}  # dictionary key=trader_id, 
                               #          value = (type, amount)
                               #          type = 'BID', 'ASK' 
@@ -178,6 +178,9 @@ class Bargain(object):
         if self.debug:
             print(self.contracts)
         test_test = 1
+
+        # TODO: Here can add broadcasting contracts locally and adding them to the global history; then global history would need to broadcast them when bargain step is over - but allows only broadcasting locally at the period-level. If want round-level, need to nest 1 deeper, then cannot make it equivalent across locations and globally w/o freezing the bargain institutions
+        # Can have interesting question here - local v. global learning. If we broadcast the local prices at the round-level and global at the period-level, can learn quicker local v. global prices
 
     def set_agents(self, agents):
         self.agents = agents
