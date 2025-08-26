@@ -50,7 +50,21 @@ class Trader(object):
         self.agent_family = 'TRA'
         self.agent_class = 'TRA'
 
+        self.round_offer_hist = None
+        self.round_contract_hist = None
+
+        self.local_offer_hist = None # Store a list of the offers placed in the current period
+        self.local_contract_hist = None # Store a list of the contracts made in the current period
+
+        self.global_offer_hist = None # Store a list of the offers placed in the current period
+        self.global_contract_hist = None # Store a list of the contracts made in the current period
+
+        # Store offers and contracts seen before the current period
+        self.offers_seen = []
+        self.contracts_seen = []
+
         self.set_group_name(group_name)
+
 
     def set_group_name(self, group_name):
         """Setter for agent group name."""
@@ -129,7 +143,8 @@ class Trader(object):
     def set_num_at_loc(self, q):
         """Set number of agents at location"""
         self.num_at_loc = q
-        
+
+
     def received_msg(self, msg):
         if self.debug:
             directive, sender, receiver, payload = msg.unpack()
@@ -230,7 +245,19 @@ class Trader(object):
             self.contract_this_period = True
         else:
             self.contract_this_period = False
-        
+
+    def set_round_bargain_history(self, round_offer_hist, round_contract_hist):
+        self.round_offer_hist = round_offer_hist
+        self.round_contract_hist = round_contract_hist
+
+    def set_global_bargain_history(self, global_offers, global_contracts):
+        self.global_offer_hist = global_offers
+        self.global_contract_hist = global_contracts
+
+    def set_local_bargain_history(self, local_offers, local_contracts):
+        self.local_offer_hist = local_offers
+        self.local_contract_hist = local_contracts
+
 
 class ZID(Trader):
     """ 
@@ -330,11 +357,7 @@ class ZID(Trader):
         return_msg = Message("MOVE", self.name, "Travel", movement_idea)
         self.returned_msg(return_msg)
         return return_msg 
-
-
-    def fetch_order_hist(self):
-        
-        return True
+    
 
     def offer(self, pl):
         """
@@ -822,6 +845,8 @@ class ZIM(ZID):
             There may be a type in the CB98 formula - where Delta(t-1) has replaced Delta(t). For now assuming initial_delta = 0.
 
     In the CB97 case, the CDA is ordering the bids/asks (improvement rule) and their environment makes trades sequential. In our environment, we have bidding/asking phase and after a contract BUY/SELL phase. So we need a way to discretize these into time-steps. The most natural is observing all contracts after the BUY/SELL phase. Now there is a problem of ordering - because agents are ordered randomly in the bargaining order, the "last" quote is not necessarily the most powerful signal like it is in the CDA. However, this may simply slow down learning, but not eliminate it in expectation.
+
+    The Baseline ZIM agent does not distinguish between local and global quotes differently - it simply reacts to the most recent quotes observed and adjusts its margin. Because "rounds" are incomparable across locations, the "most recent" quote is from a randomly selected observed location. The final quote from each location is indicated by bargaining history institution. Note that this does also indicate to agents the number of occupied locations.
     """
     def __init__(self, name, trader_type, payoff, 
                  money=None, location=None,
@@ -858,6 +883,10 @@ class ZIM(ZID):
         self.G = strategy_params['initial_g']
         self.delta = strategy_params['initial_delta']
         
+        self.last_round_quote = None # The last seen quote at the round-level
+        self.last_local_quote = None # The last seen quote at the local period level
+        self.last_global_quote = None # The last seen quote at the global period level
+
         self.set_group_name(group_name)
         
 
@@ -867,6 +896,70 @@ class ZIM(ZID):
         pj = self.values[j]*(1+self.margin)
 
         return pj
+    
+
+    def fetch_last_quotes(self):
+        """Describes the most recently seen quotes in the format required for should_update."""
+
+        # Local quote
+        # Check if rounds of bargaining have happened (and can do local round-level learning)
+        if self.round_offer_hist is not None:
+            last_offer = self.round_offer_hist[-1]
+            last_tp = last_offer[0]
+            last_pr = last_offer[1]
+            last_id = last_offer[2]
+            
+            # Check if the last offer was accepted
+            offers_accepted = [x[4] for x in self.round_contract_hist]
+            last_accepted = last_id in offers_accepted
+
+            self.last_round_quote = {'type': last_tp, 'quote': last_pr, 'accepted': last_accepted}
+
+        # Update local data to the most recent finished period
+        if self.local_offer_hist is not None:
+            # Subset final most recent quotes
+            loh = self.local_offer_hist
+            # Subset most recent week
+            max_week = max(loh['week'])
+            wloh = loh[loh['week']==max_week]
+            # Subset most recent period
+            max_period = max(wloh['period'])
+            ploh = wloh[wloh['period']==max_period]
+            # Subset final quotes
+            floh = ploh[ploh['is_last']]
+            
+            # Choose a random one of the final quotes
+            final_q = floh.sample(n=1)
+
+            last_tp = final_q['offer_type'].iloc[0]
+            last_pr = final_q['price'].iloc[0]
+            last_accepted = final_q['accepted'].iloc[0]
+
+            self.last_local_quote = {'type': last_tp, 'quote': last_pr, 'accepted': last_accepted}
+
+        # Global quote
+        # If global offer history has been provided, 
+        if self.global_offer_hist is not None:
+            # Subset final most recent quotes
+            goh = self.global_offer_hist
+            # Subset most recent week
+            max_week = max(goh['week'])
+            wgoh = goh[goh['week']==max_week]
+            # Subset most recent period
+            max_period = max(wgoh['period'])
+            pgoh = wgoh[wgoh['period']==max_period]
+            # Subset final quotes
+            fgoh = pgoh[pgoh['is_last']]
+
+            # Choose a random one of the final quotes
+            final_q = fgoh.sample(n=1)
+
+            last_tp = final_q['offer_type'].iloc[0]
+            last_pr = final_q['price'].iloc[0]
+            last_accepted = final_q['accepted'].iloc[0]
+
+            self.last_global_quote = {'type': last_tp, 'quote': last_pr, 'accepted': last_accepted}
+
 
     def should_update(self, last_quote):
         """
@@ -898,8 +991,8 @@ class ZIM(ZID):
             """
             if last_accepted and last_geq:
                 margin_dir = 'up'
-            elif active and ((last_type == 'ask' and last_leq) or 
-                             (last_type == 'bid' and last_accepted and last_geq)):
+            elif active and ((last_type == 'ASK' and last_leq) or 
+                             (last_type == 'BID' and last_accepted and last_geq)):
                 margin_dir = 'down'
         else:
             """
@@ -907,7 +1000,7 @@ class ZIM(ZID):
             """
             if last_accepted and last_leq:
                 margin_dir = 'up'
-            elif active and ((last_type == 'bid' and not last_accepted and last_geq) or (last_type == 'ask' and last_accepted and last_geq)):
+            elif active and ((last_type == 'BID' and not last_accepted and last_geq) or (last_type == 'ASK' and last_accepted and last_geq)):
                 margin_dir = 'down'
         
         return margin_dir
@@ -960,6 +1053,27 @@ class ZIM(ZID):
 
         return
     
+    def check_margin_inputs(self):
+        """Updates the last quotes available to the agent, then in priority order of round > global > local assesses the quotes and updates profit margin. 
+        
+        Overwritten by children classes which can have a more sophisticated treatment of the different types of quotes available.
+        """
+        self.fetch_last_quotes()
+        
+        # TODO: implement resetting of last_round_quote to None at the start of each period - 
+        if self.last_round_quote is not None:
+            pass
+
+        elif self.last_global_quote is not None:
+            pass
+
+        elif self.last_local_quote is not None:
+            pass
+
+        else:
+            # This corner case is encountered at the start of the simulation - there are no quotes yet
+            pass
+
     def offer(self, pl):
         """
         Make a bid or ask.

@@ -18,7 +18,9 @@ import environment.env_make_agents as mkt
 class SimPeriod(object):
     """Simulate a market on grid of consisting of weeks and days using two types of trading agents"""
 
-    def __init__(self, sim_name, num_rounds, agents, market, grid_size, debug=False, plot_on=False):
+    def __init__(self, sim_name, num_rounds, agents, market, grid_size, 
+                bargain_hist_inst=None, bargain_round_broadcasts=False,
+                debug=False, plot_on=False):
 
         self.sim_name = sim_name            # simulation name
         #self.week = week                    # current week
@@ -27,7 +29,7 @@ class SimPeriod(object):
         self.agent_list = agents            # trader objects
         self.grid_size = grid_size          # simulation grid size: square
         self.debug = debug                  # if True print additional information
-        self.plot_on = plot_on              # if True plot every week, otherwsie plot last week
+        self.plot_on = plot_on              # if True plot every week, otherwise plot last week
         self.period_results = {}            # period simulation results
                                             #(moving history, market conditions), key = week
         self.market = market     # market environment object
@@ -42,6 +44,11 @@ class SimPeriod(object):
         self.efficiency = None      # (actual_surplus/eq_max_surplus) * 100.
         self.type_surplus = {}      # surplus accrued by trader type
         self.results_period = {}    # complete results record
+
+        # Institution which stores history of bargaining
+        self.bargain_hist_inst = bargain_hist_inst # Set to None if not used
+        self.bargain_round_broadcasts = bargain_round_broadcasts # Flag for allowing between-round (intra-period) learning
+
 
     def match_found(self, agents):
         """Checks to see if there is at least one buyer and one seller at a location to allow bargaining"""
@@ -67,7 +74,7 @@ class SimPeriod(object):
             s_grid[loc] = s_list
         return s_grid
 
-    def run_period(self):
+    def run_period(self, week=-1, period=-1):
         """ Runs a simulation for a period:
                 Each day: 
                     agents make travel decisions
@@ -77,7 +84,9 @@ class SimPeriod(object):
         t_inst = dm_travel.Travel(self.grid_size, self.agent_list, self.debug)
         self.travel = t_inst
         t_inst.start_travel()
-        b_inst = dm_bargain.Bargain(self.num_rounds)
+        # TODO: Consider refactor using the bargain_hist_inst as an institution created within Bargain
+        b_inst = dm_bargain.Bargain(self.num_rounds, self.bargain_hist_inst,
+                                    self.bargain_round_broadcasts)
         self.contracts = []
         self.prices = []
 
@@ -95,7 +104,7 @@ class SimPeriod(object):
         period_contracts = []
         for loc in g:
             agents_at = g[loc]
-            # Run bargain if you have a BUYER and A Seller
+            # Run bargain if you have a BUYER and a SELLER
             if self.match_found(agents_at):
                 b_inst.set_agents(agents_at)
                 b_inst.set_debug(self.debug)
@@ -113,6 +122,16 @@ class SimPeriod(object):
         # Extract price from each contract
         for contract in self.contracts:
             self.prices.append(contract[1])
+        
+        # Send offer and contract bargaining data to agents if required
+        if self.bargain_hist_inst is not None:
+            # Send bargaining and contract information to agents
+            for ag in self.agent_list:
+                cur_loc = ag.get_location()
+                offer_hist_loc, cont_hist_loc, offer_hist_glob, cont_hist_glob = self.bargain_hist_inst.get_histories(week, period, cur_loc)
+
+                ag.set_local_bargain_history(offer_hist_loc, cont_hist_loc)
+                ag.set_global_bargain_history(offer_hist_glob, cont_hist_glob)
     
     def get_contracts(self):
         return self.contracts
@@ -173,7 +192,11 @@ if __name__ == "__main__":
     num_rounds = 60
     debug = False
     plot_on = True
-    sim = SimPeriod(sim_name, week, period, num_rounds, agents, market, grid_size)
+    sim = SimPeriod(sim_name, 
+                    week, period, num_rounds, 
+                    agents, market, grid_size,
+                    # TODO implement
+                    bargain_hist_inst, bargain_round_broadcasts)
 
     sim.run_period()
     print(sim.get_contracts())

@@ -12,6 +12,8 @@ class SpotMarketEnvironment(object):
         up the demand curve and sellers who make up the supply curve.  This
         class will also calculate market equilibria and plot the supply and
         demand curves and as an option contract prices."""
+    
+    # TODO: Add Week and Period into environment as properties
 
     def __init__(self, name="example", num_buyers=2, num_sellers=2):
         """ name (str) = the name of the market

@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
 import copy
+
 import simulations.dm_sim as dm_sim
 import simulations.dm_sim_period as dm_sim_period
 import environment.env_make_agents as env_make_agents
+import institutions.dm_history_institutions as dm_history_institutions
 
 import utils.dm_process_results as dm_process_results
 import utils.dm_utils as dm_utils
@@ -198,7 +200,15 @@ def change_back_agents(agents,
 def make_event_sim(sim_name, 
                    num_weeks, num_periods, num_rounds,
                    num_traders, agent_groups, grid_size,
-                   event_begin, event_end, compliance_rate=1,
+
+                   event_begin, event_end, 
+                   
+                   bargain_round_broadcasts=False, 
+                   bargain_history_global=False, 
+                   bargain_history_locations=False,
+                   bargain_history_duration=0, # Pass <0 to not send bargaining histories
+
+                   compliance_rate=1,
                    new_agent_class = "ZIDPR", new_strategy_params = None, new_movement_error_rate = None,
                    group_names = None,
                    return_df=False, return_period_df=False,
@@ -250,6 +260,8 @@ def make_event_sim(sim_name,
         This will allow us to run the "increase movement error" intervention - equivalent to decreasing movement cost - to hasten post-intervention recovery.
 
         TODO: Refactor this and make_sim to not double-up on saving data when using as-df
+
+        TODO: Refactor to take other params as kwargs* or some other wrapper.
     """ 
 
     # Print out the params if requested
@@ -259,6 +271,7 @@ def make_event_sim(sim_name,
                     num_traders, agent_groups,
                     grid_size, group_names,
                     event_begin, event_end,
+                    bargain_round_broadcasts,
                     compliance_rate, new_agent_class,
                     new_strategy_params,
                     new_movement_error_rate]
@@ -273,7 +286,14 @@ def make_event_sim(sim_name,
                          'num_weeks', 'num_periods', 'num_rounds', 
                          'num_traders', 'agent_groups',
                          'grid_size', 'group_names',
+
                          'event_begin', 'event_end',
+
+                         'bargain_round_broadcasts',
+                         'bargain_history_global', 
+                         'bargain_history_locations',
+                         'bargain_history_duration',
+
                          'compliance_rate', 'new_agent_class',
                          'new_strategy_params',
                          'new_movement_error_rate'
@@ -282,7 +302,14 @@ def make_event_sim(sim_name,
                          num_weeks, num_periods, num_rounds,
                          num_traders, agent_groups,
                          grid_size, group_names,
+
                          event_begin, event_end,
+
+                         bargain_round_broadcasts,
+                         bargain_history_global, 
+                         bargain_history_locations,
+                         bargain_history_duration,
+
                          compliance_rate, new_agent_class,
                          new_strategy_params,
                          new_movement_error_rate]
@@ -309,6 +336,12 @@ def make_event_sim(sim_name,
     agent_maker.make_market(sim_name)
     market = agent_maker.get_market()
 
+    # set up bargaining history institution
+    bargain_hist_inst = dm_history_institutions.BargainHistory(num_periods,
+                            project_global=bargain_history_global, 
+                            include_locations=bargain_history_locations, 
+                            history_duration=bargain_history_duration)
+
     data = {}
 
     # Run weeks in sim
@@ -330,12 +363,14 @@ def make_event_sim(sim_name,
             agent.start(None)
         contracts = []
         sim_grids = []
-        sim1 = dm_sim_period.SimPeriod(sim_name, num_rounds, agents, 
-               market, grid_size)
+        sim1 = dm_sim_period.SimPeriod(sim_name, num_rounds, 
+                                       agents, market, grid_size,
+                                       bargain_hist_inst, bargain_round_broadcasts
+                                       ) # TODO: Refactor here - pass environment
         
         # Run periods in week
         for period in range(num_periods):
-            sim1.run_period()
+            sim1.run_period(week=week, period=period)
 
             grid = sim1.get_grid()
             sim_grids.append(grid)

@@ -1,6 +1,9 @@
 """
 This file contains institutions which allow agents to track the evolution of 
 """
+
+import pandas as pd
+
 class BargainHistory(object):
     """
     This institution, BargainHistory stores the offers (quotes) and contracts created during a run of DM markets. Quotes and contracts are stored with as many details as possible, including assigning an ID to quotes, to map quotes-to-contracts directly.
@@ -16,7 +19,7 @@ class BargainHistory(object):
 
     """
     def __init__(self, num_periods, 
-                 project_global=False, include_locations=False, history_duration=1):
+                 project_global=False, include_locations=False, history_duration=0):
         
         self.num_periods = num_periods # Number of periods in a week
 
@@ -40,7 +43,7 @@ class BargainHistory(object):
         self.contract_history = None # TODO: Same as above
         self.next_contract_id = 0
 
-    def send_histories(self, cur_week, cur_period, cur_loc):
+    def get_histories(self, cur_week, cur_period, cur_loc):
         """
         Return the quote history and contract history at the location (or globally if global version) for the last history_duration periods. Quote and contract history may include locations, if those are to be provided.
 
@@ -113,10 +116,50 @@ class BargainHistory(object):
     
     def add_offers(self, offers_tuples):
         """Add the list of offer tuples to the history"""
-        pass
+
+        # offer structure (round, sender_id, offer_type, payload, offer_id, loc, week, period)
+        colns = ['round', 'sender_id', 'offer_type', 'price', 'offer_id', 'loc', 'week', 'period', 'accepted', 'is_last']
+        new_offers = pd.DataFrame(data=offers_tuples, columns=colns)
+
+        if self.offer_history is None:
+            self.offer_history = new_offers
+        else:
+            self.offer_history = pd.concat(self.offer_history, new_offers)
 
     def add_contracts(self, contract_tuples):
         """Add the list of contract tuples to the history"""
-        pass
 
+        # contract structure (round, price, buyer_id, seller_id, offer_id, contract_id, loc, week, period)
+        colns = ['round', 'price', 'buyer_id', 'seller_id', 'offer_id', 'contract_id', 'loc', 'week', 'period', 'is_last']
+        new_contracts = pd.DataFrame(data=contract_tuples, columns=colns)
 
+        if self.contract_history == None:
+            self.contract_history = new_contracts
+        else:
+            self.contract_history = pd.concat(self.contract_history, new_contracts)
+
+    def close_location_record(self, week, period, loc):
+        """Close the bargaining history at this location - indicate the present last quote and contract are the last ones"""
+
+        # If week is passed as -1, skip this step
+        if week == -1:
+            return
+
+        # Get index last offer (quote)
+        oh = self.offer_history
+        ohl_ind = oh[(oh['week']==week)&(oh['period']==period)&(oh['location']==loc)].iloc[-1].name
+        # Set flag to indicate last quote
+        self.offer_history.loc[ohl_ind, 'is_last'] = True
+
+        # Get index last contract
+        ch = self.contract_history
+        chl_ind = ch[(ch['week']==week)&(ch['period']==period)&(ch['location']==loc)].iloc[-1].name
+        # Set flag to indicate last contract
+        self.contract_history.loc[chl_ind, 'is_last'] = True
+
+    def indicate_accepted(self, offer_id):
+        # Get index of offer
+        oh = self.offer_history
+        ohi_ind = oh[(oh['offer_id']==offer_id)].iloc[0].name
+        # Set flag to indicate last quote
+        self.offer_history.loc[ohi_ind, 'accepted'] = True

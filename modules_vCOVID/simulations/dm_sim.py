@@ -8,10 +8,20 @@ import environment.env_make_agents as env_make_agents
 import copy
 import pandas as pd
 
+import institutions.dm_history_institutions as dm_history_institutions
+
 def make_sim(sim_name, 
              num_weeks, num_periods, num_rounds, 
-             num_traders, agent_groups, group_names=None,
-             grid_size=None,
+             num_traders, agent_groups, 
+             
+             group_names=None,
+             grid_size=None, # TODO: Deprecate this behavior - need to actually provide a value here - used in Travel institution
+
+             bargain_round_broadcasts=False, 
+             bargain_history_global=False, 
+             bargain_history_locations=False,
+             bargain_history_duration=0,
+
              return_df=False, return_period_df=False, debug=False,
              print_params=False):
     
@@ -21,18 +31,44 @@ def make_sim(sim_name,
 
     # Print out sim parameters if requested
     if print_params:
-        print(f"Running simulation with params: f{[sim_name, num_weeks, num_periods, num_rounds, num_traders, agent_groups, grid_size, group_names]}")
+        params = {
+            'sim_name': sim_name,
+            'num_weeks': num_weeks, 
+            'num_periods': num_periods,
+            'num_rounds': num_rounds,
+            'num_traders': num_traders, 
+            'agent_groups': agent_groups, 
+            'grid_size': grid_size, 
+            'group_names': group_names,
+
+            'bargain_round_broadcasts': bargain_round_broadcasts, 
+            'bargain_history_global': bargain_history_global, 
+            'bargain_history_locations': bargain_history_locations,
+            'bargain_history_duration': bargain_history_duration
+
+        } # TODO refactor dataframe structure so we have params as a single entry or an additional data return; less repetition
+        print(f"Running simulation with params: {params}")
 
     if return_df:
         # Store parameters
         df_cols_param = ['sim_name', 
                          'num_weeks', 'num_periods', 'num_rounds', 
                          'num_traders', 'agent_groups',
-                         'grid_size', 'group_names']
+                         'grid_size', 'group_names',
+                         
+                         'bargain_round_broadcasts', 'bargain_history_global',
+                         'bargain_history_locations', 'bargain_history_duration'
+                         ]
         week_param_ls = [sim_name, 
                          num_weeks, num_periods, num_rounds,
                          num_traders, agent_groups,
-                         grid_size, group_names]
+                         grid_size, group_names,
+                         
+                         bargain_round_broadcasts, 
+                         bargain_history_global, 
+                         bargain_history_locations,
+                         bargain_history_duration
+                         ]
         # Store results
         df_cols_results = ['week', 'contracts', 'grids', 'eff', 'class_surplus', 'group_surplus']
         df_cols = df_cols_param + df_cols_results
@@ -63,6 +99,12 @@ def make_sim(sim_name,
     agent_maker.make_market(sim_name)
     market = agent_maker.get_market()
 
+    # set up bargaining history institution
+    bargain_hist_inst = dm_history_institutions.BargainHistory(num_periods,
+                            project_global=bargain_history_global,
+                            include_locations=bargain_history_locations, 
+                            history_duration=bargain_history_duration)
+
     # run weeks in sim
     for week in range(num_weeks):
         data[week] = {}
@@ -76,8 +118,12 @@ def make_sim(sim_name,
 
         contracts = []
         sim_grids = []
-        sim1 = dm_sim_period.SimPeriod(sim_name, num_rounds, agents, 
-               market, grid_size)
+        sim1 = dm_sim_period.SimPeriod(sim_name, 
+                                       num_rounds, 
+                                       agents, market, 
+                                       grid_size,
+                                       bargain_hist_inst,
+                                       bargain_round_broadcasts=bargain_round_broadcasts)
         
         # Run periods in week
         for period in range(num_periods):
