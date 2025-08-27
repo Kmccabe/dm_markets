@@ -251,6 +251,11 @@ class Bargain(object):
         # TODO: Allow different location for buyer and seller - here would need to determine which "side" is the side of record
         if self.bargain_hist_inst is not None:
             self.bargain_hist_inst.close_location_record(period, week, loc)
+        
+        # Reset the local-level round bargaining history for agents at the end of the period
+        if self.round_broadcasts:
+            for ag in self.agent_order:
+                ag.reset_round_bargain_history()
 
         if self.debug:
             print(self.contracts)

@@ -144,7 +144,6 @@ class Trader(object):
         """Set number of agents at location"""
         self.num_at_loc = q
 
-
     def received_msg(self, msg):
         if self.debug:
             directive, sender, receiver, payload = msg.unpack()
@@ -258,6 +257,9 @@ class Trader(object):
         self.local_offer_hist = local_offers
         self.local_contract_hist = local_contracts
 
+    def reset_round_bargain_history(self):
+        self.round_offer_hist = None
+        self.round_contract_hist = None
 
 class ZID(Trader):
     """ 
@@ -887,19 +889,33 @@ class ZIM(ZID):
         self.last_local_quote = None # The last seen quote at the local period level
         self.last_global_quote = None # The last seen quote at the global period level
 
+        self.debug = True # temp anchor
+
         self.set_group_name(group_name)
         
 
     def get_own_price(self):
         """Return the price this agent would bid/ask for its current (next-to-transact) unit."""
         j = self.cur_unit
-        pj = self.values[j]*(1+self.margin)
+        
+        if self.type == 'BUYER' or self.type == 'B':
+            vj = self.values[j]
+        elif self.type == 'SELLER' or self.type == 'S':
+            vj = self.costs[j]
+        
+        pj = vj*(1+self.margin)
+
+        if self.debug:
+            print(self.name, 'get_own_price', f'Unit: {j}, Value{vj}, Margin: {self.margin}, Price: {pj}')
 
         return pj
     
 
     def fetch_last_quotes(self):
         """Describes the most recently seen quotes in the format required for should_update."""
+
+        if self.debug:
+            print(self.name, 'fetch_last_quotes - START')
 
         # Local quote
         # Check if rounds of bargaining have happened (and can do local round-level learning)
@@ -959,6 +975,10 @@ class ZIM(ZID):
             last_accepted = final_q['accepted'].iloc[0]
 
             self.last_global_quote = {'type': last_tp, 'quote': last_pr, 'accepted': last_accepted}
+        
+        if self.debug:
+            print(self.name, 'fetch_last_quotes - END', 
+                  f'lrq: {self.last_round_quote}, llq: {self.last_local_quote} , lgq: {self.last_global_quote}')
 
 
     def should_update(self, last_quote):
@@ -974,6 +994,10 @@ class ZIM(ZID):
         returns:
             'up' (raise), 'down' (lower), 'flat' (no change) depending on the direction margin should go.
         """
+
+        if self.debug:
+            print(self.name, 'should_update - START', f'checking quote: {last_quote}')
+
         active = False
         last_type = last_quote['type']
         last_accepted = last_quote['accepted']
@@ -1003,6 +1027,9 @@ class ZIM(ZID):
             elif active and ((last_type == 'BID' and not last_accepted and last_geq) or (last_type == 'ASK' and last_accepted and last_geq)):
                 margin_dir = 'down'
         
+        if self.debug:
+            print(self.name, 'should_update - END', f'checking quote: {last_quote}, own_price: {own_quote}, assessed_dir: {margin_dir}')
+
         return margin_dir
     
     def update_profit_margin(self, margin_dir, last_quote):
@@ -1011,6 +1038,9 @@ class ZIM(ZID):
 
         TODO: Consider making these variable names more natural.
         """
+
+        if self.debug:
+            print(self.name, 'update_profit_margin - START', f'margin_dir: {margin_dir}, last_quote: {last_quote}')
 
         q = last_quote
         p = self.get_own_price()
@@ -1039,6 +1069,7 @@ class ZIM(ZID):
         # In particular verify that we want last delta here and not present delta
 
         # Update margin
+        old_margin = self.margin
         new_margin = (p + G)/l
         # Verify boundaries
         if new_margin > self.margin_ub:
@@ -1051,28 +1082,44 @@ class ZIM(ZID):
         self.G = G
         self.delta = delta
 
-        return
+        if self.debug:
+            print(self.name, 'update_profit_margin - END', f'prev margin: {old_margin}, new margin: {new_margin}')
     
     def check_margin_inputs(self):
         """Updates the last quotes available to the agent, then in priority order of round > global > local assesses the quotes and updates profit margin. 
         
         Overwritten by children classes which can have a more sophisticated treatment of the different types of quotes available.
         """
+
+        if self.debug:
+            print(self.name, 'check_margin_inputs - START')
+
+
         self.fetch_last_quotes()
         
         # TODO: implement resetting of last_round_quote to None at the start of each period - 
+        used_quote = None
         if self.last_round_quote is not None:
-            pass
-
+            used_quote = self.last_round_quote
         elif self.last_global_quote is not None:
-            pass
-
+            used_quote = self.last_round_quote
         elif self.last_local_quote is not None:
-            pass
-
+            used_quote = self.last_round_quote
         else:
             # This corner case is encountered at the start of the simulation - there are no quotes yet
+            used_quote = None
+
+        # Update margin based on selected quote
+        if used_quote is not None:
+            direction = self.should_update(used_quote)
+            self.update_profit_margin(direction, used_quote)
+        # Do not update margin if no quote
+        else:
             pass
+
+
+        if self.debug:
+            print(self.name, 'check_margin_inputs - END', f'used_quote: {used_quote}')
 
     def offer(self, pl):
         """
@@ -1080,45 +1127,59 @@ class ZIM(ZID):
 
         Buyers bid and sellers ask. The price quoted is: price = current_value * (1 + margin). Margins are negative for buyers.
         """
+        
         if self.debug:
+            print(self.name, 'offer - START')
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
             print(f"-- {self.name} working on unit {self.cur_unit}")
+
         if self.cur_unit >= self.max_units:
             return_msg = Message("NULL", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
             return return_msg
         
-        current_offers = pl  # payload from bargain, self.order_book
-        
-        if self.type == "BUYER" or self.type == "B":
-            WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
-            return_msg = Message("BID", self.name, "BARGAIN", WTP)
-            self.returned_msg(return_msg)
-            return return_msg   
+        # Update margin based on class-level quote-margin behavior
+        self.check_margin_inputs()
 
+        # Get own price with updated margin
+        own_price = self.get_own_price()
+        
+        # Build an offer response message
+        if self.type == "BUYER" or self.type == "B":
+            WTP = own_price
+            return_msg = Message("BID", self.name, "BARGAIN", WTP) 
         elif self.type == "SELLER" or self.type == "S": # for SELLER
-            WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
+            WTA = own_price
             return_msg = Message("ASK", self.name, "BARGAIN", WTA)
-            self.returned_msg(return_msg)
-            return return_msg  
+        
+        self.returned_msg(return_msg)
+        return return_msg  
 
 
     def transact(self, pl):
         """
         Make a buy or sell order
         """
+
         if self.debug:
+            print(self.name, 'transact - START')
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
             print(f"-- {self.name} working on unit {self.cur_unit}")
+
         if self.cur_unit >= self.max_units:
             return_msg = Message("NULL", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
             return return_msg
             
+        # Get own price with updated margin
+        own_price = self.get_own_price()
+
         current_offers = pl  # payload from bargain, self.order_book
         
+        # TODO: consider refactor without making new lists - can fetch from bargain
         if self.type == "BUYER" or self.type == "B":
-            WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
+            #WTP = rnd.randint(self.lower_bound, self.values[self.cur_unit])
+            WTP = own_price
             offers = []
             for trader_id in current_offers:
                 if current_offers[trader_id] == None:
@@ -1145,7 +1206,8 @@ class ZIM(ZID):
                 return return_msg
             
         elif self.type == "SELLER" or self.type == "S": # for SELLER
-            WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
+            #WTA = rnd.randint(self.costs[self.cur_unit], self.upper_bound)
+            WTA = own_price
             offers = []
             for trader_id in current_offers:
                 if current_offers[trader_id] == None:
