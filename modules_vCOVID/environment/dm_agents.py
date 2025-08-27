@@ -875,15 +875,53 @@ class ZIM(ZID):
         else:
             self.margin_lb = -1
 
-        self.margin = strategy_params['initial_margin']
-        self.learning_rate = strategy_params['learning_rate']
-        self.momentum_coef = strategy_params['momentum_coef']
+        
 
-        self.cR = strategy_params['max_r_step']
-        self.cA = strategy_params['max_a_step']
-
-        self.G = strategy_params['initial_g']
-        self.delta = strategy_params['initial_delta']
+        max_r_step (float e[0, 1]): The maximal proportional learning step - max of distr. cR=0.05 in CB98.
+        max_a_step (float e[0, 1]): The maximal non-proportional learning step - max of distr. cA=0.05 in CB98.
+        initial_g (float e R): the initial value of G, part of the adjustment to margin. G=0 in CB98.
+        initial_delta (float e R): the initial value of delta, part of the adjustment to margin. Initial value not specified in CB98.
+            There may be a type in the CB98 formula - where Delta(t-1) has replaced Delta(t). For now assuming initial_delta = 0.
+        
+        # Pull parameter values, if provided, otherwise default to CB98 parameter values
+        # Initial Margin
+        if 'initial_margin' in strategy_params:
+            self.margin = strategy_params['initial_margin']
+        else:
+            if self.type == 'BUYER' or self.type == 'B':
+                self.margin = rnd.uniform(-0.35, -0.05)
+            elif self.type == 'SELLER' or self.type == 'S':
+                self.margin = rnd.uniform(0.05, 0.35)
+        # Learning Rate
+        if 'learning_rate' in strategy_params:
+            self.learning_rate = strategy_params['learning_rate']
+        else:
+            self.learning_rate = rnd.uniform(0.1, 0.5)
+        # Momentum Coefficient
+        if 'momentum_coe' in strategy_params:
+            self.momentum_coef = strategy_params['momentum_coef']
+        else:
+            self.momentum_coef = rnd.uniform(0.0, 0.1)
+        # Maximum proportional change
+        if 'max_r_step' in strategy_params:
+            self.cR = strategy_params['max_r_step']
+        else:
+            self.cR = 0.05
+        # Maximal additive change
+        if 'max_a_step' in strategy_params:
+            self.cA = strategy_params['max_a_step']
+        else:
+            self.cA = 0.05
+        # Initial G parameter
+        if 'initial_g' in strategy_params:
+            self.G = strategy_params['initial_g']
+        else:
+            self.G = 0
+        # Initial delta parameter
+        if 'initial_delta' in strategy_params:
+            self.delta = strategy_params['initial_delta']
+        else:
+            self.delta = 0
         
         self.last_round_quote = None # The last seen quote at the round-level
         self.last_local_quote = None # The last seen quote at the local period level
