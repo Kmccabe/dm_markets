@@ -108,7 +108,7 @@ class SimPeriod(object):
             if self.match_found(agents_at):
                 b_inst.set_agents(agents_at)
                 b_inst.set_debug(self.debug)
-                b_inst.run()
+                b_inst.run(week=week, period=period)
                 loc_contracts = b_inst.get_contracts()
                 period_contracts.extend(loc_contracts)
         self.contracts = period_contracts
@@ -132,6 +132,8 @@ class SimPeriod(object):
 
                 ag.set_local_bargain_history(offer_hist_loc, cont_hist_loc)
                 ag.set_global_bargain_history(offer_hist_glob, cont_hist_glob)
+
+            self.bargain_hist_inst.trim_histories(week, period) # Trim histories to limit compute costs
     
     def get_contracts(self):
         return self.contracts

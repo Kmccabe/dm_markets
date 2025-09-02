@@ -1,4 +1,4 @@
-import environment.dm_agents as dma
+import environment.dm_agents as dma # TODO rename
 import simulations.dm_sim as dm_sim
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -15,7 +15,8 @@ def get_agent_class(class_name):
         "ZIDPA": dma.ZIDPA,
         "ZIDPR": dma.ZIDPR,
         "ZIDT": dma.ZIDT,
-        "ZIDTR": dma.ZIDTR
+        "ZIDTR": dma.ZIDTR,
+        "ZIM": dma.ZIM
     }
     return class_name_map[class_name]
 
@@ -31,7 +32,8 @@ def get_agent_str(agent_class):
         dma.ZIDPA: "ZIDPA",
         dma.ZIDPR: "ZIDPR",
         dma.ZIDT: "ZIDT",
-        dma.ZIDTR: "ZIDTR"
+        dma.ZIDTR: "ZIDTR",
+        dma.ZIM: "ZIM"
     }
     return class_name_map[agent_class]
 
@@ -42,7 +44,10 @@ def agent_strategy_helper(agent_class_name=None):
     Args:
         agent_class_name (str, optional, default None): The agent class you want to print strategy parameters for. If None, prints potential agent class names instead.
     """
-    class_list = ["ZID", "ZIDA", "ZIDP", "ZIDPA", "ZIDPR", "ZIDT", "ZIDTR"]
+    class_list = ["ZID", "ZIDA", "ZIDP", "ZIDPA", "ZIDPR", "ZIDT", "ZIDTR", "ZIM", "ZIMA", "ZIMT"]
+
+    # TODO add and option to this helper which summarizes the behavior of each agent class
+    # TODO rename ZIDP & derivatives to ZIP - so we keep the name scheme of ZI+bargain_strat+movement_strat (ZIDPR -> ZIPAR)
 
     if agent_class_name is None:
         print("Agent Classes Available")
@@ -60,10 +65,17 @@ def agent_strategy_helper(agent_class_name=None):
     elif agent_class_name == "ZIDPR":
         print(f"{agent_class_name} takes the same parameters as ZIDA, along with \"max_agents_allowed\", representing the maximum agents allowed in one location by the distancing rule.")
     elif agent_class_name == "ZIDT":
-        print(f"{agent_class_name} requires the \"memory_length\" (2eta) representing how many periods the agent calculates their payoff contentness over and \"down_tolerance\" (nu) representing how significant of a decline in payoff and agent is willing to tolerate, relative to the first half of their memory.")
+        print(f"{agent_class_name} requires the \"memory_length\" (2eta) representing how many periods the agent calculates their payoff contentedness over and \"down_tolerance\" (nu) representing how significant of a decline in payoff and agent is willing to tolerate, relative to the first half of their memory.")
     elif agent_class_name == "ZIDTR":
         print(f"{agent_class_name} takes the same parameters as ZIDT, along with \"max_agents_allowed\", representing the maximum agents allowed in one location by the distancing rule.")
-        
+    elif agent_class_name == "ZIM":
+        print(f"{agent_class_name} takes the parameters . If none are provided, the agent defaults to the Cliff and Bruten 1998 parameters.")
+    elif agent_class_name == "ZIMA":
+        print(f"{agent_class_name} takes the same parameters as ZIM for bidding strategy, and ZIDA for movement strategy.")
+    elif agent_class_name == "ZIMT":
+        print(f"{agent_class_name} takes the same parameters as ZIM for bidding strategy, and ZIDT for movement strategy.")
+    elif agent_class_name == "ZIMTR":
+        print(f"{agent_class_name} takes the same parameters as ZIM for bidding strategy, and ZIDT for movement strategy, and \"max_agents\", representing the maximum agents allowed at one location.")
 
 def test_agents(debug):
     """Helper function to initialize test agents"""
@@ -683,6 +695,34 @@ def agents_from_dict(ag_var_dict, return_names=False):
                             agent_type, agent_class, strategy_params, 
                             lower_bound, upper_bound, num_units, endowment, payoff_function, 
                             move_error_rate, starting_location, return_names)
+
+
+def offer_tuple_to_quote(offer_tuple, contract_tuples):
+    """Transform the offer tuple into a quote as used in Cliff-Bruten 1997/98"""
+    off_tp = offer_tuple[2]
+    off_pr = offer_tuple[3]
+    off_id = offer_tuple[4]
+    
+    # Check if this offer was accepted
+    offers_accepted = [x[4] for x in contract_tuples]
+    off_accepted = off_id in offers_accepted
+
+    offer_quote = {'type': off_tp, 'quote': off_pr, 'accepted': off_accepted}
+
+    return offer_quote
+
+
+def offer_df_to_quote(offer_df):
+    """Transform the offer df row to a quote as in CB97/98"""
+
+    off_tp = offer_df['offer_type']
+    off_pr = offer_df['price']
+    off_accepted = offer_df['accepted']
+
+    offer_quote = {'type': off_tp, 'quote': off_pr, 'accepted': off_accepted}
+
+    return offer_quote
+
 
 if __name__ == "__main__":
 

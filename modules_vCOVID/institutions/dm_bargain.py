@@ -3,7 +3,8 @@ from institutions.dm_message_model import Message
 
 class Bargain(object):
     """Governs bargaining between agents in self.agents"""
-    def __init__(self, rounds, bargain_hist_inst = None, round_broadcasts = False):
+    def __init__(self, rounds, bargain_hist_inst = None, round_broadcasts = False,
+                 debug = False):
         self.agents = []   # list of agent objects who will bargain
         self.offer_history = []    # list of offer tuples # TODO: Deprecate
         self.contracts = []   # list of contract tuples
@@ -14,7 +15,7 @@ class Bargain(object):
         self.agent_lookup = {} # dictionary key=trader_id, 
                                #         value = index into agent_order
         self.rounds = rounds  # number of rounds of bargaining
-        self.debug = False  # used to print information for debugging
+        self.debug = True # debug  # used to print information for debugging
 
         # Flag to broadcast price information during bargaining (local learning)
         self.round_broadcasts = round_broadcasts
@@ -268,8 +269,12 @@ class Bargain(object):
     def send_round_history(self, round_offers, round_contracts):
         """Send the round history (offers and contracts) to the agents."""
 
+        if self.debug:
+            print('BargainHistory', 'send_round_history', 
+                  f'setting round_offers: {round_offers}, round_contracts: {round_contracts}, to agents: {self.agent_order}')
+
         for agent in self.agent_order:
-            agent.set_round_history(round_offers, round_contracts)
+            agent.set_round_bargain_history(round_offers, round_contracts)
 
     def set_agents(self, agents):
         self.agents = agents

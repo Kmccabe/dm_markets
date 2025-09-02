@@ -1,6 +1,7 @@
 import random as rnd
 import numpy as np
 from institutions.dm_message_model import Message
+from utils import dm_utils
 
 class Trader(object):
     """
@@ -258,6 +259,8 @@ class Trader(object):
         self.local_contract_hist = local_contracts
 
     def reset_round_bargain_history(self):
+        if self.debug:
+            print(self.name, 'reset_round_bargain_history')
         self.round_offer_hist = None
         self.round_contract_hist = None
 
@@ -367,7 +370,11 @@ class ZID(Trader):
         """
         if self.debug:
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
-            print(f"-- {self.name} working on unit {self.cur_unit}")
+            if self.cur_unit >= self.max_units:
+                print(f"-- {self.name} no longer transacting")
+            else:
+                print(f"-- {self.name} working on unit {self.cur_unit}")
+
         if self.cur_unit >= self.max_units:
             return_msg = Message("NULL", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
@@ -394,7 +401,11 @@ class ZID(Trader):
         """
         if self.debug:
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
-            print(f"-- {self.name} working on unit {self.cur_unit}")
+            if self.cur_unit >= self.max_units:
+                print(f"-- {self.name} no longer transacting")
+            else:
+                print(f"-- {self.name} working on unit {self.cur_unit}")
+            
         if self.cur_unit >= self.max_units:
             return_msg = Message("NULL", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
@@ -656,7 +667,11 @@ class ZIDP(ZID):
         """
         if self.debug:
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
-            print(f"-- {self.name} working on unit {self.cur_unit}")
+            if self.cur_unit >= self.max_units:
+                print(f"-- {self.name} no longer transacting")
+            else:
+                print(f"-- {self.name} working on unit {self.cur_unit}")
+
         if self.cur_unit >= self.max_units:
             return_msg = Message("NULL", self.name, "BARGAIN", None)
             self.returned_msg(return_msg)
@@ -863,35 +878,31 @@ class ZIM(ZID):
         self.agent_family = 'ZIM'
         self.agent_class = 'ZIM'
 
+        # TODO unify trader_type and type -> self.trader_type
         # Sellers upper bound on margin is infinite, buyers it's 0
-        if self.trader_type == 'SELLER' or self.trader_type == 'S':
+        if self.type == 'SELLER' or self.type == 'S':
             self.margin_ub = np.inf
         else:
             self.margin_ub = 0
 
         # Sellers lower bound on margin is 0, buyers it's -1
-        if self.trader_type == 'SELLER' or self.trader_type == 'S':
+        if self.type == 'SELLER' or self.type == 'S':
             self.margin_lb = 0
         else:
             self.margin_lb = -1
-
-        
-
-        max_r_step (float e[0, 1]): The maximal proportional learning step - max of distr. cR=0.05 in CB98.
-        max_a_step (float e[0, 1]): The maximal non-proportional learning step - max of distr. cA=0.05 in CB98.
-        initial_g (float e R): the initial value of G, part of the adjustment to margin. G=0 in CB98.
-        initial_delta (float e R): the initial value of delta, part of the adjustment to margin. Initial value not specified in CB98.
-            There may be a type in the CB98 formula - where Delta(t-1) has replaced Delta(t). For now assuming initial_delta = 0.
         
         # Pull parameter values, if provided, otherwise default to CB98 parameter values
+        if strategy_params is None:
+            strategy_params = {}
         # Initial Margin
         if 'initial_margin' in strategy_params:
-            self.margin = strategy_params['initial_margin']
+            init_margin = strategy_params['initial_margin']
         else:
             if self.type == 'BUYER' or self.type == 'B':
-                self.margin = rnd.uniform(-0.35, -0.05)
+                init_margin = rnd.uniform(-0.35, -0.05)
             elif self.type == 'SELLER' or self.type == 'S':
-                self.margin = rnd.uniform(0.05, 0.35)
+                init_margin = rnd.uniform(0.05, 0.35)
+        self.margins = [init_margin]*num_units # have n margins, where n = number of units
         # Learning Rate
         if 'learning_rate' in strategy_params:
             self.learning_rate = strategy_params['learning_rate']
@@ -914,20 +925,21 @@ class ZIM(ZID):
             self.cA = 0.05
         # Initial G parameter
         if 'initial_g' in strategy_params:
-            self.G = strategy_params['initial_g']
+            initG = strategy_params['initial_g']
         else:
-            self.G = 0
-        # Initial delta parameter
-        if 'initial_delta' in strategy_params:
-            self.delta = strategy_params['initial_delta']
+            initG = 0
+        self.Gs = [initG]*self.num_units
+        # Which quotes to look at to update margin
+        if 'update_mode' in strategy_params:
+            self.update_mode = strategy_params['update_mode']
         else:
-            self.delta = 0
+            self.update_mode = 'all' # all or last
         
         self.last_round_quote = None # The last seen quote at the round-level
         self.last_local_quote = None # The last seen quote at the local period level
         self.last_global_quote = None # The last seen quote at the global period level
 
-        self.debug = True # temp anchor
+        self.debug = False # temp anchor
 
         self.set_group_name(group_name)
         
@@ -941,13 +953,13 @@ class ZIM(ZID):
         elif self.type == 'SELLER' or self.type == 'S':
             vj = self.costs[j]
         
-        pj = vj*(1+self.margin)
+        pj = vj*(1+self.margins[j])
 
         if self.debug:
-            print(self.name, 'get_own_price', f'Unit: {j}, Value{vj}, Margin: {self.margin}, Price: {pj}')
+            print(self.name, 'get_own_price', f'Unit: {j}, Value: {vj}, Margin: {self.margins[j]}, Price: {pj}')
 
         return pj
-    
+
 
     def fetch_last_quotes(self):
         """Describes the most recently seen quotes in the format required for should_update."""
@@ -958,16 +970,7 @@ class ZIM(ZID):
         # Local quote
         # Check if rounds of bargaining have happened (and can do local round-level learning)
         if self.round_offer_hist is not None:
-            last_offer = self.round_offer_hist[-1]
-            last_tp = last_offer[0]
-            last_pr = last_offer[1]
-            last_id = last_offer[2]
-            
-            # Check if the last offer was accepted
-            offers_accepted = [x[4] for x in self.round_contract_hist]
-            last_accepted = last_id in offers_accepted
-
-            self.last_round_quote = {'type': last_tp, 'quote': last_pr, 'accepted': last_accepted}
+            self.last_round_quote = dm_utils.offer_tuple_to_quote(self.round_offer_hist[-1], self.round_contract_hist)
 
         # Update local data to the most recent finished period
         if self.local_offer_hist is not None:
@@ -1017,7 +1020,7 @@ class ZIM(ZID):
         if self.debug:
             print(self.name, 'fetch_last_quotes - END', 
                   f'lrq: {self.last_round_quote}, llq: {self.last_local_quote} , lgq: {self.last_global_quote}')
-
+            
 
     def should_update(self, last_quote):
         """
@@ -1036,12 +1039,14 @@ class ZIM(ZID):
         if self.debug:
             print(self.name, 'should_update - START', f'checking quote: {last_quote}')
 
-        active = False
+        active = self.cur_unit < self.max_units # anchor
         last_type = last_quote['type']
         last_accepted = last_quote['accepted']
         last_val = last_quote['quote']
         own_quote = self.get_own_price()
         # Compare quote to what one what you would quote
+        if self.debug:
+            print('---- should_update: last_val', last_val, 'own_quote', own_quote, 'own margins', self.margins)
         last_geq = last_val >= own_quote
         last_leq = last_val <= own_quote
 
@@ -1070,9 +1075,12 @@ class ZIM(ZID):
 
         return margin_dir
     
+
     def update_profit_margin(self, margin_dir, last_quote):
         """
-        ZIM traders update their profit margin according to the definition in CB97
+        ZIM traders update their profit margin according to the definition in CB97.
+
+        Updates the margin only for the current unit, denoted with subscript j.
 
         TODO: Consider making these variable names more natural.
         """
@@ -1080,49 +1088,69 @@ class ZIM(ZID):
         if self.debug:
             print(self.name, 'update_profit_margin - START', f'margin_dir: {margin_dir}, last_quote: {last_quote}')
 
-        q = last_quote
+        q = last_quote['quote']
         p = self.get_own_price()
         j = self.get_cur_unit()
-        l = self.values[j]
+        if self.type == 'BUYER':
+            l = self.values[j]
+        elif self.type == 'SELLER':
+            l = self.costs[j]
 
-        last_G = self.G
+        last_G = self.Gs[j]
         gamma = self.momentum_coef
         beta = self.learning_rate
-        last_delta = self.delta
 
         # Draw random adjustment steps
-        if margin_dir == 'up':
-            R = rnd.uniform(1, 1+self.cR)
-            A = rnd.uniform(0, self.cA)
-        elif margin_dir == 'down':
-            R = rnd.uniform(1-self.cR, 1.0)
-            A = rnd.uniform(-self.cA, 0)
-        elif margin_dir == 'flat':
-            R = 0; A = 0
+        if margin_dir == 'up' or margin_dir == 'down':
+            if margin_dir == 'up':
+                R = rnd.uniform(1, 1+self.cR)
+                A = rnd.uniform(0, self.cA)
+            elif margin_dir == 'down':
+                R = rnd.uniform(1-self.cR, 1.0)
+                A = rnd.uniform(-self.cA, 0)
         
-        # Calculate adjustment (learning)
-        tau = R*q + A
-        delta = beta * (tau - p)
-        G = gamma*last_G + (1-gamma)*last_delta # TODO: verify this formula with Cliff and Bruten 1997 - 98 might have an error
-        # In particular verify that we want last delta here and not present delta
+            # Calculate adjustment (learning)
+            tau = R*q + A
+            #tau = R*p + A
+            delta = (tau - p)
+            #delta = beta * (p - tau)
+            G = gamma*last_G + (1-gamma)*beta*delta
+            # G = gamma*last_G + (1-gamma)*last_delta # TODO: verify this formula with Cliff and Bruten 1997 - 98 might have an error
+            # In particular verify that we want last delta here and not present delta
 
-        # Update margin
-        old_margin = self.margin
-        new_margin = (p + G)/l
-        # Verify boundaries
-        if new_margin > self.margin_ub:
-            new_margin = self.margin_ub
-        elif new_margin < self.margin_lb:
-            new_margin = self.margin_lb
-        self.margin = new_margin
+            # Store G and delta for next time this function is called
+            self.Gs[j] = G
 
-        # Store G and delta for next time this function is called
-        self.G = G
-        self.delta = delta
+            # Update margin
+            old_margin = self.margins[j]
+            new_margin = (p + G)/l - 1
+            # Verify boundaries
+            if new_margin > self.margin_ub:
+                new_margin = self.margin_ub
+            elif new_margin < self.margin_lb:
+                new_margin = self.margin_lb
+
+            """print(self.name, 'update_profit_margin', 
+                  f'Unit: {j}, Value: {l}, Quote: {q}, Price: {p}, \
+                    \nDir: {margin_dir}, tau: {tau}, delta: {delta}, G: {G}, \
+                    \np: {p}, G: {G}, l: {l}, \
+                    \nOld Margin: {old_margin}, New Margin: {new_margin}')
+            print(self.values)
+            print(self.costs)
+            print(self.margins)
+            print(self.round_offer_hist)"""
+
+        # Otherwise no adjustment
+        elif margin_dir == 'flat':
+            old_margin = self.margins[j]
+            new_margin = self.margins[j]
+
+        self.margins[j] = new_margin
 
         if self.debug:
             print(self.name, 'update_profit_margin - END', f'prev margin: {old_margin}, new margin: {new_margin}')
     
+
     def check_margin_inputs(self):
         """Updates the last quotes available to the agent, then in priority order of round > global > local assesses the quotes and updates profit margin. 
         
@@ -1132,32 +1160,82 @@ class ZIM(ZID):
         if self.debug:
             print(self.name, 'check_margin_inputs - START')
 
+        update_mode = self.update_mode
 
-        self.fetch_last_quotes()
-        
-        # TODO: implement resetting of last_round_quote to None at the start of each period - 
-        used_quote = None
-        if self.last_round_quote is not None:
-            used_quote = self.last_round_quote
-        elif self.last_global_quote is not None:
-            used_quote = self.last_round_quote
-        elif self.last_local_quote is not None:
-            used_quote = self.last_round_quote
-        else:
-            # This corner case is encountered at the start of the simulation - there are no quotes yet
+        if update_mode == 'last':
+            self.fetch_last_quotes()
+            
+            # TODO: implement resetting of last_round_quote to None at the start of each period - 
             used_quote = None
+            # Round-level data
+            if self.last_round_quote is not None:
+                used_quote = self.last_round_quote
+            # Local period-level data
+            elif self.last_global_quote is not None:
+                used_quote = self.last_global_quote
+            # Global period-level data
+            elif self.last_local_quote is not None:
+                used_quote = self.last_local_quote
+            # No quotes encountered yet
+            else:
+                # This corner case is encountered at the start of the simulation - there are no quotes yet
+                used_quote = None
 
-        # Update margin based on selected quote
-        if used_quote is not None:
-            direction = self.should_update(used_quote)
-            self.update_profit_margin(direction, used_quote)
-        # Do not update margin if no quote
-        else:
-            pass
+            # Update margin based on selected quote
+            if used_quote is not None:
+                direction = self.should_update(used_quote)
+                self.update_profit_margin(direction, used_quote)
+            # Do not update margin if no quote
+            else:
+                pass
+        
+        elif update_mode == 'all':
+            # Round-level data
+            if self.round_offer_hist is not None:
+                for of in self.round_offer_hist:
+                    qt = dm_utils.offer_tuple_to_quote(of, self.round_contract_hist)
+                    direction = self.should_update(qt)
+                    self.update_profit_margin(direction, qt)
+            # Period local-level data
+            elif self.local_offer_hist is not None and len(self.local_offer_hist)>0:
+                # Subset most recent local quotes
+                loh = self.local_offer_hist
+                # Subset most recent week
+                max_week = max(loh['week'])
+                wloh = loh[loh['week']==max_week]
+                # Subset most recent period
+                max_period = max(wloh['period'])
+                ploh = wloh[wloh['period']==max_period]
 
+                for ofi in range(len(ploh)):
+                    of = ploh.iloc[ofi]
 
+                    qt = dm_utils.offer_df_to_quote(of)
+                    direction = self.should_update(qt)
+                    self.update_profit_margin(direction, qt)
+            # Period global-level data
+            elif self.global_offer_hist is not None:
+                # Subset local most recent quotes
+                goh = self.global_offer_hist
+                # Subset most recent week
+                max_week = max(goh['week'])
+                wgoh = goh[goh['week']==max_week]
+                # Subset most recent period
+                max_period = max(wgoh['period'])
+                pgoh = wgoh[wgoh['period']==max_period]
+
+                for ofi in range(len(pgoh)):
+                    of = pgoh.iloc[ofi]
+
+                    qt = dm_utils.offer_df_to_quote(of)
+                    direction = self.should_update(qt)
+                    self.update_profit_margin(direction, qt)
+            # Have no quotes to learn on
+            else:
+                pass
+        
         if self.debug:
-            print(self.name, 'check_margin_inputs - END', f'used_quote: {used_quote}')
+            print(self.name, 'check_margin_inputs - END')
 
     def offer(self, pl):
         """
@@ -1169,7 +1247,10 @@ class ZIM(ZID):
         if self.debug:
             print(self.name, 'offer - START')
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
-            print(f"-- {self.name} working on unit {self.cur_unit}")
+            if self.cur_unit >= self.max_units:
+                print(f"-- {self.name} no longer transacting")
+            else:
+                print(f"-- {self.name} working on unit {self.cur_unit}")
 
         if self.cur_unit >= self.max_units:
             return_msg = Message("NULL", self.name, "BARGAIN", None)
@@ -1202,7 +1283,10 @@ class ZIM(ZID):
         if self.debug:
             print(self.name, 'transact - START')
             print(f"-- {self.name} has {self.units_transacted} of {self.max_units}")
-            print(f"-- {self.name} working on unit {self.cur_unit}")
+            if self.cur_unit >= self.max_units:
+                print(f"-- {self.name} no longer transacting")
+            else:
+                print(f"-- {self.name} working on unit {self.cur_unit}")
 
         if self.cur_unit >= self.max_units:
             return_msg = Message("NULL", self.name, "BARGAIN", None)

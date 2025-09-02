@@ -19,7 +19,8 @@ class BargainHistory(object):
 
     """
     def __init__(self, num_periods, 
-                 project_global=False, include_locations=False, history_duration=0):
+                 project_global=False, include_locations=False, history_duration=0,
+                 debug=False):
         
         self.num_periods = num_periods # Number of periods in a week
 
@@ -43,6 +44,8 @@ class BargainHistory(object):
         self.contract_history = None # TODO: Same as above
         self.next_contract_id = 0
 
+        self.debug = debug #debug
+
     def get_histories(self, cur_week, cur_period, cur_loc):
         """
         Return the quote history and contract history at the location (or globally if global version) for the last history_duration periods. Quote and contract history may include locations, if those are to be provided.
@@ -59,14 +62,20 @@ class BargainHistory(object):
             c_hist_global (list) a list of contracts globally or None
         """
 
+        if True:
+            print('BargainHistory', 'get_histories - START', f'at week: {cur_week}, period: {cur_period}, location: {cur_loc}')
+
+        # Indicate if need to go to previous week
         # Number of periods before current week required
         period_before_week = cur_period - self.history_duration
-
-        # Number of weeks before current week required
-        weeks_back = (-1*period_before_week)//self.num_periods
-
-        # Week to start at
-        start_week = max(0, cur_week-weeks_back)
+        if period_before_week < 0:
+            # Calculate how many weeks back
+            nback = (period_before_week)//self.num_periods - 1
+            start_week = cur_week + nback
+        else:
+            start_week = cur_week
+        if start_week < 0: # Truncate hist at start
+            start_week = 0
 
         # Period to start at (within a week)
         if period_before_week < 0:
@@ -75,14 +84,22 @@ class BargainHistory(object):
             start_period = max(0, cur_period-self.history_duration)
 
         # Subset offer history
-        qh_df = self.offer_history
-        rec_qs = qh_df[(qh_df['week']>=start_week)&(qh_df['period']>=start_period)]
-        q_hist_local = rec_qs[rec_qs['location']==cur_loc]
+        if self.offer_history is not None:
+            qh_df = self.offer_history
+            rec_qs = qh_df[(qh_df['week']>=start_week)&(qh_df['period']>=start_period)]
+            q_hist_local = rec_qs[rec_qs['location']==cur_loc]
+        else:
+            rec_qs = None
+            q_hist_local = None
 
         # Subset contract history
-        ch_df = self.contract_history
-        rec_cs = ch_df[(ch_df['week']>=start_week)&(ch_df['period']>=start_period)]
-        c_hist_local = rec_cs[rec_qs['location']==cur_loc]
+        if self.contract_history is not None:
+            ch_df = self.contract_history
+            rec_cs = ch_df[(ch_df['week']>=start_week)&(ch_df['period']>=start_period)]
+            c_hist_local = rec_cs[rec_cs['location']==cur_loc]
+        else:
+            rec_cs = None
+            c_hist_local = None
 
         # If do not want global price info, returns Nones
         if not self.project_global:
@@ -90,15 +107,20 @@ class BargainHistory(object):
             c_hist_global = None
         # If do not include location data, replace with None
         elif not self.include_locations:
-            q_hist_global = rec_qs.copy()
-            q_hist_global['location'] = None
+            if rec_qs is not None:
+                q_hist_global = rec_qs.copy()
+                q_hist_global['location'] = None
 
-            c_hist_global = rec_cs.copy()
-            c_hist_global['location'] = None
+            if rec_cs is not None:
+                c_hist_global = rec_cs.copy()
+                c_hist_global['location'] = None
         # Otherwise return full most recent offer and contract info
         else:
             q_hist_global = rec_qs
             c_hist_global = rec_cs
+
+        if True:
+            print('BargainHistory', 'get_histories - END', f'returning from week: {start_week}, period: {start_period}, globally: {self.project_global}, including locations: {self.include_locations}.')
 
         return q_hist_local, c_hist_local, q_hist_global, c_hist_global
     
@@ -118,25 +140,25 @@ class BargainHistory(object):
         """Add the list of offer tuples to the history"""
 
         # offer structure (round, sender_id, offer_type, payload, offer_id, loc, week, period)
-        colns = ['round', 'sender_id', 'offer_type', 'price', 'offer_id', 'loc', 'week', 'period', 'accepted', 'is_last']
+        colns = ['round', 'sender_id', 'offer_type', 'price', 'offer_id', 'location', 'week', 'period', 'accepted', 'is_last']
         new_offers = pd.DataFrame(data=offers_tuples, columns=colns)
 
         if self.offer_history is None:
             self.offer_history = new_offers
         else:
-            self.offer_history = pd.concat(self.offer_history, new_offers)
+            self.offer_history = pd.concat([self.offer_history, new_offers])
 
     def add_contracts(self, contract_tuples):
         """Add the list of contract tuples to the history"""
 
         # contract structure (round, price, buyer_id, seller_id, offer_id, contract_id, loc, week, period)
-        colns = ['round', 'price', 'buyer_id', 'seller_id', 'offer_id', 'contract_id', 'loc', 'week', 'period', 'is_last']
+        colns = ['round', 'price', 'buyer_id', 'seller_id', 'offer_id', 'contract_id', 'location', 'week', 'period', 'is_last']
         new_contracts = pd.DataFrame(data=contract_tuples, columns=colns)
 
-        if self.contract_history == None:
+        if self.contract_history is None:
             self.contract_history = new_contracts
         else:
-            self.contract_history = pd.concat(self.contract_history, new_contracts)
+            self.contract_history = pd.concat([self.contract_history, new_contracts])
 
     def close_location_record(self, week, period, loc):
         """Close the bargaining history at this location - indicate the present last quote and contract are the last ones"""
@@ -146,16 +168,55 @@ class BargainHistory(object):
             return
 
         # Get index last offer (quote)
-        oh = self.offer_history
-        ohl_ind = oh[(oh['week']==week)&(oh['period']==period)&(oh['location']==loc)].iloc[-1].name
-        # Set flag to indicate last quote
-        self.offer_history.loc[ohl_ind, 'is_last'] = True
+        if self.offer_history is not None:
+            oh = self.offer_history
+            oh_h = oh[(oh['week']==week)&(oh['period']==period)&(oh['location']==loc)]
+
+            if len(oh_h) > 0:
+                ohl_ind = oh_h.iloc[-1].name
+                # Set flag to indicate last quote
+                self.offer_history.loc[ohl_ind, 'is_last'] = True
+            
 
         # Get index last contract
-        ch = self.contract_history
-        chl_ind = ch[(ch['week']==week)&(ch['period']==period)&(ch['location']==loc)].iloc[-1].name
-        # Set flag to indicate last contract
-        self.contract_history.loc[chl_ind, 'is_last'] = True
+        if self.contract_history is not None:
+            ch = self.contract_history
+            ch_h = ch[(ch['week']==week)&(ch['period']==period)&(ch['location']==loc)]
+
+            if len(ch_h) > 0:
+                chl_ind = ch_h.iloc[-1].name
+                # Set flag to indicate last contract
+                self.contract_history.loc[chl_ind, 'is_last'] = True
+
+    def trim_histories(self, week, period):
+        # Keep only most recent data required for maintaining the required accessible histories
+
+        start_week, start_period = self.get_starts(week, period)
+
+        if self.offer_history is not None:
+            self.offer_history = self.offer_history[(self.offer_history['week']>=start_week)&(self.offer_history['period']>=start_period)]
+        
+        if self.contract_history is not None:
+            self.contract_history = self.contract_history[(self.contract_history['week']>=start_week)&(self.contract_history['period']>=start_period)]
+
+    def get_starts(self, week, period):
+        period_before_week = period - self.history_duration
+        if period_before_week < 0:
+            # Calculate how many weeks back
+            nback = (period_before_week)//self.num_periods - 1
+            start_week = week + nback
+        else:
+            start_week = week
+        if start_week < 0: # Truncate hist at start
+            start_week = 0
+
+        # Period to start at (within a week)
+        if period_before_week < 0:
+            start_period = period - self.history_duration + self.num_periods
+        else:
+            start_period = max(0, period-self.history_duration)
+
+        return start_week, start_period
 
     def indicate_accepted(self, offer_id):
         # Get index of offer

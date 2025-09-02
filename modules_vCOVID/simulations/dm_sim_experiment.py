@@ -145,7 +145,7 @@ def change_agents(agents, ratio=1,
                 new_agent.set_costs(cos)
 
             # Handle special values based on agent families
-            agent_family = agent.agent_family
+            agent_family = agent.agent_family # TODO change to have bargaining family and movement family - there are two sets of params needed to copy over
 
             # Handle special values for ZIDA-Derivatives
             if agent_family == 'ZIDA':

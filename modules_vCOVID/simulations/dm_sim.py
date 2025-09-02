@@ -20,7 +20,7 @@ def make_sim(sim_name,
              bargain_round_broadcasts=False, 
              bargain_history_global=False, 
              bargain_history_locations=False,
-             bargain_history_duration=0,
+             bargain_history_duration=-1,
 
              return_df=False, return_period_df=False, debug=False,
              print_params=False):
@@ -100,10 +100,13 @@ def make_sim(sim_name,
     market = agent_maker.get_market()
 
     # set up bargaining history institution
-    bargain_hist_inst = dm_history_institutions.BargainHistory(num_periods,
-                            project_global=bargain_history_global,
-                            include_locations=bargain_history_locations, 
-                            history_duration=bargain_history_duration)
+    if bargain_history_duration >= 0:
+        bargain_hist_inst = dm_history_institutions.BargainHistory(num_periods,
+                                project_global=bargain_history_global,
+                                include_locations=bargain_history_locations, 
+                                history_duration=bargain_history_duration)
+    else:
+        bargain_hist_inst = None
 
     # run weeks in sim
     for week in range(num_weeks):
@@ -127,7 +130,7 @@ def make_sim(sim_name,
         
         # Run periods in week
         for period in range(num_periods):
-            sim1.run_period()
+            sim1.run_period(week=week, period=period)
             grid = sim1.get_grid()
             sim_grids.append(grid)
             pr_contracts = sim1.get_contracts()
@@ -188,6 +191,12 @@ def make_monte_carlo(sim_name=None,
                      num_trials=None, num_weeks=None, num_periods=None, num_rounds=None, 
                      num_traders=None, agent_groups=None, group_names=None,
                      grid_size=None,
+
+                    bargain_round_broadcasts=False, 
+                    bargain_history_global=False, 
+                    bargain_history_locations=False,
+                    bargain_history_duration=-1,
+
                      return_df=False, return_period_df=False,
                      passed_as_dict=False,
                      params_dict=None,
@@ -236,6 +245,22 @@ def make_monte_carlo(sim_name=None,
             group_names = params_dict['group_names']
         except KeyError:
             pass
+        try:
+            bargain_round_broadcasts = params_dict['bargain_round_broadcasts']
+        except KeyError:
+            pass
+        try:
+            bargain_history_global = params_dict['bargain_history_global']
+        except KeyError:
+            pass
+        try:
+            bargain_history_locations = params_dict['bargain_history_locations']
+        except KeyError:
+            pass
+        try:
+            bargain_history_duration = params_dict['bargain_history_duration']
+        except KeyError:
+            pass
 
     if group_names is None:
         group_names = [None]*len(agent_groups)
@@ -247,7 +272,12 @@ def make_monte_carlo(sim_name=None,
                           'num_rounds': num_rounds,
                           'num_traders': num_traders,
                           'agent_groups': agent_groups, 'grid_size': grid_size,
-                          'group_names': group_names}
+                          'group_names': group_names,
+                          
+                          'bargain_round_broadcasts': bargain_round_broadcasts, 
+                          'bargain_history_global': bargain_history_global, 
+                          'bargain_history_locations': bargain_history_locations,
+                          'bargain_history_duration': bargain_history_duration}
     
     # Print parameters if requested
     if print_params:
@@ -268,8 +298,19 @@ def make_monte_carlo(sim_name=None,
         if not return_df:
             trial_data = make_sim(sim_name, 
                                     num_weeks, num_periods, num_rounds, 
-                                    num_traders, agent_groups, group_names, grid_size,
+                                    num_traders, agent_groups, 
+                                    
+                                    group_names=group_names, grid_size=grid_size,
+
+                                    bargain_round_broadcasts=bargain_round_broadcasts, 
+                                    bargain_history_global=bargain_history_global, 
+                                    bargain_history_locations=bargain_history_locations,
+                                    bargain_history_duration=bargain_history_duration,
+
+                                    return_df=False, return_period_df=False, debug=False,
+
                                     print_params=False)
+            
             sim_data[trial] = trial_data
 
         
@@ -280,9 +321,16 @@ def make_monte_carlo(sim_name=None,
             if return_period_df:
                 trial_df, trial_period_df = make_sim(sim_name,
                                                          num_weeks, num_periods, num_rounds, 
-                                                         num_traders, agent_groups, 
-                                                         group_names,
-                                                         grid_size, 
+                                                         num_traders, agent_groups,
+
+                                                         group_names=group_names,
+                                                         grid_size=grid_size,
+                                                         
+                                                         bargain_round_broadcasts=bargain_round_broadcasts, 
+                                                         bargain_history_global=bargain_history_global, 
+                                                         bargain_history_locations=bargain_history_locations,
+                                                         bargain_history_duration=bargain_history_duration,
+
                                                          return_df=True, return_period_df=True,
                                                          print_params=False)
                 trial_period_df['trial'] = trial
@@ -297,9 +345,17 @@ def make_monte_carlo(sim_name=None,
             elif not return_period_df:
                 trial_df = make_sim(sim_name,
                                         num_weeks, num_periods, num_rounds, 
-                                        num_traders, agent_groups, group_names,
-                                        grid_size,
-                                        return_df=True,
+                                        num_traders, agent_groups,
+
+                                        group_names=group_names,
+                                        grid_size=grid_size,
+                                        
+                                        bargain_round_broadcasts=bargain_round_broadcasts, 
+                                        bargain_history_global=bargain_history_global, 
+                                        bargain_history_locations=bargain_history_locations,
+                                        bargain_history_duration=bargain_history_duration,
+
+                                        return_df=True, return_period_df=False,
                                         print_params=False)
             
             trial_df['trial'] = trial
