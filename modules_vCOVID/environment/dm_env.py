@@ -169,6 +169,55 @@ class SpotMarketEnvironment(object):
         else:
             print("No Equilibrium")
 
+        # TODO: Update with below
+        # Includes: fixes to price range in equilibrium, allow units range in equilibrium
+        """
+        def calc_equilibrium(bvals, svals, print_eq=False):
+
+            max_surplus = 0
+            eq_units_low = 0
+            eq_units_high = 0
+            last_accepted_value = 0
+            last_accepted_cost = 0
+            first_rejected_value = 0
+            first_rejected_cost = 999999999  # big number > max cost ever
+
+            for buy_unit, sell_unit in zip(bvals, svals):
+                value = buy_unit
+                cost = sell_unit
+                if value > cost:
+                    eq_units_low += 1
+                    eq_units_high += 1
+                    max_surplus += value - cost
+                    last_accepted_value = value
+                    last_accepted_cost = cost
+                elif value == cost:
+                    eq_units_high += 1
+                else:
+                    first_rejected_value = value
+                    first_rejected_cost = cost
+                    break
+            #  Now caluclate equilibrium price range
+            if eq_units_low > 1:
+                eq_price_high = max(last_accepted_value, first_rejected_cost)
+                eq_price_low = max(last_accepted_cost, first_rejected_value)
+                print(last_accepted_value)
+                print(first_rejected_cost)
+
+                print(last_accepted_cost)
+                print(first_rejected_value)
+
+            else:
+                if print_eq:
+                    print("No Equilibrium")
+                
+                return None, None
+
+            if print_eq:
+                print("Eq Units Range", eq_units_low, eq_units_high)
+                print("Eq Price Range", eq_price_low, eq_price_high)
+            """
+
     def show_equilibrium(self):
         #  Print out market equilibrium numbers
         print()

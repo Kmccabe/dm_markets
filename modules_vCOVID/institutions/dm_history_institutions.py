@@ -62,7 +62,7 @@ class BargainHistory(object):
             c_hist_global (list) a list of contracts globally or None
         """
 
-        if True:
+        if self.debug:
             print('BargainHistory', 'get_histories - START', f'at week: {cur_week}, period: {cur_period}, location: {cur_loc}')
 
         # Indicate if need to go to previous week
@@ -110,16 +110,20 @@ class BargainHistory(object):
             if rec_qs is not None:
                 q_hist_global = rec_qs.copy()
                 q_hist_global['location'] = None
+            else:
+                q_hist_global = None
 
             if rec_cs is not None:
                 c_hist_global = rec_cs.copy()
                 c_hist_global['location'] = None
+            else:
+                c_hist_global = None
         # Otherwise return full most recent offer and contract info
         else:
             q_hist_global = rec_qs
             c_hist_global = rec_cs
 
-        if True:
+        if self.debug:
             print('BargainHistory', 'get_histories - END', f'returning from week: {start_week}, period: {start_period}, globally: {self.project_global}, including locations: {self.include_locations}.')
 
         return q_hist_local, c_hist_local, q_hist_global, c_hist_global

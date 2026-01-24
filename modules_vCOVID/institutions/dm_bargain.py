@@ -94,7 +94,7 @@ class Bargain(object):
             print(ex_contract)
         test_test = 1
 
-    def run(self, week=-1, period=-1):
+    def run(self, week=-1, period=-1, bargain_loc=None):
         """Runs bargaining between self.agents
            Accepts BID ASK BUY and SELL messages
            
@@ -103,10 +103,16 @@ class Bargain(object):
                 Each agent makes a BID, ASK BUY or SELL order
                 Only the most recent order is kept"""
         
+        if len(self.agents) == 0:
+            return
+        else:
+            if bargain_loc is None:
+                bargain_loc = self.agents[0].get_location()
+
         self.agent_order = self.agents.copy()
         self.order_book = {}
         self.contracts = []
-        
+
         # Begin Bargaining
         for round in range(self.rounds):
             self.make_bargaining_order() # Shuffle order of agent activation
@@ -137,7 +143,7 @@ class Bargain(object):
                         offer_id = self.bargain_hist_inst.get_offer_id()
                     else:
                         offer_id = rnd.randint(0, 1000000)
-                    loc = agent.get_location()
+                    # loc = agent.get_location()
 
                     # put offer in self.order_book
                     # replaces and previous offer of this agent
@@ -151,7 +157,7 @@ class Bargain(object):
 
                     self.offer_history.append(offer)
 
-                    offer_full = (round, sender_id, offer_type, payload, offer_id, loc, week, period,
+                    offer_full = (round, sender_id, offer_type, payload, offer_id, bargain_loc, week, period,
                                   False, # indicate if this offer was accepted
                                   False) # indicate if this is the last offer - changed by bargaining history institution when location closes
 
@@ -194,7 +200,7 @@ class Bargain(object):
                         contract_id = self.bargain_hist_inst.get_contract_id()
                     else:
                         contract_id = rnd.randint(0, 1000000)
-                    loc = agent.get_location()
+                    # loc = agent.get_location()
 
                     if directive == "BUY":
                         # make contract if possible
@@ -224,7 +230,7 @@ class Bargain(object):
                     contract_full = (round, price, 
                                         buyer_id, seller_id, 
                                         offer_id, contract_id, 
-                                        loc, # TODO: Allow location to be different for buyer and seller - add these at offer level
+                                        bargain_loc, # TODO: Allow location to be different for buyer and seller - add these at offer level
                                         week, period,
                                         False) # indicate if this is the last contract - changed by bargaining history institution when location closes
 
@@ -251,7 +257,7 @@ class Bargain(object):
         # Close bargaining history for this period in this location
         # TODO: Allow different location for buyer and seller - here would need to determine which "side" is the side of record
         if self.bargain_hist_inst is not None:
-            self.bargain_hist_inst.close_location_record(period, week, loc)
+            self.bargain_hist_inst.close_location_record(period, week, bargain_loc)
         
         # Reset the local-level round bargaining history for agents at the end of the period
         if self.round_broadcasts:

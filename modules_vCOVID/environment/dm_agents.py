@@ -236,15 +236,12 @@ class Trader(object):
         return self.cur_unit
 
     def update_flag_window(self):
-        period_span = np.arange(np.max(self.current_period-self.reset_flag_window, 0), self.current_period+1)
-        trades_in_window = 0
-        for p in period_span:
-            if p in self.periods_traded_in:
-                trades_in_window += 1
-        if trades_in_window >= self.reset_flag_min_trades:
-            self.contract_this_period = True
-        else:
-            self.contract_this_period = False
+        """
+        Updates flag window
+        
+        Overwritten.
+        """
+        pass
 
     def set_round_bargain_history(self, round_offer_hist, round_contract_hist):
         self.round_offer_hist = round_offer_hist
@@ -263,6 +260,14 @@ class Trader(object):
             print(self.name, 'reset_round_bargain_history')
         self.round_offer_hist = None
         self.round_contract_hist = None
+
+    def load_strategy_params(self, strategy_params):
+        """
+        Load the strategy parameters used by this model from the strategy dict.
+        
+        Overwritten by children which use strategy params.
+        """
+        pass
 
 class ZID(Trader):
     """ 
@@ -523,21 +528,32 @@ class ZIDA(ZID):
         self.agent_family = 'ZIDA'
         self.agent_class = 'ZIDA'
 
+        self.load_strategy_params(strategy_params)
+
         self.set_group_name(group_name)
-        
+
+    def load_strategy_params(self, strategy_params):
+        """Load ZIDA params."""
+
         # Trappings for movement strategy
         self.reset_flag_frequency = None
+        self.reset_flag_window = None
         self.current_period = None
         self.periods_traded_in = None
         self.reset_flag_min_agents = None
         self.reset_flag_min_trades = None
         self.trades_this_week = None
 
+        # Load ZIDA defaults if none provided
+        if strategy_params is None:
+            strategy_params = {'reset_flag_frequency':'WINDOW',
+                                        'reset_flag_window':7,
+                                        'reset_flag_min_trades':1}
+
         if strategy_params is not None:
             self.reset_flag_frequency = strategy_params['reset_flag_frequency']
-        else:
-            self.reset_flag_frequency = "NONE"
-        
+            # self.reset_flag_frequency = "NONE"
+
         rf = self.reset_flag_frequency
 
         if rf == "WINDOW":
@@ -551,6 +567,17 @@ class ZIDA(ZID):
             self.trades_this_week = 0
             self.reset_flag_min_trades = strategy_params['reset_flag_min_trades']
 
+    def update_flag_window(self):
+        """Updates flag using window method."""
+        period_span = np.arange(np.max(self.current_period-self.reset_flag_window, 0), self.current_period+1)
+        trades_in_window = 0
+        for p in period_span:
+            if p in self.periods_traded_in:
+                trades_in_window += 1
+        if trades_in_window >= self.reset_flag_min_trades:
+            self.contract_this_period = True
+        else:
+            self.contract_this_period = False
 
     def move_requested(self, pl, silence_log=False):
         """
@@ -807,21 +834,123 @@ class ZIDPR(ZIDA, ZIDP):
 
 
 class ZIDT(ZID):
-
+    """Extend ZID - but implement a movement rule which attempts to maximize observed payoffs. An agent will start with no earnings expectations, but will build and maintain a memory of their earnings, $p_j$ for the $2\eta$ most recent periods. Agents will form an earnings expectation, $\bar{p_{\eta}} = \frac{1}{\eta} \sum_{j=0}^{\eta}p_j$ after experiencing their first $\eta$ periods, and continuously update this expectation to reflect the most recent $p_j \forall j \in \{-2\eta, \ldots, -\eta\}$, such that $\bar{p_{\eta}} = \frac{1}{\eta} \sum_{j=-2\eta}^{-\eta}p_j$ once these periods have been observed. Agents stay at their current location if they earn at least $\bar{p_{\eta}}-\nu\sigma(p_{\eta})$ on average in the most recent $\eta$ periods. $\sigma(\bar{p_{\eta}})$ is the standard deviation of $p_j \forall j \in {-2\eta, \ldots, -\eta}$ and $\nu$ is a risk-aversion (or equivalently patience) parameter."""
 
     # TODO: Implement
     def __init__(self, name, trader_type, payoff, money=None, location=None,
                 lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
             redraw_values = False, group_name=None, debug=False
         ):
-        super().__init__(name, trader_type, payoff, money, location,
+        ZID.__init__(self, name, trader_type, payoff, money, location,
                 lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
         
         self.agent_family = 'ZIDT'
         self.agent_class = 'ZIDT'
 
+        self.load_strategy_params(strategy_params)
+
         self.set_group_name(group_name)
-        raise ValueError('NOT IMPLEMENTED ZIDT')
+
+
+    def load_strategy_params(self, strategy_params):
+        # TODO: refactor change back agents to utilize the load_strategy_params method
+        # TODO: Add a "state_params" dictionary and use that as well similarly
+        if strategy_params is None:
+            strategy_params = {}
+        
+        if 'memory_len' in strategy_params:
+            self.memory_len = strategy_params['memory_len']
+        else:
+            self.memory_len = 7
+        self.profit_memory = []
+        self.current_period = -1
+        
+        if 'dev_tolerance' in strategy_params:
+            self.dev_tolerance = strategy_params['dev_tolerance']
+        else:
+            self.dev_tolerance = 1
+
+        if 'subsidy' in strategy_params:
+            self.subsidy = strategy_params['subsidy']
+        else:
+            self.subsidy = 0
+
+
+    def move_requested(self, pl):
+        """
+        Determine how/if want to move.
+        
+        Also record period number increasing and make placeholder for profits.
+        """
+        # If have not seen enough periods, act as ZID
+        enough_observed = len(self.profit_memory) >= self.memory_len
+
+        if enough_observed:
+            # Check if meeting threshold
+            ref_per = self.profit_memory[:self.memory_len]
+            mean_earn = np.mean(ref_per)
+            sd_earn = np.std(ref_per)
+            recent_mean = np.mean(self.profit_memory[-self.memory_len:])
+
+            thresh = mean_earn - self.dev_tolerance * sd_earn
+            stick = False
+            if recent_mean >= thresh: # Earning enough
+                stick = True
+            
+            # All zeros - clearly not good enough
+            if recent_mean <= 0:
+                stick = False
+
+            # If sticking - movement is zero in both directions
+            if stick:
+                movement_idea = (0, 0)
+            else:
+                movement_idea = self.total_random_move(pl) # TODO: refactor for DRY
+
+        else: # Otherwise move randomly
+            movement_idea = self.total_random_move(pl)
+
+        # If draw below the error rate randomly, have a COMPLETELY random movement
+        np_rand = np.random.default_rng()
+        if np_rand.random() < self.movement_error_rate:
+            movement_idea = self.total_random_move(pl)
+        
+        # Make room for next profit update
+        self.profit_memory.append(0)
+        self.profit_memory = self.profit_memory[:2*self.memory_len] # Trim memory if too long
+
+        # Add payment for subsidy if subsidizing movement
+        if self.subsidy != 0:
+            if movement_idea != (0, 0):
+                self.profit_memory[-1] = self.profit_memory[-1] + self.subsidy
+
+        # TODO: Make less crude
+
+        return_msg = Message("MOVE", self.name, "Travel", movement_idea)
+        self.returned_msg(return_msg)
+        return return_msg
+    
+    def contract(self, pl, debug_contract=False):
+        """
+        Override super to keep track of trades with earnings.
+        """
+
+        # Record trade profit
+        contract = pl
+        price = contract[1]
+
+        j = self.cur_unit
+
+        if self.type == 'BUYER':
+            val = self.values[j]
+            profit = val - price
+        elif self.type == 'SELLER':
+            cos = self.costs[j]
+            profit = price - cos
+        
+        self.profit_memory[-1] = self.profit_memory[-1]+profit # Should never be negative
+
+        return ZID.contract(self, pl, debug_contract) # Process rest of contract as normal
 
 
 class ZIDTR(ZIDT):
@@ -878,6 +1007,15 @@ class ZIM(ZID):
         self.agent_family = 'ZIM'
         self.agent_class = 'ZIM'
 
+        self.load_strategy_params(strategy_params)
+
+        self.debug = False # temp anchor
+
+        self.set_group_name(group_name)
+        
+
+    def load_strategy_params(self, strategy_params):
+        
         # TODO unify trader_type and type -> self.trader_type
         # Sellers upper bound on margin is infinite, buyers it's 0
         if self.type == 'SELLER' or self.type == 'S':
@@ -902,7 +1040,7 @@ class ZIM(ZID):
                 init_margin = rnd.uniform(-0.35, -0.05)
             elif self.type == 'SELLER' or self.type == 'S':
                 init_margin = rnd.uniform(0.05, 0.35)
-        self.margins = [init_margin]*num_units # have n margins, where n = number of units
+        self.margins = [init_margin]*self.num_units # Have n margins, where n = number of units
         # Learning Rate
         if 'learning_rate' in strategy_params:
             self.learning_rate = strategy_params['learning_rate']
@@ -934,15 +1072,12 @@ class ZIM(ZID):
             self.update_mode = strategy_params['update_mode']
         else:
             self.update_mode = 'all' # all or last
-        
+
         self.last_round_quote = None # The last seen quote at the round-level
         self.last_local_quote = None # The last seen quote at the local period level
         self.last_global_quote = None # The last seen quote at the global period level
-
-        self.debug = False # temp anchor
-
-        self.set_group_name(group_name)
         
+
 
     def get_own_price(self):
         """Return the price this agent would bid/ask for its current (next-to-transact) unit."""
@@ -1214,7 +1349,7 @@ class ZIM(ZID):
                     direction = self.should_update(qt)
                     self.update_profit_margin(direction, qt)
             # Period global-level data
-            elif self.global_offer_hist is not None:
+            elif self.global_offer_hist is not None and len(self.global_offer_hist)>0:
                 # Subset local most recent quotes
                 goh = self.global_offer_hist
                 # Subset most recent week
@@ -1353,4 +1488,76 @@ class ZIM(ZID):
             else:
                 return_msg = Message("NULL", self.name, "BARGAIN", None)
                 self.returned_msg(return_msg)
-                return return_msg  
+                return return_msg
+            
+class ZIMA(ZIM, ZIDA):
+    """Combines the margin search process from ZIM and the space search process form ZIDA"""
+
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        ZID.__init__(self, 
+                     name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZIDA'
+        self.agent_class = 'ZIMA'
+
+        self.set_group_name(group_name)
+
+        self.load_strategy_params(strategy_params)
+
+
+    def load_strategy_params(self, strategy_params):
+        """Load ZIM, ZIDA parameters"""
+        # ZIDA Strategy Params
+        ZIDA.load_strategy_params(self, strategy_params)
+
+        # ZIM Strategy Params
+        ZIM.load_strategy_params(self, strategy_params)
+    
+class ZIMT(ZIM, ZIDT):
+    
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        ZID.__init__(self, 
+                     name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZIDT' # TODO fix the family business
+        self.agent_class = 'ZIMT'
+
+        self.set_group_name(group_name)
+
+        self.load_strategy_params(strategy_params)
+
+    def load_strategy_params(self, strategy_params):
+        # ZIDA Strategy Params
+        ZIDT.load_strategy_params(self, strategy_params)
+
+        # ZIM Strategy Params
+        ZIM.load_strategy_params(self, strategy_params)
+
+class ZIPT(ZIDT, ZIDP):
+
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        ZID.__init__(self, 
+                     name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZIDT' # TODO fix the family business
+        self.agent_class = 'ZIPT'
+
+        self.set_group_name(group_name)
+
+        self.load_strategy_params(strategy_params)
+
+    def load_strategy_params(self, strategy_params):
+        # ZIDT Strategy Params
+        ZIDT.load_strategy_params(self, strategy_params)

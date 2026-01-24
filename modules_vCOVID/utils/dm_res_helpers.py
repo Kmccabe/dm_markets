@@ -582,6 +582,13 @@ def add_type_counts(o_df):
 
     return n_df
 
+def add_cv(o_df):
+    n_df = o_df.copy()
+    n_df['week_price_cv'] = n_df['week_price_std']/n_df['week_price_avg']
+    # n_df['week_loc_price_cv'] = n_df['week_loc_price_std']/n_df['week_loc_price_avg']
+
+    return n_df
+
 def add_all_metrics(week_df, period_df):
     n_df = period_df.copy()
 
@@ -616,6 +623,7 @@ def add_all_metrics(week_df, period_df):
     n_df = add_match_density(n_df, agent_types=ag_tps, agent_counts=ag_tpc, 
                               by_locs=True, by_counts=True) # Add match-counts 
     n_df = add_match_density(n_df, agent_types=ag_tps, agent_counts=ag_tpc, by_locs=True, by_counts=False) # Add match density
+    n_df = add_cv(n_df)
 
     return n_df
 

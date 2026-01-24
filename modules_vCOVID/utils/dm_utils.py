@@ -16,7 +16,10 @@ def get_agent_class(class_name):
         "ZIDPR": dma.ZIDPR,
         "ZIDT": dma.ZIDT,
         "ZIDTR": dma.ZIDTR,
-        "ZIM": dma.ZIM
+        "ZIM": dma.ZIM,
+        "ZIMA": dma.ZIMA,
+        "ZIMT": dma.ZIMT,
+        "ZIPT": dma.ZIPT
     }
     return class_name_map[class_name]
 
@@ -33,7 +36,10 @@ def get_agent_str(agent_class):
         dma.ZIDPR: "ZIDPR",
         dma.ZIDT: "ZIDT",
         dma.ZIDTR: "ZIDTR",
-        dma.ZIM: "ZIM"
+        dma.ZIM: "ZIM",
+        dma.ZIMA: "ZIMA",
+        dma.ZIPT: "ZIPT",
+        dma.ZIMT: "ZIMT"
     }
     return class_name_map[agent_class]
 
