@@ -1561,3 +1561,194 @@ class ZIPT(ZIDT, ZIDP):
     def load_strategy_params(self, strategy_params):
         # ZIDT Strategy Params
         ZIDT.load_strategy_params(self, strategy_params)
+
+class assure_agent(ZIDP):
+
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        ZID.__init__(self, 
+                     name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'ZID'
+        self.agent_class = 'assure_agent'
+
+        self.set_group_name(group_name)
+
+        # beta, starting p_z
+        self.load_strategy_params(strategy_params)
+
+
+    def load_strategy_params(self, strategy_params):
+        assert 'beta', 'pz' in strategy_params
+        self.beta = strategy_params['beta']
+        self.pz = strategy_params['pz']
+
+    def move_requested(self, pl):
+        # check if you are better off staying in this location or if you are better off moving
+
+        cost_to_leave = pl['cost_to_leave']
+
+        
+        value_to_stay = self.calculate_expectation_staying(pl)
+        value_to_leave = self.calculate_expectation_leaving(pl)
+
+        pz_forced_stay = self.pz
+
+        want_to_stay = value_to_stay > (1 - pz_forced_stay) * value_to_leave + pz_forced_stay * value_to_stay - cost_to_leave
+
+        return not want_to_stay
+    
+    def calculate_expectation_staying(self, pl):
+        # calculate the expected payoff of staying 
+
+        # Transactions version
+        # Earn exactly what you earned in this period ad infinitum
+
+        # Margins version
+        # Earn the area under the curve of your optimized margins
+        pass
+
+    def calculate_expectation_leaving(self, pl):
+        # Transactions version
+        # Earn the implied trades from the mean and volume of the other locations
+        # Expectations differ about each location
+        
+        # Margins version
+        # Earn the area under the curve of your margins expectations (uniform across locations)
+        pass
+
+class assure_agent_margin(assure_agent):
+    def __init__(self, 
+                     name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug):
+        
+        super().__init__(self, 
+                     name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+        
+        self.agent_family = 'assure_agent'
+        self.agent_class = 'margin'
+
+        self.set_group_name(group_name)
+
+        # beta, starting p_z
+        self.load_strategy_params(strategy_params)
+    
+    def load_strategy_params(self, strategy_params):
+        assert 'beta', 'pz' in strategy_params
+        self.beta = strategy_params['beta']
+        self.pz = strategy_params['pz']
+        self.expectation_decay = strategy_params['expectation_decay']
+
+        # Set the initial margins from a random p calculation
+        # Pull a random unit value and set it as p
+        """
+        random_unit = rng.randint(0, num_units)
+        random_p = values[random_unit]
+        implied_margins = [] # TODO: use array
+        for i in values:
+            margin = (values[i] - p)/values[i]
+            margin = max(margin, 0)
+            implied_margins.append(margin)
+        self.expected_margins = implied_margins
+        self.optimal_margins = implied_margins
+        """
+    
+    def update_margin(self, book):
+        """
+        Read the starting book at the end of the posting of bids and asks and update the optimal margin for your current unit (the one you posted a bid and ask for).
+
+        Essentially: do the crossing of the market yourself and see if your current unit could make you more or less money by trading at a slightly better (inframarginal) or worse (extramarginal) margin.
+
+        Learning of margin: margins are updated at the unit level according to the formula Delta(price)^(-rho), with rho in [0, 1].
+        """
+
+        """
+        clearing_price = None
+        bids = get_bids(book)
+        bids = order(bids, reversed) # Order in descending order
+        asks = get_asks(book)
+        asks = order(asks) # Order in ascending order
+
+        for i in range(min(len(bids), len(asks))):
+            if bid >= ask:
+                clearing_price = (bid+ask)/2   
+            else:
+                continue
+        
+        # Buyer logic
+        my_price = (1 - unit_u margin) * unit_u value
+        
+        if my_price < clearing_price:
+            decrease margin until margin = 0
+        else:
+            decrease margin until implied price = clearing price
+        
+        # Seller logic
+        my_price = (1 + unit_u margin) * unit_u cost
+
+        if my_price > clearing_price:
+            decrease margin until margin = 0
+        else:
+            decrease margin until implied price = clearing price
+
+        Updates at the exponential rho rate (see above)
+
+        Implement ordering rule, so the unit margins are monotonic
+            
+        """
+        pass
+
+    def calculate_expectation_staying(self, pl):
+        """
+        Sum area under curve of present optimal margins
+
+        implied_profit = optimal_margins*values # Dotproduct
+
+        """
+        pass
+
+    def calculate_expectation_leaving(self, pl):   
+        """
+        Sum area under curve of expected margins
+
+        implied_profit = expected_margins*values # Dotproduct
+
+        """
+        pass    
+
+class assure_agent_transactions(assure_agent):
+
+    def __init__(self, name, trader_type, payoff, money=None, location=None,
+                lower_bound = 0, upper_bound = 9999, num_units=8, movement_error_rate = 0, strategy_params = None,
+            redraw_values = False, group_name=None, debug=False
+        ):
+        assure_agent.__init__(self, 
+                     name, trader_type, payoff, money, location,
+                lower_bound, upper_bound, num_units, movement_error_rate, strategy_params, redraw_values, group_name, debug)
+    
+    def calculate_expectation_staying(self, pl):
+        """
+        return current_week_earnings # Need to store
+        """
+        pass
+
+    def calculate_expectation_leaving(self, pl):   
+        """
+        Need probability of hitting each location (p_l)
+        Need average price at each location (mu_l)
+        Need volume at each location v_l
+        Number of periods in week (periods)
+
+        Buyer
+        earning exp at location = sum (- mu_l + value_unit) to min(v_l, periods)
+
+        Seller
+        earning exp at location = sum (mu_l - cost_unit) to min(v_l, periods)
+
+        Value outside = p_l * earning exp at location
+        """
+        pass    
