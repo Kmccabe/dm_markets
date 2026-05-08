@@ -53,6 +53,33 @@ class Travel(object):
                 msg = Message('MOVE_REQUESTED', 'TRAVEL', agent.get_name(), "  ")
                 return_msg = agent.process_message(msg)
                 if return_msg.get_directive() == "MOVE":
+                    """
+                    TODO:
+                    Don't get direction
+                    If Move and location has not be been moved to:
+                        Calculate location probabilities for each location
+                        Move to a random location based on P_l
+                        Record location has been moved to this week
+                        Return "Move success"
+                    elif move and location_moved_to:
+                        Don't move agent
+                        Return "move failed"
+                    else:
+                        skip agent
+
+                    Implications of non-population-based closeness matching:
+                        Holding total pop fixed, easier to leave larger locations. Proof:
+                        Assume the following distance structure:
+                        A -- B ---- C
+                            P(B to A) = 1 - P(B to C)
+                        And all agents at B move.
+                        10 - 5 ---- 5 : 
+                            P_{zb} = 
+                                P(nobody from B moves to A) = 1 - 5(1-P(C))
+                        5 -- 7 ---- 8 : 
+                            P(nobody from B moves to A) = 1 - 7(1-P(C))
+                        Then it is easier to leave A if Pop(B) is lower.
+                    """
                     x_dir, y_dir = return_msg.get_payload()
                     loc = agent.get_location()
                     # debug message
